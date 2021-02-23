@@ -1,0 +1,325 @@
+/*
+
+Copyright (c) F-Secure Corporation
+https://foundry.f-secure.com
+
+Use of this source code is governed by the license
+that can be found in the LICENSE file.
+
+*/
+
+syntax = "proto3";
+
+option go_package = ".;main";
+
+package main;
+
+/*
+
+Inter-exchange envelope
+
+The message envelope is used to carry authenticated messages, all messages must
+be signed with the sender EC private key.
+
+The receiver must verify each message using the peer EC public key (long term
+pre-session establishment, ephemeral post-session establishment).
+
+*/
+message Envelope {
+	bytes Message       = 1;
+	Signature Signature = 2;
+}
+
+/*
+
+Signature format
+
+All messages before session key negotiation are ECDSA signed with long-term EC
+keys, all messages after session key negotiation are ECDSA signed with
+ephemeral EC keys.
+
+The signed data consists of the message SHA-256 digest.
+
+*/
+message Signature {
+	bytes Data = 1;
+	bytes R    = 2;
+	bytes S    = 3;
+}
+
+/*
+
+Inter-exchange message
+
+Each message includes a timestamp reference to allow the receiver to mitigate
+replay attacks.
+
+During a session each party must ensure that the timestamp of the received
+message is older than the previous one, as well as not too far off in the
+future.
+
+To this end the UA sets its internal clock using the timestamp of the first
+received valid message, from power-up, from the MD.
+
+All payloads are encrypted, with the exception of PAIR and SESSION ones, using
+AES-256 and the negotiated symmetric session encryption key. A random IV is
+prepended to the encrypted payload.
+
+The payload format depends on the specific operation code.
+
+*/
+message Message {
+	// timestamp is epoch in milliseconds
+	int64 Timestamp = 1;
+	bool Response   = 2;
+	ErrorCode Error = 3;
+	OpCode OpCode   = 4;
+	bytes Payload   = 5;
+}
+
+/*
+
+Generic response
+
+A generic response to be returned as message payload for all operation
+responses, or errors, without a specific format.
+
+*/
+message Response {
+	repeated string Text = 1;
+}
+
+/*
+
+1. Pairing sequence
+
+   The pairing procedure is a pre-requisite for session establishment.
+
+   Request, OpCode: PAIR, signed with MD long-term EC private key:
+     MD > UA: KeyExchange{Key:<MD long-term EC public key>, Nonce:<pairing nonce>}
+
+   Response, OpCode: PAIR, signed with UA long-term EC private key:
+     MD < UA: standard response
+
+   This sequence can only be used in pairing mode, the device must be restarted
+   to exit pairing mode.
+
+2. Session negotiation sequence
+
+   New sessions can be negotiated at any time by the MD, invalidating the
+   previous one. Sessions are volatile and therefore not persistent across UA
+   reboots.
+
+   Request, OpCode: SESSION, signed with MD long-term EC private key:
+    MD > UA: KeyExchange{Key:<MD EC ephemeral public key>}
+
+   Response, OpCode: SESSION, signed with UA long-term EC private key:
+    MD < UA: KeyExchange{Key:<UA EC ephemeral public key>, Nonce:<HKDF nonce>}
+
+3. Encrypted storage unlock
+
+   This MD request instructs the UA to unlock its encrypted storage and
+   expose it as USB Mass Storage.
+
+   Request, OpCode: UNLOCK, signed with MD ephemeral EC private key, encrypted with session key
+     MD > UA: KeyExchange{Key:<MD KEK>}
+
+   Response, OpCode: UNLOCK, signed with MD ephemeral EC private key, encrypted with session key
+     MD < UA: standard response
+
+4. Encrypted storage lock
+
+   Request, OpCode: LOCK, signed with MD ephemeral EC private key, encrypted with session key
+     MD > UA: empty payload
+
+   Response, OpCode: LOCK, signed with MD ephemeral EC private key, encrypted with session key
+     MD < UA: standard response
+
+*/
+message KeyExchange {
+	bytes  Key   = 1;
+	uint64 Nonce = 2;
+}
+
+/*
+
+Status information request
+
+Request, OpCode: STATUS, signed with MD ephemeral EC private key, encrypted with session key
+  MD > UA: empty payload
+
+Response, OpCode: STATUS, signed with MD ephemeral EC private key, encrypted with session key
+  MD < UA: Status{Version:<revision string>, Capacity:<microSD card capacity>, Locked:<locking state>}
+
+Any error condition, not tied to a specific request, can be return as an error
+to the status request.
+
+*/
+message Status {
+	string        Version       = 1;
+	uint64        Capacity      = 2;
+	bool          Locked        = 3;
+	Configuration Configuration = 4;
+}
+
+/*
+
+Configuration change request
+
+Any configuration change should be issued only while encrypted storage is
+locked, otherwise an error is returned.
+
+Request, OpCode: CONFIGURATION, signed with MD ephemeral EC private key, encrypted with session key
+  MD > UA: Configuration{ <configuration parameters> }
+
+Response, OpCode: CONFIGURATION, signed with MD ephemeral EC private key, encrypted with session key
+  MD < UA: Configuration{ <updated configuration> }
+
+Any error condition, not tied to a specific request, can be return as an error
+to the status request.
+
+*/
+message Configuration {
+	// Select encryption/decryption algorithm.
+	Cipher Cipher = 1;
+}
+
+/*
+
+Pairing QR code format
+
+The pairing QR code embeds a binary blob which can be decoded with this message
+format.
+
+The message includes the BLE name, the pairing nonce, the UA long-term EC key
+and their signature created with the UA long-term EC key.
+
+*/
+message PairingQRCode {
+	string BLEName      = 1;
+	uint64 Nonce        = 2;
+	bytes PubKey        = 3;
+	Signature Signature = 4;
+}
+
+/*
+
+Recovery QR code format
+
+The recovery QR code embeds a binary blob which can be decoded with this
+message format.
+
+The message includes the BLE name, encryption status, recovery information and
+their signature created with the MD long-term EC key.
+
+The recovery information includes the UA long-term MC, the MD long-term EC key
+pair and the KEK.
+
+The encryption flag indicates that the recovery payload is protected with a
+passphrase used for AES-256-OFB encryption (compliant with the INTERLOCK
+specifications for aes cipher). This is an optional request by the user when
+selecting the recovery function in the MD application menu.
+
+*/
+message RecoveryQRCode {
+	string    BLEName   = 1;
+	bool      Encrypted = 2;
+	bytes     Recovery  = 3;
+}
+
+message Recovery {
+	bytes PubKey    = 1;
+	bytes MDPrivate = 2;
+	bytes MDPublic  = 3;
+	bytes KEK       = 4;
+}
+
+enum OpCode {
+	// Plaintext messages
+
+	NULL            = 0;
+	// Pairing sequence
+	PAIR            = 1;
+	// Session negotiation sequence
+	SESSION         = 2;
+
+	// Encrypted messages
+
+	// Encrypted storage unlock
+	UNLOCK          = 3;
+	// Encrypted storage lock
+	LOCK            = 4;
+	// Status information request
+	STATUS          = 5;
+	// Configuration change request
+	CONFIGURATION   = 6;
+
+	// Pro version only
+	LIST            = 7;
+	SET_VISIBILITY  = 8;
+}
+
+/*
+
+Error codes
+
+The MD must always check the `ErrorCode` field in the response `Message`
+payload to determine if an error occurred.
+
+*/
+enum ErrorCode {
+	NO_ERROR = 0;
+	GENERIC_ERROR = 1;
+
+	// INVALID_SESSION is returned if the UA is unable to authenticate or
+	// decrypt messages from the MD.
+	//
+	// When this happens the MD should establish a new session.
+	INVALID_SESSION = 2;
+
+	// SESSION_KEY_NEGOTIATION_FAILED is returned if the MD
+	// fails to negotiate a new session key with the paired USB armory.
+	//
+	// This happens at long-term keys mismatch between MD and UA.
+	//
+	// The MD should advise the user to:
+	//
+	//  1. Try rebooting the UA.
+	//  2. If the problem persists reset MD with recovery data.
+	//  3. If the problem persists, or recovery data is not available,
+	//     perform a full reset of MD+UA (this results in data loss).
+	SESSION_KEY_NEGOTIATION_FAILED = 4;
+
+	// PAIRING_KEY_NEGOTIATION_FAILED is returned if the MD fails to
+	// negotiate the long-term (pairing) keys.
+	//
+	// When this happens the MD should instruct the user to unplug and
+	// reinsert the USB armory and restart the pairing procedure.
+	PAIRING_KEY_NEGOTIATION_FAILED = 5;
+
+	// UNLOCK_FAILED is returned if the UA fails to unlock encrypted
+	// storage with the KEK received from the MD.
+	//
+	// When this happens the MD should suggest the user that the inserted
+	// microSD might not be matching the UA it has been inserted to.
+	UNLOCK_FAILED = 6;
+
+	// INVALID_MESSAGE is returned by the UA when received protobuf
+	// cannot be parsed or authenticated correctly.
+	INVALID_MESSAGE = 7;
+}
+
+enum Cipher {
+	// Ciphers are list from most performant to least performant one.
+
+	// AES-128 CBC mode (hardware accelerated) with plain IVs
+	AES128_CBC_PLAIN = 0;
+	// AES-128 CBC mode (hardware accelerated) with ESSIV
+	AES128_CBC_ESSIV = 1;
+	// AES-128 XTS mode (CPU bound) with plain IVs
+	AES128_XTS_PLAIN = 2;
+	// AES-256 XTS mode (CPU bound) with plain IVs
+	AES256_XTS_PLAIN = 3;
+
+	NONE = 255;
+}
