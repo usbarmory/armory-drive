@@ -3,7 +3,8 @@ module github.com/f-secure-foundry/armory-drive
 go 1.15
 
 require (
-	github.com/f-secure-foundry/tamago v0.0.0-20210208163511-6cc9699b14bd
+	github.com/f-secure-foundry/crucible v0.0.0-20210315084109-6d5c7d388821 // indirect
+	github.com/f-secure-foundry/tamago v0.0.0-20210217103808-875e533027e3
 	github.com/golang/protobuf v1.4.1
 	github.com/mitchellh/go-fs v0.0.0-20180402235330-b7b9ca407fff
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
