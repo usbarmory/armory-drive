@@ -8,10 +8,16 @@ allows encrypted USB Mass Storage interfacing for a microSD card connected to a
 [USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
 
 The encrypted storage setup and authentication is meant to be performed with the
-[F-Secure Armory mobile application](FIXME).
+[F-Secure Armory mobile application](FIXME) over Bluetooth.
 
 To understand the firmware capabilities and use see this
 [Tutorial](https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial).
+
+Security Model
+==============
+
+See the [detailed specifications](https://github.com/f-secure-foundry/armory-drive/wiki/Specifications)
+for full explanation of the security model.
 
 Installation of pre-compiled releases
 =====================================
@@ -167,6 +173,11 @@ can be performed to flash it on the internal eMMC.
 
 Alternatively [armory-ums](https://github.com/f-secure-foundry/armory-ums) can
 be used.
+
+Support
+=======
+
+If you require support, please email us at usbarmory@f-secure.com.
 
 Authors
 =======
