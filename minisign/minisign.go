@@ -54,7 +54,7 @@ func NewPublicKey(publicKeyStr string) (PublicKey, error) {
 func DecodeSignature(in string) (Signature, int, error) {
 	var signature Signature
 
-	lines := strings.SplitN(in, "\n", sigLines + 1)
+	lines := strings.SplitN(in, "\n", sigLines+1)
 
 	if len(lines) < 2 {
 		return signature, 0, errors.New("Incomplete encoded signature")

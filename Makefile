@@ -22,11 +22,27 @@ TEXT_START := 0x80010000 # ramStart (defined in imx6/imx6ul/memory.go) + 0x10000
 
 #### primary targets ####
 
-all: $(APP)
+all: $(APP) $(APP)-install
 
 imx: $(APP).imx
 
 imx_signed: $(APP)-signed.imx
+
+$(APP)-install: GOFLAGS= -trimpath -ldflags "-s -w"
+$(APP)-install:
+	@if [ "${TAMAGO}" != "" ]; then \
+		${TAMAGO} build $(GOFLAGS) cmd/$(APP)-install/*.go; \
+	else \
+		go build $(GOFLAGS) cmd/$(APP)-install/*.go; \
+	fi
+
+$(APP)-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
+$(APP)-install.exe:
+	@if [ "${TAMAGO}" != "" ]; then \
+		$(BUILD_OPTS) ${TAMAGO} build cmd/$(APP)-install/*.go; \
+	else \
+		$(BUILD_OPTS) go build cmd/$(APP)-install/*.go; \
+	fi
 
 #### utilities ####
 
@@ -53,24 +69,22 @@ dcd:
 	echo $(TAMAGO_PKG)
 	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
 
-elf:
-	@if [ "${OTA_PUBLIC}" != "" ]; then \
-		echo '** WARNING ** Enabling OTA verification with public key ${OTA_PUBLIC}'; \
-	else \
-		echo '** WARNING ** OTA verification is disabled'; \
-	fi
-	$(GOENV) $(TAMAGO) build $(GOFLAGS) -o ${APP}
-
 clean:
 	rm -f $(APP)
-	@rm -fr $(APP).bin $(APP).imx $(APP)-signed.imx $(APP)-signed.sig $(APP)-signed.ota $(APP).csf $(APP).dcd *.pb.go
+	@rm -fr $(APP).bin $(APP).imx $(APP)-signed.imx $(APP)-signed.sig $(APP)-signed.ota $(APP).csf $(APP).dcd $(APP)-install *.pb.go
 
 #### dependencies ####
 
+$(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Build=${BUILD}' -X 'main.Revision=${REV}'"
 $(APP): check_tamago proto
-$(APP): OTA_PUBLIC=$(shell cat ${OTA_KEYS}/armory-drive-minisign.pub 2> /dev/null | tail -n 1 | head -c -1)
-$(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Build=${BUILD}' -X 'main.Revision=${REV}' -X 'main.OTAPublicKey=${OTA_PUBLIC}'"
-$(APP): elf
+	@if [ "${OTA_KEYS}" != "" ]; then \
+		echo '** WARNING ** Enabling OTA verification with public key ${OTA_KEYS}/armory-drive-minisign.pub'; \
+	else \
+		echo '** WARNING ** OTA verification is disabled'; \
+	fi
+	cd $(CURDIR)/assets && ${TAMAGO} generate -tags ${BUILD_TAGS} && \
+	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP} || (rm -f $(CURDIR)/assets/tmp*.go && exit 1)
+	rm -f $(CURDIR)/assets/tmp*.go
 
 $(APP).dcd: check_tamago
 $(APP).dcd: GOMODCACHE=$(shell ${TAMAGO} env GOMODCACHE)

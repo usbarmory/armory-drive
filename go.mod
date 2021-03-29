@@ -3,9 +3,12 @@ module github.com/f-secure-foundry/armory-drive
 go 1.15
 
 require (
-	github.com/f-secure-foundry/crucible v0.0.0-20210322082828-1a26aae60e6c // indirect
+	github.com/f-secure-foundry/armory-boot v0.0.0-20210315180839-7316240ca4f3
+	github.com/f-secure-foundry/crucible v0.0.0-20210322082828-1a26aae60e6c
 	github.com/f-secure-foundry/tamago v0.0.0-20210217103808-875e533027e3
+	github.com/flynn/hid v0.0.0-20190502022136-f1b9b6cc019a
 	github.com/google/go-cmp v0.5.3-0.20201020212313-ab46b8bd0abd // indirect
+	github.com/google/go-github/v34 v34.0.0
 	github.com/mitchellh/go-fs v0.0.0-20180402235330-b7b9ca407fff
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad

@@ -13,10 +13,15 @@ The encrypted storage setup and authentication is meant to be performed with the
 Installation of pre-compiled releases
 =====================================
 
-Two categories of binary releases
-[are available](https://github.com/f-secure-foundry/tamago-go/releases).
+F-Secure provides [binary releases](https://github.com/f-secure-foundry/tamago-go/releases)
+for the Amory Drive firmware.
 
-* Unsigned binary releases: such firmware images do *not*
+The binary release includes the `armory-drive-installer` to guide through
+initial installation of such releases and Secure Boot activation.
+
+The installer supports the following installation modes:
+
+* Installation of unsigned binary releases: such firmware images do *not*
   leverage on Secure Boot and can be installed on standard USB armory devices.
 
   Such releases however *cannot guarantee device security* as hardware bound
@@ -27,8 +32,13 @@ Two categories of binary releases
   Unsigned releases are therefore recommended only for test/evaluation purposes
   and are *not recommended for protection of sensitive data*.
 
-  To enable the full security model either install F-Secure signed releases or
-  compile your own.
+  To enable the full security model install a signed release, which enables
+  Secure Boot.
+
+* F-Secure signed releases: the installation of such firmware images
+  causes F-Secure own secure boot public keys to be *permanently fused* on your
+  USB armory, fully converting the device to exclusive use with the F-Secure
+  Armory mobile application.
 
 * F-Secure signed releases: the installation of such firmware images
   causes F-Secure own secure boot public keys to be *permanently fused* on your
@@ -38,76 +48,12 @@ Two categories of binary releases
 > :warning: loading F-Secure signed releases is an a *irreversible operation*
 > to be performed **at your own risk**.
 
-Installation of self-compiled releases
-======================================
+The `armory-drive-installer` provides an interactive installation for all
+possible installation modes and is the recommended way to use the Armory Drive
+firmware.
 
-Compiling
----------
-
-Ensure that `make`, a recent version of `go` and `protoc` are installed.
-
-Install, or update, the following dependency (ensure that the `GOPATH` variable
-is set accordingly):
-
-```
-go get -u google.golang.org/protobuf/cmd/protoc-gen-go
-```
-
-Build the [TamaGo compiler](https://github.com/f-secure-foundry/tamago-go)
-(or use the [latest binary release](https://github.com/f-secure-foundry/tamago-go/releases/latest)):
-
-```
-git clone https://github.com/f-secure-foundry/tamago-go -b latest
-cd tamago-go/src && ./all.bash
-cd ../bin && export TAMAGO=`pwd`/go
-```
-
-The firmware is operational only on secure booted systems, therefore
-[secure boot keys](https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II))
-must be created and passed with the `HAB_KEYS` environment variable.
-
-To receive and build firmware updates to be passed over USB Mass Storage (see
-_Firmware update_) the optional `OTA_KEYS` variable can be set to a path
-containing the output of [minisign](https://jedisct1.github.io/minisign/) keys
-generated as follows:
-
-```
-minisign -G -p $OTA_KEYS/armory-drive-minisign.pub -s armory-drive-minisign.sec
-
-```
-
-Build the `armory-drive-signed.imx` application executable:
-
-```
-make CROSS_COMPILE=arm-none-eabi- HAB_KEYS=<path> OTA_KEYS=<path> imx_signed
-```
-
-Executing
----------
-
-The resulting `armory-drive-signed.imx` file can be executed over USB using
-[SDP](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp).
-
-SDP mode requires boot switch configuration towards microSD without any card
-inserted, however this firmware detects microSD card only at startup.
-Therefore, when starting with SDP, to expose the microSD over mass storage,
-follow this procedure:
-
-  1. Remove the microSD card on a powered off device.
-  2. Set microSD boot mode switch.
-  3. Plug the device on a USB port to power it up in SDP mode.
-  4. Insert the microSD card.
-  5. Launch `imx_usb armory-drive-signed.imx`.
-
-Installing
-----------
-
-To permanently install `armory-drive-signed.imx` on internal non-volatile memory,
-after the steps in _Executing_, the procedure described in _Firmware update_
-can be performed to flash it on the internal eMMC.
-
-Alternatively [armory-ums](https://github.com/f-secure-foundry/armory-ums) can
-be used.
+Expert users can compile and sign their own releases with the information
+included in section _Installation of self-compiled releases_.
 
 Operation
 =========
@@ -137,6 +83,88 @@ Firmware update
   4. Copy the renamed file to the "F-Secure" disk.
   5. Eject the "F-Secure" disk.
   6. The white LED should turn on and then off after the update is complete.
+
+Installation of self-compiled releases
+======================================
+
+> :warning: these instructions are for *expert users only*, it is recommended
+> to use `armory-drive-installer` if you don't know what you are doing.
+
+Compiling
+---------
+
+Ensure that `make`, a recent version of `go` and `protoc` are installed.
+
+Install, or update, the following dependency (ensure that the `GOPATH` variable
+is set accordingly):
+
+```
+go get -u google.golang.org/protobuf/cmd/protoc-gen-go
+```
+
+Build the [TamaGo compiler](https://github.com/f-secure-foundry/tamago-go)
+(or use the [latest binary release](https://github.com/f-secure-foundry/tamago-go/releases/latest)):
+
+```
+git clone https://github.com/f-secure-foundry/tamago-go -b latest
+cd tamago-go/src && ./all.bash
+cd ../bin && export TAMAGO=`pwd`/go
+```
+
+The firmware is meant to be executed on secure booted systems, therefore
+[secure boot keys](https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II))
+should be created and passed with the `HAB_KEYS` environment variable.
+
+To build and install firmware updates to be passed over USB Mass Storage (see
+_Firmware update_) the `OTA_KEYS` variable must be set to a path containing the
+output of [minisign](https://jedisct1.github.io/minisign/) keys generated as
+follows:
+
+```
+minisign -G -p $OTA_KEYS/armory-drive-minisign.pub -s armory-drive-minisign.sec
+
+```
+
+Build the `armory-drive-signed.imx` application executable:
+
+```
+make CROSS_COMPILE=arm-none-eabi- HAB_KEYS=<path> OTA_KEYS=<path> imx_signed
+```
+
+An unsigned test binary can be compiled with the `imx` target *and* with an
+empty `HAB_KEYS` variable.
+
+Executing
+---------
+
+The resulting `armory-drive-signed.imx` file can be executed over USB using
+[SDP](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp).
+
+> :warning: if you execute firmware compiled with valid `HAB_KEYS` on an open
+> unit, at its first execution the firmware will fuse public HAB keys on the
+> device, this is an *irreversible operation* to be performed **at your own
+> risk**.
+
+SDP mode requires boot switch configuration towards microSD without any card
+inserted, however this firmware detects microSD card only at startup.
+Therefore, when starting with SDP, to expose the microSD over mass storage,
+follow this procedure:
+
+  1. Remove the microSD card on a powered off device.
+  2. Set microSD boot mode switch.
+  3. Plug the device on a USB port to power it up in SDP mode.
+  4. Insert the microSD card.
+  5. Launch `imx_usb armory-drive-signed.imx`.
+
+Installing
+----------
+
+To permanently install `armory-drive-signed.imx` on internal non-volatile memory,
+after the steps in _Executing_, the procedure described in _Firmware update_
+can be performed to flash it on the internal eMMC.
+
+Alternatively [armory-ums](https://github.com/f-secure-foundry/armory-ums) can
+be used.
 
 Authors
 =======

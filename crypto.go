@@ -24,7 +24,6 @@ import (
 	"golang.org/x/crypto/xts"
 
 	"github.com/f-secure-foundry/tamago/dma"
-	"github.com/f-secure-foundry/tamago/soc/imx6"
 	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
 )
 
@@ -66,12 +65,6 @@ func init() {
 }
 
 func deriveKey(diversifier []byte, index int, export bool) (key []byte, err error) {
-	// This check is commented out on F-Secure unsigned releases, which
-	// must be used only for test/evaluation purposes.
-	if !imx6.SNVS() {
-		return nil, errors.New("SNVS is not enabled")
-	}
-
 	if index == BLOCK_KEY {
 		var armoryLongterm []byte
 

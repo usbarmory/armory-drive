@@ -7,6 +7,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -16,24 +17,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mitchellh/go-fs"
-	"github.com/mitchellh/go-fs/fat"
+	"github.com/f-secure-foundry/armory-drive/assets"
 
 	"github.com/f-secure-foundry/armory-drive/minisign"
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
+
+	"github.com/mitchellh/go-fs"
+	"github.com/mitchellh/go-fs/fat"
 )
 
 const sigLimit = 1024
 
 var OTAPattern = regexp.MustCompile(`\d{8}.BIN`)
 
-var OTAPublicKey string
-
 func ota() {
-	if len(OTAPublicKey) == 0 {
-		return
-	}
-
 	img, err := os.OpenFile(QR_DISK_PATH, os.O_RDWR|os.O_TRUNC, 0600)
 
 	if err != nil {
@@ -132,13 +129,17 @@ func update(entry fs.DirectoryEntry) {
 }
 
 func verify(buf []byte) (valid bool, bin []byte, err error) {
+	if len(buf) < sigLimit {
+		return false, nil, errors.New("invalid signature")
+	}
+
 	sig, off, err := minisign.DecodeSignature(string(buf[0:sigLimit]))
 
 	if err != nil {
 		return false, nil, fmt.Errorf("invalid signature, %v", err)
 	}
 
-	pub, err := minisign.NewPublicKey(OTAPublicKey)
+	pub, err := minisign.NewPublicKey(string(assets.OTAPublicKey))
 
 	if err != nil {
 		return false, nil, fmt.Errorf("invalid public key, %v", err)
