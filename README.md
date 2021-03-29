@@ -10,6 +10,9 @@ allows encrypted USB Mass Storage interfacing for a microSD card connected to a
 The encrypted storage setup and authentication is meant to be performed with the
 [F-Secure Armory mobile application](FIXME).
 
+To understand the firmware capabilities and use see this
+[Tutorial](https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial).
+
 Installation of pre-compiled releases
 =====================================
 
@@ -19,34 +22,33 @@ for the Amory Drive firmware.
 The binary release includes the `armory-drive-installer` to guide through
 initial installation of such releases and Secure Boot activation.
 
+> :warning: loading signed releases triggers secure boot activation which is an
+> a *irreversible operation* to be performed **at your own risk**, carefully
+> read and understand the following instructions.
+
 The installer supports the following installation modes:
 
-* Installation of unsigned binary releases: such firmware images do *not*
-  leverage on Secure Boot and can be installed on standard USB armory devices.
+* F-Secure signed releases: the installation of such firmware images
+  causes F-Secure own secure boot public keys to be *permanently fused* on the
+  target USB armory, fully converting the device to exclusive use with Armory
+  Drive releases signed by F-Secure.
+
+* User signed releases: the installation of such firmware images
+  causes user own secure boot keys to be created and *permanently fused* on the
+  target USB armory, fully converting the device to exclusive use with user
+  signed binaries.
+
+* Unsigned releases: such firmware images do *not* leverage on Secure Boot and
+  can be installed on standard USB armory devices.
 
   Such releases however *cannot guarantee device security* as hardware bound
   key material will use *default test keys*, lacking protection for stored armory
   communication keys and leaving data encryption key freshness only to the mobile
   application.
 
-  Unsigned releases are therefore recommended only for test/evaluation purposes
-  and are *not recommended for protection of sensitive data*.
-
-  To enable the full security model install a signed release, which enables
-  Secure Boot.
-
-* F-Secure signed releases: the installation of such firmware images
-  causes F-Secure own secure boot public keys to be *permanently fused* on your
-  USB armory, fully converting the device to exclusive use with the F-Secure
-  Armory mobile application.
-
-* F-Secure signed releases: the installation of such firmware images
-  causes F-Secure own secure boot public keys to be *permanently fused* on your
-  USB armory, fully converting the device to exclusive use with the F-Secure
-  Armory mobile application.
-
-> :warning: loading F-Secure signed releases is an a *irreversible operation*
-> to be performed **at your own risk**.
+  Unsigned releases are recommended only for test/evaluation purposes and are
+  *not recommended for protection of sensitive data* where device tampering is a
+  risk.
 
 The `armory-drive-installer` provides an interactive installation for all
 possible installation modes and is the recommended way to use the Armory Drive
@@ -61,7 +63,7 @@ Operation
 Pairing and initialization
 --------------------------
 
-See this [Tutorial]((https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial).
+See the [Tutorial](https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial).
 
 Disk access
 -----------
@@ -79,8 +81,8 @@ Firmware update
 
   1. Set the device in pairing mode (see _Pairing and initialization_).
   2. An "F-Secure" disk volume should appear.
-  3. Rename `armory-drive-signed.ota` to a filename with pattern `YYYYMMDD.bin` (e.g. `20200922.bin`).
-  4. Copy the renamed file to the "F-Secure" disk.
+  3. Rename `armory-drive-signed.ota` to "UA-DRIVE.ota".
+  4. Copy "UA-DRIVE.oa" to the "F-Secure" disk.
   5. Eject the "F-Secure" disk.
   6. The white LED should turn on and then off after the update is complete.
 
@@ -140,8 +142,8 @@ Executing
 The resulting `armory-drive-signed.imx` file can be executed over USB using
 [SDP](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp).
 
-> :warning: if you execute firmware compiled with valid `HAB_KEYS` on an open
-> unit, at its first execution the firmware will fuse public HAB keys on the
+> :warning: firmware compiled with valid `HAB_KEYS` and executed on an open
+> unit will fuse, at its first execution, public secure boot keys on the
 > device, this is an *irreversible operation* to be performed **at your own
 > risk**.
 

@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -28,7 +27,7 @@ import (
 
 const sigLimit = 1024
 
-var OTAPattern = regexp.MustCompile(`\d{8}.BIN`)
+const OTAName = "UA-DRIVE.ota"
 
 func ota() {
 	img, err := os.OpenFile(QR_DISK_PATH, os.O_RDWR|os.O_TRUNC, 0600)
@@ -65,7 +64,7 @@ func ota() {
 	}
 
 	for _, entry := range root.Entries() {
-		if OTAPattern.MatchString(entry.Name()) {
+		if entry.Name() == OTAName {
 			update(entry)
 			return
 		}
