@@ -10,7 +10,7 @@ that can be found in the LICENSE file.
 
 syntax = "proto3";
 
-option go_package = ".;main";
+option go_package = "./;main";
 
 package main;
 
