@@ -19,7 +19,7 @@ import (
 const org = "f-secure-foundry"
 const repo = "armory-drive"
 
-func downloadLatestRelease() (imx []byte, sig []byte, sigSDP []byte, err error) {
+func downloadLatestRelease() (imx []byte, hab []byte, ota []byte, sdp []byte, err error) {
 	var release *github.RepositoryRelease
 
 	client := github.NewClient(nil)
@@ -43,11 +43,15 @@ func downloadLatestRelease() (imx []byte, sig []byte, sigSDP []byte, err error) 
 				return
 			}
 		case tagName + ".sig":
-			if sig, err = download("release signature", release, asset); err != nil {
+			if hab, err = download("HAB signature", release, asset); err != nil {
 				return
 			}
-		case tagName + ".recovery-sig":
-			if sigSDP, err = download("recovery signature", release, asset); err != nil {
+		case tagName + ".ota":
+			if ota, err = download("OTA signature", release, asset); err != nil {
+				return
+			}
+		case tagName + ".sdp":
+			if sdp, err = download("recovery signature", release, asset); err != nil {
 				return
 			}
 		}
@@ -58,8 +62,18 @@ func downloadLatestRelease() (imx []byte, sig []byte, sigSDP []byte, err error) 
 		return
 	}
 
-	if len(sig) == 0 {
-		err = fmt.Errorf("could not find %s signature for github.com/%s/%s", conf.releaseVersion, org, repo)
+	if len(hab) == 0 {
+		err = fmt.Errorf("could not find %s HAB signature for github.com/%s/%s", conf.releaseVersion, org, repo)
+		return
+	}
+
+	if len(ota) == 0 {
+		err = fmt.Errorf("could not find %s OTA signature for github.com/%s/%s", conf.releaseVersion, org, repo)
+		return
+	}
+
+	if len(sdp) == 0 {
+		err = fmt.Errorf("could not find %s recovery signature for github.com/%s/%s", conf.releaseVersion, org, repo)
 		return
 	}
 
