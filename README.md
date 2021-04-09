@@ -85,12 +85,18 @@ like any standard USB drive when unlocked through its paired companion iOS app.
 Firmware update
 ---------------
 
-  1. Set the device in pairing mode (see _Pairing and initialization_).
-  2. An "F-Secure" disk volume should appear.
-  3. Rename `armory-drive-signed.ota` to "UA-DRIVE.ota".
-  4. Copy "UA-DRIVE.oa" to the "F-Secure" disk.
-  5. Eject the "F-Secure" disk.
-  6. The white LED should turn on and then off after the update is complete.
+The firmware update procedure is meant to be used on USB armory devices which
+have been already initialized with the Armory Drive firmware as shown in
+_Pairing and initialization_.
+
+  1. If the USB armory contains an SD card, remove it.
+  2. Plug the USB armory.
+  3. An "F-Secure" disk volume should appear.
+  4. Rename `armory-drive-signed.ota` to "UA-DRIVE.ota".
+  5. Copy "UA-DRIVE.ota" to the "F-Secure" disk.
+  6. Eject the "F-Secure" disk.
+  7. The white LED should turn on and then off after the update is complete.
+  8. Put the SD card back in.
 
 Installation of self-compiled releases
 ======================================
@@ -114,8 +120,8 @@ Build the [TamaGo compiler](https://github.com/f-secure-foundry/tamago-go)
 (or use the [latest binary release](https://github.com/f-secure-foundry/tamago-go/releases/latest)):
 
 ```
-git clone https://github.com/f-secure-foundry/tamago-go -b latest
-cd tamago-go/src && ./all.bash
+wget https://github.com/f-secure-foundry/tamago-go/archive/refs/tags/latest.zip
+cd tamago-go-latest/src && ./all.bash
 cd ../bin && export TAMAGO=`pwd`/go
 ```
 

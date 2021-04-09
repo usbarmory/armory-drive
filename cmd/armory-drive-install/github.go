@@ -40,21 +40,17 @@ func downloadLatestRelease() (imx []byte, sig []byte, sigSDP []byte, err error) 
 		switch *asset.Name {
 		case tagName + ".imx":
 			if imx, err = download("release", release, asset); err != nil {
-				break
+				return
 			}
 		case tagName + ".sig":
 			if sig, err = download("release signature", release, asset); err != nil {
-				break
+				return
 			}
 		case tagName + ".recovery-sig":
 			if sigSDP, err = download("recovery signature", release, asset); err != nil {
-				break
+				return
 			}
 		}
-	}
-
-	if err != nil {
-		return
 	}
 
 	if len(imx) == 0 {

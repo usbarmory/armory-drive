@@ -162,28 +162,23 @@ func imxLoad(imx []byte) (err error) {
 		return fmt.Errorf("DCD parsing error: %v", err)
 	}
 
-	log.Printf("loading DCD at %#08x (%d bytes)", iramOffset, len(dcd))
 	err = dcdWrite(dcd, iramOffset)
 
 	if err != nil {
 		return
 	}
 
-	log.Printf("loading imx to %#08x (%d bytes)", ivt.Self, len(imx))
 	err = fileWrite(imx, ivt.Self)
 
 	if err != nil {
 		return
 	}
 
-	log.Printf("jumping to %#08x", ivt.Self)
 	err = jumpAddress(ivt.Self)
 
 	if err != nil {
 		return
 	}
-
-	log.Printf("serial download complete")
 
 	return
 }
