@@ -70,7 +70,7 @@ dcd:
 	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
 
 clean:
-	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP)-signed.sig $(APP)-signed.ota $(APP).csf $(APP).dcd $(APP)-install *.pb.go
+	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).ota $(APP).csf $(APP).dcd $(APP)-install *.pb.go
 
 #### dependencies ####
 
@@ -117,7 +117,7 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-o $(APP).csf && \
 	cat $(APP).imx $(APP).csf > $(APP)-signed.imx
 	@if [ "${OTA_KEYS}" != "" ]; then \
-		echo -e "\n" | minisign -S -s ${OTA_KEYS}/armory-drive-minisign.sec -m $(APP)-signed.imx -x $(APP)-signed.sig -c `stat -L -c %s ${APP}-signed.imx` && \
-		minisign -V -p ${OTA_KEYS}/armory-drive-minisign.pub -m $(APP)-signed.imx -x $(APP)-signed.sig && \
-		cat $(APP)-signed.sig $(APP)-signed.imx > $(APP)-signed.ota; \
+		echo -e "\n" | minisign -S -s ${OTA_KEYS}/armory-drive-minisign.sec -m $(APP)-signed.imx -x $(APP).sig -c `stat -L -c %s ${APP}-signed.imx` && \
+		minisign -V -p ${OTA_KEYS}/armory-drive-minisign.pub -m $(APP)-signed.imx -x $(APP).sig && \
+		cat $(APP).sig $(APP)-signed.imx > $(APP).ota; \
 	fi

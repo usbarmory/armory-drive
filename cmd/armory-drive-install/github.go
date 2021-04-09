@@ -19,7 +19,7 @@ import (
 const org = "f-secure-foundry"
 const repo = "armory-drive"
 
-func downloadLatestRelease() (imx []byte, csf []byte, ota []byte, sdp []byte, err error) {
+func downloadLatestRelease() (imx []byte, csf []byte, sig []byte, sdp []byte, err error) {
 	var release *github.RepositoryRelease
 
 	client := github.NewClient(nil)
@@ -46,8 +46,8 @@ func downloadLatestRelease() (imx []byte, csf []byte, ota []byte, sdp []byte, er
 			if csf, err = download("HAB signature", release, asset); err != nil {
 				return
 			}
-		case tagName + ".ota":
-			if ota, err = download("OTA signature", release, asset); err != nil {
+		case tagName + ".sig":
+			if sig, err = download("OTA signature", release, asset); err != nil {
 				return
 			}
 		case tagName + ".sdp":
@@ -67,7 +67,7 @@ func downloadLatestRelease() (imx []byte, csf []byte, ota []byte, sdp []byte, er
 		return
 	}
 
-	if len(ota) == 0 {
+	if len(sig) == 0 {
 		err = fmt.Errorf("could not find %s OTA signature for github.com/%s/%s", conf.releaseVersion, org, repo)
 		return
 	}
