@@ -173,7 +173,7 @@ func upgrade() {
 }
 
 func installUnsignedFirmware(upgrade bool) {
-	imx, sig, ota, _, err := downloadLatestRelease()
+	imx, csf, ota, _, err := downloadLatestRelease()
 
 	if err != nil {
 		log.Fatal(err)
@@ -203,7 +203,7 @@ func installUnsignedFirmware(upgrade bool) {
 	log.Printf("The USB armory should now have a blinking blue LED to indicate pairing mode, a new drive should appear on your system")
 	mountPoint := prompt("Please specify the path of the newly appeared drive")
 
-	imx = append(imx, sig...)
+	imx = append(imx, csf...)
 	imx = append(imx, ota...)
 
 	log.Printf("Copying firmware to USB armory in pairing mode at %s", mountPoint)
