@@ -47,7 +47,7 @@ func detect() (err error) {
 		}
 
 		if product, ok := supportedDevices[d.ProductID]; ok {
-			log.Printf("found device %04x:%04x %s", d.VendorID, d.ProductID, product)
+			log.Printf("Found device %04x:%04x %s", d.VendorID, d.ProductID, product)
 		} else {
 			continue
 		}
@@ -147,8 +147,6 @@ func imxLoad(imx []byte) (err error) {
 	if err = detect(); err != nil {
 		return
 	}
-
-	defer conf.dev.Close()
 
 	ivt, err := sdp.ParseIVT(imx)
 

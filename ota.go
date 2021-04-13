@@ -27,7 +27,7 @@ import (
 
 const sigLimit = 1024
 
-const OTAName = "UA-DRIVE.ota"
+const OTAName = "UA-DRIVE.OTA"
 
 func ota() {
 	img, err := os.OpenFile(QR_DISK_PATH, os.O_RDWR|os.O_TRUNC, 0600)

@@ -31,9 +31,11 @@ imx_signed: $(APP)-signed.imx
 $(APP)-install: GOFLAGS= -trimpath -ldflags "-s -w"
 $(APP)-install:
 	@if [ "${TAMAGO}" != "" ]; then \
-		${TAMAGO} build $(GOFLAGS) cmd/$(APP)-install/*.go; \
+		cd $(CURDIR)/assets && ${TAMAGO} generate && \
+		cd $(CURDIR) && ${TAMAGO} build $(GOFLAGS) cmd/$(APP)-install/*.go; \
 	else \
-		go build $(GOFLAGS) cmd/$(APP)-install/*.go; \
+		cd $(CURDIR)/assets && go generate && \
+		cd $(CURDIR) && go build $(GOFLAGS) cmd/$(APP)-install/*.go; \
 	fi
 
 $(APP)-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
@@ -70,7 +72,7 @@ dcd:
 	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
 
 clean:
-	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).ota $(APP).csf $(APP).dcd $(APP)-install *.pb.go
+	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).ota $(APP).csf $(APP).sdp $(APP).dcd $(APP)-install *.pb.go $(CURDIR)/assets/tmp*.go
 
 #### dependencies ####
 
@@ -81,7 +83,7 @@ $(APP): check_tamago proto
 	else \
 		echo '** WARNING ** OTA verification is disabled'; \
 	fi
-	cd $(CURDIR)/assets && ${TAMAGO} generate -tags ${BUILD_TAGS} && \
+	cd $(CURDIR)/assets && ${TAMAGO} generate && \
 	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP} || (rm -f $(CURDIR)/assets/tmp*.go && exit 1)
 	rm -f $(CURDIR)/assets/tmp*.go
 
@@ -106,6 +108,16 @@ $(APP).imx: $(APP).bin $(APP).dcd
 
 $(APP)-signed.imx: check_hab_keys $(APP).imx
 	${TAMAGO} install github.com/f-secure-foundry/crucible/cmd/habtool
+	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
+		-A ${HAB_KEYS}/CSF_1_key.pem \
+		-a ${HAB_KEYS}/CSF_1_crt.pem \
+		-B ${HAB_KEYS}/IMG_1_key.pem \
+		-b ${HAB_KEYS}/IMG_1_crt.pem \
+		-t ${HAB_KEYS}/SRK_1_2_3_4_table.bin \
+		-x 1 \
+		-s \
+		-i $(APP).imx \
+		-o $(APP).sdp && \
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
 		-a ${HAB_KEYS}/CSF_1_crt.pem \

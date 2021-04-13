@@ -20,19 +20,15 @@ import (
 	"github.com/f-secure-foundry/crucible/util"
 )
 
-// HAB SRK hash size in bytes
-const srkSize = 32
-
 func initializeHAB() {
 	switch {
 	case imx6.SNVS():
-		// unit is already Secure Booted
 		return
-	case len(assets.SRKHash) != srkSize:
-		// image is not signed
+	case len(assets.SRKHash) != assets.SRKSize:
 		return
-	case !bytes.Equal(assets.SRKHash, make([]byte, len(assets.SRKHash))):
-		// no Secure Boot and empty SRK hash means this is a test unit
+	case bytes.Equal(assets.SRKHash, make([]byte, len(assets.SRKHash))):
+		return
+	case bytes.Equal(assets.SRKHash, assets.DummySRKHash()):
 		return
 	default:
 		hab(assets.SRKHash)
@@ -64,7 +60,7 @@ func fuse(name string, bank int, word int, off int, size int, val []byte) {
 func hab(srk []byte) {
 	// Enable High Assurance Boot (i.e. secure boot)
 
-	if len(assets.SRKHash) != srkSize {
+	if len(assets.SRKHash) != assets.SRKSize {
 		panic("fatal error, invalid SRK hash")
 	}
 

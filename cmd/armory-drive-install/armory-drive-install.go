@@ -17,9 +17,9 @@ import (
 	"github.com/flynn/hid"
 )
 
-const OTAName = "UA-DRIVE.ota"
+const OTAName = "UA-DRIVE.OTA"
 
-const welcome =`
+const welcome = `
 Welcome to the Armory Drive installer!
 
 For more information or support on Armory Drive see:
@@ -28,7 +28,7 @@ For more information or support on Armory Drive see:
 This program will install or upgrade Armory Drive on your USB armory.
 `
 
-const secureBootNotice =`
+const secureBootNotice = `
 ████████████████████████████████████████████████████████████████████████████████
 
 This installer supports installation of unsigned or signed Armory Drive
@@ -119,14 +119,14 @@ func init() {
 func confirm(msg string) bool {
 	var res string
 
-	fmt.Printf("%s (y/n): ", msg)
+	fmt.Printf("\n%s (y/n): ", msg)
 	fmt.Scanln(&res)
 
 	return res == "y"
 }
 
 func prompt(msg string) (res string) {
-	fmt.Printf("%s: ", msg)
+	fmt.Printf("\n%s: ", msg)
 	fmt.Scanln(&res)
 	return
 }
@@ -137,7 +137,7 @@ func main() {
 	log.Println(welcome)
 
 	switch {
-	case confirm("Are you installing Armory Drive for the first time on the target USB armory (or recovering a device)?"):
+	case confirm("Are you installing Armory Drive for the first time on the target USB armory?"):
 		install()
 	case confirm("Are you upgrading Armory Drive on a USB armory already running Armory Drive firmware?"):
 		upgrade()
@@ -179,15 +179,13 @@ func installUnsignedFirmware(upgrade bool) {
 		log.Fatal(err)
 	}
 
-	// remove SRK hash to disable Secure Boot provisioning
-	if imx, err = removeSRKHash(imx); err != nil {
-		log.Fatalf("could not disable secure boot provisioning, %v", err)
-	}
-
-	log.Printf("Downloaded firmware with SHA256 %x", sha256.Sum256(imx))
+	log.Printf("\nDownloaded release assets, binary release SHA256 is %x", sha256.Sum256(imx))
 
 	if !upgrade {
-		if !confirm("Confirm that the target USB armory is plugged to this computer in SDP mode (See https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II) for help)") {
+		log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)")
+		log.Printf("to set the target USB armory in SDP mode.")
+
+		if !confirm("Confirm that the target USB armory is plugged to this computer in SDP mode.") {
 			log.Fatal("Goodbye")
 		}
 
@@ -195,27 +193,34 @@ func installUnsignedFirmware(upgrade bool) {
 			log.Fatal(err)
 		}
 	} else {
-		if !confirm("Confirm that the target USB armory is plugged to this computer in pairing mode? (See https://github.com/f-secure-foundry/armory-drive#firmware-update for help)") {
+		log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/armory-drive#firmware-update")
+		log.Printf("to set the loaded Armory Drive firmware in pairing mode.")
+
+		if !confirm("Confirm that target USB armory is plugged to this computer in pairing mode.") {
 			log.Fatal("Goodbye")
 		}
 	}
 
-	log.Printf("The USB armory should now have a blinking blue LED to indicate pairing mode, a new drive should appear on your system")
-	mountPoint := prompt("Please specify the path of the newly appeared drive")
+	log.Printf("\nWait for the USB armory blue LED to blink to indicate pairing mode.\nAn F-Secure drive should appear on your system.")
+	mountPoint := prompt("Please specify the path of the mounted F-Secure drive")
 
 	// append HAB signature
 	imx = append(imx, csf...)
 	// prepend OTA signature
 	imx = append(sig, imx...)
 
-	log.Printf("Copying firmware to USB armory in pairing mode at %s", mountPoint)
+	log.Printf("\nCopying firmware to USB armory in pairing mode at %s", mountPoint)
 	if err = os.WriteFile(path.Join(mountPoint, OTAName), imx, 0600); err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Please eject the drive mounted at %s to flash the firmware. Wait for the white LED to turn on and then off for the update to complete.", mountPoint)
-	log.Printf("Once the update is complete unplug the USB armory and restore eMMC boot mode (See https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II) for help)")
-	log.Printf("\nYou can now use your new Armory Drive installation!")
+	log.Printf("\nCopied %d bytes to %s", len(imx), path.Join(mountPoint, OTAName))
+
+	log.Printf("\nPlease eject the drive mounted at %s to flash the firmware and wait for the white LED to turn on and then off for the update to complete.", mountPoint)
+	log.Printf("Once the update is complete unplug the USB armory and set eMMC boot mode (see https://github.com/f-secure-foundry/armory-drive#firmware-update for instructions).")
+
+	log.Printf("\nAfter doing so you can use your new Armory Drive installation, following this tutorial:")
+	log.Printf("  https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial")
 }
 
 //case confirm("Would you like to use F-Secure signed releases, enabling Secure Boot on the USB armory with F-Secure public keys as required?"):
@@ -224,3 +229,8 @@ func installUnsignedFirmware(upgrade bool) {
 //	default:
 //		log.Fatal("Goodbye")
 //	}
+
+// set SRK hash to enable Secure Boot provisioning
+//if imx, err = setSRKHash(imx, srk); err != nil {
+//	log.Fatalf("could not enable secure boot provisioning, %v", err)
+//}

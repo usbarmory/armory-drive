@@ -145,19 +145,13 @@ Build the `armory-drive-signed.imx` application executable:
 make CROSS_COMPILE=arm-none-eabi- HAB_KEYS=<path> OTA_KEYS=<path> imx_signed
 ```
 
-An unsigned test binary can be compiled with the `imx` target *and* with an
-empty `HAB_KEYS` variable.
+An unsigned test binary can be compiled with the `imx` target.
 
 Executing
 ---------
 
 The resulting `armory-drive-signed.imx` file can be executed over USB using
 [SDP](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp).
-
-> :warning: firmware compiled with valid `HAB_KEYS` and executed on an open
-> unit will fuse, at its first execution, public secure boot keys on the
-> device, this is an *irreversible operation* to be performed **at your own
-> risk**.
 
 SDP mode requires boot switch configuration towards microSD without any card
 inserted, however this firmware detects microSD card only at startup.

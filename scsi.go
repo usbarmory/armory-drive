@@ -408,7 +408,10 @@ func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error
 
 		if !ready && remote.pairingMode {
 			pairingComplete <- true
-			ota()
+
+			go func() {
+				ota()
+			}()
 		}
 	case MODE_SENSE_6, MODE_SENSE_10:
 		data, err = modeSense(length)
