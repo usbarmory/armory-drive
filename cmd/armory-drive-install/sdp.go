@@ -23,6 +23,9 @@ const (
 
 	// On-Chip RAM (OCRAM/iRAM) address for payload staging
 	iramOffset = 0x00910000
+
+	// USB command timeout in seconds
+	timeout = 5
 )
 
 // This tool should work with all SoCs from the i.MX series capable of USB HID
@@ -76,7 +79,7 @@ func sendHIDReport(n int, buf []byte, wait int) (res []byte, err error) {
 	}
 
 	ok := false
-	timer := time.After(time.Duration(conf.timeout) * time.Second)
+	timer := time.After(time.Duration(timeout) * time.Second)
 
 	for {
 		select {

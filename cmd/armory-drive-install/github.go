@@ -8,6 +8,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"log"
@@ -21,7 +22,28 @@ import (
 const org = "f-secure-foundry"
 const repo = "armory-drive"
 
-func downloadLatestRelease() (imx []byte, csf []byte, sig []byte, sdp []byte, err error) {
+type releaseAssets struct {
+	// firmware binary
+	imx []byte
+	// secure boot fuse table
+	srk []byte
+	// secure boot signature for eMMC boot mode
+	csf []byte
+	// secure boot signature for serial download mode
+	sdp []byte
+	// OTA signature
+	sig []byte
+}
+
+func (a *releaseAssets) valid() bool {
+	return (len(a.imx) > 0 &&
+		len(a.srk) > 0 &&
+		len(a.csf) > 0 &&
+		len(a.sdp) > 0 &&
+		len(a.sig) > 0)
+}
+
+func downloadRelease(version string) (assets *releaseAssets, err error) {
 	var release *github.RepositoryRelease
 	var httpClient *http.Client
 
@@ -39,10 +61,10 @@ func downloadLatestRelease() (imx []byte, csf []byte, sig []byte, sdp []byte, er
 
 	client := github.NewClient(httpClient)
 
-	if conf.releaseVersion == "latest" {
+	if version == "latest" {
 		release, _, err = client.Repositories.GetLatestRelease(context.Background(), org, repo)
 	} else {
-		release, _, err = client.Repositories.GetReleaseByTag(context.Background(), org, repo, conf.releaseVersion)
+		release, _, err = client.Repositories.GetReleaseByTag(context.Background(), org, repo, version)
 	}
 
 	if err != nil {
@@ -55,46 +77,38 @@ func downloadLatestRelease() (imx []byte, csf []byte, sig []byte, sdp []byte, er
 		client = nil
 	}
 
+	assets = &releaseAssets{}
+
 	for _, asset := range release.Assets {
 		switch *asset.Name {
 		case "armory-drive.imx":
-			if imx, err = download("binary release", release, asset, client); err != nil {
+			if assets.imx, err = download("binary release", release, asset, client); err != nil {
+				return
+			}
+		case "armory-drive.srk":
+			if assets.srk, err = download("SRK table hash", release, asset, client); err != nil {
 				return
 			}
 		case "armory-drive.csf":
-			if csf, err = download("HAB signature", release, asset, client); err != nil {
-				return
-			}
-		case "armory-drive.sig":
-			if sig, err = download("OTA signature", release, asset, client); err != nil {
+			if assets.csf, err = download("HAB signature", release, asset, client); err != nil {
 				return
 			}
 		case "armory-drive.sdp":
-			if sdp, err = download("recovery signature", release, asset, client); err != nil {
+			if assets.sdp, err = download("recovery signature", release, asset, client); err != nil {
+				return
+			}
+		case "armory-drive.sig":
+			if assets.sig, err = download("OTA signature", release, asset, client); err != nil {
 				return
 			}
 		}
 	}
 
-	if len(imx) == 0 {
-		err = fmt.Errorf("could not find %s release for github.com/%s/%s", conf.releaseVersion, org, repo)
-		return
+	if !assets.valid() {
+		return nil, fmt.Errorf("incomplete release")
 	}
 
-	if len(csf) == 0 {
-		err = fmt.Errorf("could not find %s HAB signature for github.com/%s/%s", conf.releaseVersion, org, repo)
-		return
-	}
-
-	if len(sig) == 0 {
-		err = fmt.Errorf("could not find %s OTA signature for github.com/%s/%s", conf.releaseVersion, org, repo)
-		return
-	}
-
-	if len(sdp) == 0 {
-		err = fmt.Errorf("could not find %s recovery signature for github.com/%s/%s", conf.releaseVersion, org, repo)
-		return
-	}
+	log.Printf("\nDownloaded release assets, binary release SHA256 is %x", sha256.Sum256(assets.imx))
 
 	return
 }

@@ -7,7 +7,6 @@
 package main
 
 import (
-	"crypto/sha256"
 	"flag"
 	"fmt"
 	"log"
@@ -17,91 +16,17 @@ import (
 	"github.com/flynn/hid"
 )
 
-const OTAName = "UA-DRIVE.OTA"
-
-const welcome = `
-Welcome to the Armory Drive installer!
-
-For more information or support on Armory Drive see:
-  https://github.com/f-secure-foundry/armory-drive/wiki
-
-This program will install or upgrade Armory Drive on your USB armory.
-`
-
-const secureBootNotice = `
-████████████████████████████████████████████████████████████████████████████████
-
-This installer supports installation of unsigned or signed Armory Drive
-releases on the USB armory.
-
-                 ***     Option #1: signed releases     ***
-
-The installation of signed releases activates Secure Boot on the target USB
-armory, fully converting the device to exclusive operation with signed
-executables.
-
-If the signed releases option is chosen you will be given the option of using
-F-Secure signing keys or your own.
-
-                 ***    Option #2: unsigned releases    ***
-
-The installation of unsigned releases does not leverage on Secure Boot and does
-not permanently modify the USB armory security state.
-
-Unsigned releases however cannot guarantee device security as hardware bound
-key material will use default test keys, lacking protection for stored armory
-communication keys and leaving data encryption key freshness only to the mobile
-application.
-
-Unsigned releases are recommended only for test/evaluation purposes and are not
-recommended for protection of sensitive data where device tampering is a risk.
-
-████████████████████████████████████████████████████████████████████████████████
-`
-
-const fscSignedFirmwareWarning = `
-████████████████████████████████████████████████████████████████████████████████
-
-                 ***  Armory Drive Programming Utility  ***
-                 ***           READ CAREFULLY           ***
-
-This will provision F-Secure signed Armory Drive firmware on your USB armory. By
-doing so, secure boot will be activated on the USB armory with permanent OTP
-fusing of F-Secure public secure boot keys.
-
-Fusing OTP's is an **irreversible** action that permanently fuses values on the
-device. This means that your USB armory will be able to only execute F-Secure
-signed Armory Drive firmware after programming is completed.
-
-In other words your USB armory will stop acting as a generic purpose device and
-will be converted to *exclusive use of F-Secure signed Armory Drive releases*.
-`
-
-const unsignedFirmwareWarning = `
-████████████████████████████████████████████████████████████████████████████████
-
-                 ***  Armory Drive Programming Utility  ***
-                 ***           READ CAREFULLY           ***
-
-This will provision unsigned Armory Drive firmware on your USB armory.
-
-This firmware *cannot guarantee device security* as hardware bound key material
-will use *default test keys*, lacking protection for stored armory communication
-keys and leaving data encryption key freshness only to the mobile application.
-
-Unsigned releases are therefore recommended exclusively for test/evaluation
-purposes and are *not recommended for protection of sensitive data*.
-
-To enable the full security model install a signed release, which enables
-Secure Boot.
-
-████████████████████████████████████████████████████████████████████████████████
-`
+type Mode int
 
 type Config struct {
 	releaseVersion string
-	timeout        int
-	dev            hid.Device
+	table          string
+	tableHash      string
+	srkKey         string
+	srkCrt         string
+	index          int
+
+	dev hid.Device
 }
 
 var conf *Config
@@ -112,8 +37,13 @@ func init() {
 
 	conf = &Config{}
 
-	flag.IntVar(&conf.timeout, "t", 5, "timeout in seconds for command responses")
 	flag.StringVar(&conf.releaseVersion, "r", "latest", "release version")
+
+	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")
+	flag.StringVar(&conf.srkCrt, "c", "", "SRK public  key in PEM format")
+	flag.StringVar(&conf.table, "t", "", "SRK table")
+	flag.StringVar(&conf.tableHash, "T", "", "SRK table hash")
+	flag.IntVar(&conf.index, "x", -1, "Index for SRK key")
 }
 
 func confirm(msg string) bool {
@@ -141,6 +71,7 @@ func main() {
 		install()
 	case confirm("Are you upgrading Armory Drive on a USB armory already running Armory Drive firmware?"):
 		upgrade()
+	// TODO: recovery mode
 	default:
 		log.Fatal("Goodbye")
 	}
@@ -149,68 +80,51 @@ func main() {
 func install() {
 	log.Println(secureBootNotice)
 
+	if confirm("Would you like to use unsigned releases, *without enabling* Secure Boot on the USB armory?") {
+		installFirmware(unsigned)
+		return
+	}
+
+	if !confirm("Would you like to *permanently enable* Secure Boot on the USB armory?") {
+		log.Fatal("Goodbye")
+	}
+
 	switch {
-	//case confirm("Would you like to use signed releases by enabling Secure Boot on the USB armory?"):
-	//	installSignedFirmware()
-	case confirm("Would you like to use unsigned releases, without enabling Secure Boot on the USB armory?"):
-		installUnsignedFirmware(false)
+	case confirm("Would you like to use F-Secure signed releases, enabling Secure Boot on the USB armory with permanent fusing of F-Secure public keys?"):
+		installFirmware(signedByFSecure)
+	case confirm("Would you like to sign releases on your own, enabling Secure Boot on the USB armory with your own public keys?"):
+		checkHABArguments()
+		installFirmware(signedByUser)
 	default:
 		log.Fatal("Goodbye")
 	}
 }
 
 func upgrade() {
-	log.Println(secureBootNotice)
+	if !confirm("Is Secure Boot enabled on your USB armory?") {
+		upgradeFirmware(unsigned)
+		return
+	}
 
-	switch {
-	//case confirm("Would you like to use signed releases by enabling Secure Boot on the USB armory?"):
-	//	installSignedFirmware()
-	case confirm("Would you like to use unsigned releases, without enabling Secure Boot on the USB armory?"):
-		installUnsignedFirmware(true)
-	default:
-		log.Fatal("Goodbye")
+	if confirm("Is Secure Boot enabled on your USB armory using F-Secure signing keys?") {
+		upgradeFirmware(signedByFSecure)
+	} else {
+		checkHABArguments()
+		upgradeFirmware(signedByUser)
 	}
 }
 
-func installUnsignedFirmware(upgrade bool) {
-	imx, csf, sig, _, err := downloadLatestRelease()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("\nDownloaded release assets, binary release SHA256 is %x", sha256.Sum256(imx))
-
-	if !upgrade {
-		log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)")
-		log.Printf("to set the target USB armory in SDP mode.")
-
-		if !confirm("Confirm that the target USB armory is plugged to this computer in SDP mode.") {
-			log.Fatal("Goodbye")
-		}
-
-		if err = imxLoad(imx); err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/armory-drive#firmware-update")
-		log.Printf("to set the loaded Armory Drive firmware in pairing mode.")
-
-		if !confirm("Confirm that target USB armory is plugged to this computer in pairing mode.") {
-			log.Fatal("Goodbye")
-		}
-	}
-
+func ota(assets *releaseAssets) {
 	log.Printf("\nWait for the USB armory blue LED to blink to indicate pairing mode.\nAn F-Secure drive should appear on your system.")
 	mountPoint := prompt("Please specify the path of the mounted F-Secure drive")
 
 	// append HAB signature
-	imx = append(imx, csf...)
+	imx := append(assets.imx, assets.csf...)
 	// prepend OTA signature
-	imx = append(sig, imx...)
+	imx = append(assets.sig, imx...)
 
 	log.Printf("\nCopying firmware to USB armory in pairing mode at %s", mountPoint)
-	if err = os.WriteFile(path.Join(mountPoint, OTAName), imx, 0600); err != nil {
+	if err := os.WriteFile(path.Join(mountPoint, OTAName), imx, 0600); err != nil {
 		log.Fatal(err)
 	}
 
@@ -223,14 +137,82 @@ func installUnsignedFirmware(upgrade bool) {
 	log.Printf("  https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial")
 }
 
-//case confirm("Would you like to use F-Secure signed releases, enabling Secure Boot on the USB armory with F-Secure public keys as required?"):
-//	switch {
-//	case confirm("Would you like to use sign releases on your own, enabling Secure Boot on the USB armory with your own public keys as required?"):
-//	default:
-//		log.Fatal("Goodbye")
-//	}
+func installFirmware(mode Mode) {
+	assets, err := downloadRelease(conf.releaseVersion)
 
-// set SRK hash to enable Secure Boot provisioning
-//if imx, err = setSRKHash(imx, srk); err != nil {
-//	log.Fatalf("could not enable secure boot provisioning, %v", err)
-//}
+	if err != nil {
+		log.Fatalf("Download error, %v", err)
+	}
+
+	switch mode {
+	case unsigned:
+		log.Println(unsignedFirmwareWarning)
+
+		if !confirm("Proceed?") {
+			log.Fatal("Goodbye")
+		}
+	case signedByFSecure:
+		log.Println(fscSignedFirmwareWarning)
+
+		if !confirm("Proceed?") {
+			log.Fatal("Goodbye")
+		}
+
+		assets.imx = setSRKHash(assets.imx, assets.srk)
+	case signedByUser:
+		log.Println(userSignedFirmwareWarning)
+
+		if !confirm("Proceed?") {
+			log.Fatal("Goodbye")
+		}
+
+		if assets.srk, err = os.ReadFile(conf.tableHash); err != nil {
+			log.Fatal(err)
+		}
+
+		assets.imx = setSRKHash(assets.imx, assets.srk)
+
+		if assets.csf, err = sign(assets.imx, false); err != nil {
+			log.Fatal(err)
+		}
+
+		// assets.sig = // FIXME: find a way to skip this
+	default:
+		log.Fatal("invalid installation mode")
+	}
+
+	log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)")
+	log.Printf("to set the target USB armory in SDP mode.")
+
+	if !confirm("Confirm that the target USB armory is plugged to this computer in SDP mode.") {
+		log.Fatal("Goodbye")
+	}
+
+	if err = imxLoad(assets.imx); err != nil {
+		log.Fatal(err)
+	}
+
+	ota(assets)
+}
+
+func upgradeFirmware(mode Mode) {
+	assets, err := downloadRelease(conf.releaseVersion)
+
+	if err != nil {
+		log.Fatalf("Download error, %v", err)
+	}
+
+	log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/armory-drive#firmware-update")
+	log.Printf("to set the loaded Armory Drive firmware in pairing mode.")
+
+	if !confirm("Confirm that target USB armory is plugged to this computer in pairing mode.") {
+		log.Fatal("Goodbye")
+	}
+
+	//if mode == signedByUser {
+	//	csf = nil // FIXME: interaction with OTA ?
+	//}
+
+	// FSC OTA signature is always computed over FSC HAB releases
+	ota(assets)
+}
