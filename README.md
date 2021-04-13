@@ -89,14 +89,15 @@ The firmware update procedure is meant to be used on USB armory devices which
 have been already initialized with the Armory Drive firmware as shown in
 _Pairing and initialization_.
 
-  1. If the USB armory contains an SD card, remove it.
-  2. Plug the USB armory.
-  3. An "F-Secure" disk volume should appear.
-  4. Rename `armory-drive-signed.ota` to "UA-DRIVE.ota".
-  5. Copy "UA-DRIVE.ota" to the "F-Secure" disk.
-  6. Eject the "F-Secure" disk.
-  7. The white LED should turn on and then off after the update is complete.
-  8. Put the SD card back in.
+  1. Download file `armory-drive-signed.ota` from the [latest binary release](https://github.com/f-secure-foundry/armory-drive/releases/latest)
+  2. If the USB armory contains an SD card, remove it.
+  3. Plug the USB armory.
+  4. An "F-Secure" disk volume should appear.
+  5. Rename `armory-drive-signed.ota` to "UA-DRIVE.ota".
+  6. Copy "UA-DRIVE.ota" to the "F-Secure" disk.
+  7. Eject the "F-Secure" disk.
+  8. The white LED should turn on and then off after the update is complete.
+  9. Put the SD card back in.
 
 Installation of self-compiled releases
 ======================================
