@@ -4,11 +4,7 @@
 # Use of this source code is governed by the license
 # that can be found in the LICENSE file.
 
-BUILD_USER = $(shell whoami)
-BUILD_HOST = $(shell hostname)
-BUILD_DATE = $(shell /bin/date -u "+%Y-%m-%d %H:%M:%S")
 BUILD_TAGS = "linkramsize,linkprintk"
-BUILD = ${BUILD_USER}@${BUILD_HOST} on ${BUILD_DATE}
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 
 SHELL = /bin/bash
@@ -76,7 +72,7 @@ clean:
 
 #### dependencies ####
 
-$(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Build=${BUILD}' -X 'main.Revision=${REV}'"
+$(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Revision=${REV}'"
 $(APP): check_tamago proto
 	@if [ "${OTA_KEYS}" != "" ]; then \
 		echo '** WARNING ** Enabling OTA verification with public key ${OTA_KEYS}/armory-drive-minisign.pub'; \

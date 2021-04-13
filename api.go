@@ -323,7 +323,7 @@ func status(reqMsg *Message, resMsg *Message) {
 	}
 
 	s := &Status{
-		Version:       fmt.Sprintf("%s %s", Revision, Build),
+		Version:       fmt.Sprintf("%s", Revision),
 		Capacity:      capacity,
 		Locked:        !ready,
 		Configuration: conf.Settings,

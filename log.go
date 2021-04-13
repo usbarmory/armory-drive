@@ -11,7 +11,6 @@ import (
 )
 
 // initialized at compile time (see Makefile)
-var Build string
 var Revision string
 
 func init() {
