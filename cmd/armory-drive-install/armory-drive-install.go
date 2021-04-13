@@ -158,7 +158,7 @@ func installFirmware(mode Mode) {
 			log.Fatal("Goodbye")
 		}
 
-		assets.imx = setSRKHash(assets.imx, assets.srk)
+		assets.imx = fixupSRKHash(assets.imx, assets.srk)
 	case signedByUser:
 		log.Println(userSignedFirmwareWarning)
 
@@ -170,13 +170,17 @@ func installFirmware(mode Mode) {
 			log.Fatal(err)
 		}
 
-		assets.imx = setSRKHash(assets.imx, assets.srk)
+		assets.imx = fixupSRKHash(assets.imx, assets.srk)
+
+		// On user signed releases we disable OTA authentication to
+		// simplify key management. This has no security impact as the
+		// executable is authenticated at boot using secure boot.
+		assets.sig = nil
+		assets.imx = clearOTAPublicKey(assets.imx)
 
 		if assets.csf, err = sign(assets.imx, false); err != nil {
 			log.Fatal(err)
 		}
-
-		// assets.sig = // FIXME: find a way to skip this
 	default:
 		log.Fatal("invalid installation mode")
 	}
@@ -209,10 +213,13 @@ func upgradeFirmware(mode Mode) {
 		log.Fatal("Goodbye")
 	}
 
-	//if mode == signedByUser {
-	//	csf = nil // FIXME: interaction with OTA ?
-	//}
+	if mode == signedByUser {
+		// On user signed releases we disable OTA authentication to
+		// simplify key management. This has no security impact as the
+		// executable is authenticated at boot using secure boot.
+		assets.sig = nil
+		assets.imx = clearOTAPublicKey(assets.imx)
+	}
 
-	// FSC OTA signature is always computed over FSC HAB releases
 	ota(assets)
 }

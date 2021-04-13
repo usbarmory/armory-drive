@@ -7,6 +7,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -128,6 +129,12 @@ func update(entry fs.DirectoryEntry) {
 }
 
 func verify(buf []byte) (valid bool, bin []byte, err error) {
+	if bytes.Equal(assets.OTAPublicKey, make([]byte, len(assets.OTAPublicKey))) {
+		// If there is no valid OTA public key we assume that no OTA
+		// signature is present.
+		return true, buf, nil
+	}
+
 	if len(buf) < sigLimit {
 		return false, nil, errors.New("invalid signature")
 	}
