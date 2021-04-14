@@ -114,7 +114,7 @@ func downloadRelease(version string) (assets *releaseAssets, err error) {
 }
 
 func download(tag string, release *github.RepositoryRelease, asset *github.ReleaseAsset, client *github.Client) ([]byte, error) {
-	log.Printf("Found %s", tag)
+	log.Printf("\nFound %s", tag)
 	log.Printf("  Tag:    %s", release.GetTagName())
 	log.Printf("  Author: %s", asset.GetUploader().GetLogin())
 	log.Printf("  Date:   %s", asset.CreatedAt)

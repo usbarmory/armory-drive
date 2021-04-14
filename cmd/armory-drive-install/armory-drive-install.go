@@ -20,13 +20,16 @@ type Mode int
 
 type Config struct {
 	releaseVersion string
-	table          string
-	tableHash      string
-	srkKey         string
-	srkCrt         string
-	index          int
+	install        bool
+	upgrade        int
+
+	table     string
+	tableHash string
+	srkKey    string
+	srkCrt    string
+	index     int
 	// TODO: recovery mode
-	sdp            bool
+	sdp bool
 
 	dev hid.Device
 }
@@ -40,6 +43,8 @@ func init() {
 	conf = &Config{}
 
 	flag.StringVar(&conf.releaseVersion, "r", "latest", "release version")
+	flag.BoolVar(&conf.install, "I", false, "first time install")
+	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
 
 	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")
 	flag.StringVar(&conf.srkCrt, "c", "", "SRK public  key in PEM format")
@@ -69,9 +74,10 @@ func main() {
 	log.Println(welcome)
 
 	switch {
-	case confirm("Are you installing Armory Drive for the first time on the target USB armory?"):
+	case conf.install ||
+		conf.upgrade < 0 && confirm("Are you installing Armory Drive for the first time on the target USB armory?"):
 		install()
-	case confirm("Are you upgrading Armory Drive on a USB armory already running Armory Drive firmware?"):
+	case conf.upgrade >= 0 || confirm("Are you upgrading Armory Drive on a USB armory already running Armory Drive firmware?"):
 		upgrade()
 	default:
 		log.Fatal("Goodbye")
@@ -102,16 +108,20 @@ func install() {
 }
 
 func upgrade() {
-	if !confirm("Is Secure Boot enabled on your USB armory?") {
+	switch {
+	case conf.upgrade == unsigned ||
+		conf.upgrade < 0 && !confirm("Is Secure Boot enabled on your USB armory?"):
 		upgradeFirmware(unsigned)
 		return
-	}
-
-	if confirm("Is Secure Boot enabled on your USB armory using F-Secure signing keys?") {
+	case conf.upgrade == signedByFSecure ||
+		conf.upgrade < 0 && confirm("Is Secure Boot enabled on your USB armory using F-Secure signing keys?"):
 		upgradeFirmware(signedByFSecure)
-	} else {
+	case conf.upgrade == signedByUser ||
+		confirm("Is Secure Boot enabled on your USB armory using your own signing keys?"):
 		checkHABArguments()
 		upgradeFirmware(signedByUser)
+	default:
+		log.Fatal("Goodbye")
 	}
 }
 
@@ -131,8 +141,10 @@ func ota(assets *releaseAssets) {
 
 	log.Printf("\nCopied %d bytes to %s", len(imx), path.Join(mountPoint, OTAName))
 
-	log.Printf("\nPlease eject the drive mounted at %s to flash the firmware and wait for the white LED to turn on and then off for the update to complete.", mountPoint)
-	log.Printf("Once the update is complete unplug the USB armory and set eMMC boot mode (see https://github.com/f-secure-foundry/armory-drive#firmware-update for instructions).")
+	log.Printf("\n1. Please eject the drive mounted at %s to flash the firmware.", mountPoint)
+	log.Printf("2. Wait for the white LED to turn on and then off for the update to complete.")
+	log.Printf("3. Once the update is complete unplug the USB armory and set eMMC boot mode as explained at:")
+	log.Printf("  https://github.com/f-secure-foundry/armory-drive#firmware-update for instructions.")
 
 	log.Printf("\nAfter doing so you can use your new Armory Drive installation, following this tutorial:")
 	log.Printf("  https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial")
@@ -201,17 +213,17 @@ func upgradeFirmware(mode Mode) {
 		log.Fatalf("Download error, %v", err)
 	}
 
-	log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/armory-drive#firmware-update")
-	log.Printf("to set the loaded Armory Drive firmware in pairing mode.")
-
-	if !confirm("Confirm that target USB armory is plugged to this computer in pairing mode.") {
-		log.Fatal("Goodbye")
-	}
-
 	if mode == signedByUser {
 		if err = sign(assets); err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/armory-drive#firmware-update")
+	log.Printf("to set the Armory Drive firmware in pairing mode.")
+
+	if !confirm("Confirm that target USB armory is plugged to this computer in pairing mode.") {
+		log.Fatal("Goodbye")
 	}
 
 	ota(assets)
