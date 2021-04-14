@@ -163,7 +163,7 @@ follow this procedure:
   2. Set microSD boot mode switch.
   3. Plug the device on a USB port to power it up in SDP mode.
   4. Insert the microSD card.
-  5. Launch `imx_usb armory-drive-signed.imx`.
+  5. Load `armory-drive-signed.imx` via [SDP](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp).
 
 Installing
 ----------
