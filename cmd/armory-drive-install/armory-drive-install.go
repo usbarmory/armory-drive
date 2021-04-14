@@ -25,6 +25,8 @@ type Config struct {
 	srkKey         string
 	srkCrt         string
 	index          int
+	// TODO: recovery mode
+	sdp            bool
 
 	dev hid.Device
 }
@@ -71,7 +73,6 @@ func main() {
 		install()
 	case confirm("Are you upgrading Armory Drive on a USB armory already running Armory Drive firmware?"):
 		upgrade()
-	// TODO: recovery mode
 	default:
 		log.Fatal("Goodbye")
 	}
@@ -172,13 +173,7 @@ func installFirmware(mode Mode) {
 
 		assets.imx = fixupSRKHash(assets.imx, assets.srk)
 
-		// On user signed releases we disable OTA authentication to
-		// simplify key management. This has no security impact as the
-		// executable is authenticated at boot using secure boot.
-		assets.sig = nil
-		assets.imx = clearOTAPublicKey(assets.imx)
-
-		if assets.csf, err = sign(assets.imx, false); err != nil {
+		if err = sign(assets); err != nil {
 			log.Fatal(err)
 		}
 	default:
@@ -214,11 +209,9 @@ func upgradeFirmware(mode Mode) {
 	}
 
 	if mode == signedByUser {
-		// On user signed releases we disable OTA authentication to
-		// simplify key management. This has no security impact as the
-		// executable is authenticated at boot using secure boot.
-		assets.sig = nil
-		assets.imx = clearOTAPublicKey(assets.imx)
+		if err = sign(assets); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	ota(assets)
