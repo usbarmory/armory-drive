@@ -22,7 +22,7 @@ for full explanation of the security model.
 Installation of pre-compiled releases
 =====================================
 
-F-Secure provides [binary releases](https://github.com/f-secure-foundry/tamago-go/releases)
+F-Secure provides [binary releases](https://github.com/f-secure-foundry/armory-drive/releases)
 for the Amory Drive firmware.
 
 The binary release includes the `armory-drive-installer` to guide through
