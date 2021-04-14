@@ -37,9 +37,11 @@ $(APP)-install:
 $(APP)-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
 $(APP)-install.exe:
 	@if [ "${TAMAGO}" != "" ]; then \
-		$(BUILD_OPTS) ${TAMAGO} build cmd/$(APP)-install/*.go; \
+		cd $(CURDIR)/assets && ${TAMAGO} generate && \
+		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build cmd/$(APP)-install/*.go; \
 	else \
-		$(BUILD_OPTS) go build cmd/$(APP)-install/*.go; \
+		cd $(CURDIR)/assets && go generate && \
+		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$(APP)-install/*.go; \
 	fi
 
 #### utilities ####
