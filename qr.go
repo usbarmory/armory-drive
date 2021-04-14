@@ -160,6 +160,8 @@ func QRFS() (card *QRCard) {
 		panic(err)
 	}
 
+	_ = addFile(root, "VERSION.txt", []byte(Revision))
+
 	img.Close()
 
 	partitionData, err := ioutil.ReadFile(img.Name())
