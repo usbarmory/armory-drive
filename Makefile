@@ -70,7 +70,8 @@ dcd:
 	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
 
 clean:
-	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).ota $(APP).csf $(APP).sdp $(APP).dcd $(APP)-install *.pb.go $(CURDIR)/assets/tmp*.go
+	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).ota $(APP).csf $(APP).sdp $(APP).dcd *.pb.go $(CURDIR)/assets/tmp*.go
+	@rm -fr $(APP)-install $(APP)-install.exe
 
 #### dependencies ####
 
