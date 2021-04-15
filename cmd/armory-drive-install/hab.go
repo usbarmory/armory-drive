@@ -107,8 +107,9 @@ func genCerts() (CSFKeyPEMBlock, CSFCertPEMBlock, IMGKeyPEMBlock, IMGCertPEMBloc
 
 func sign(assets *releaseAssets) (err error) {
 	opts := hab.SignOptions{
-		Index: conf.index,
-		DCD:   hab.DCD_OFFSET,
+		Index:  conf.index,
+		DCD:    hab.DCD_OFFSET,
+		Engine: hab.HAB_ENG_SW,
 	}
 
 	if opts.Table, err = os.ReadFile(conf.table); err != nil {
