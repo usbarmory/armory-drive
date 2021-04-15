@@ -46,9 +46,6 @@ const (
 	SNVS_DIV = "floppySNVS"
 )
 
-// debug flag for units in open mode
-var nosnvs bool
-
 // flag to select ESSIV on AES-128 CBC ciphers
 var ESSIV bool
 
