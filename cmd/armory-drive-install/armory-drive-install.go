@@ -22,14 +22,13 @@ type Config struct {
 	releaseVersion string
 	install        bool
 	upgrade        int
+	recovery       bool
 
 	table     string
 	tableHash string
 	srkKey    string
 	srkCrt    string
 	index     int
-	// TODO: recovery mode
-	sdp bool
 
 	dev hid.Device
 }
@@ -45,9 +44,10 @@ func init() {
 	flag.StringVar(&conf.releaseVersion, "r", "latest", "release version")
 	flag.BoolVar(&conf.install, "I", false, "first time install")
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
+	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
 
 	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")
-	flag.StringVar(&conf.srkCrt, "c", "", "SRK public  key in PEM format")
+	flag.StringVar(&conf.srkCrt, "c", "", "SRK public key in PEM format")
 	flag.StringVar(&conf.table, "t", "", "SRK table")
 	flag.StringVar(&conf.tableHash, "T", "", "SRK table hash")
 	flag.IntVar(&conf.index, "x", -1, "Index for SRK key")
@@ -74,11 +74,27 @@ func main() {
 	log.Println(welcome)
 
 	switch {
+	case conf.recovery:
+		if confirm("Are you recovering an Armory Drive installation on a Secure Booted USB armory?") {
+			recovery()
+		}
 	case conf.install ||
 		conf.upgrade < 0 && confirm("Are you installing Armory Drive for the first time on the target USB armory?"):
 		install()
 	case conf.upgrade >= 0 || confirm("Are you upgrading Armory Drive on a USB armory already running Armory Drive firmware?"):
 		upgrade()
+	}
+
+	log.Printf("\nGoodbye")
+}
+
+func recovery() {
+	switch {
+	case confirm("Is Secure Boot enabled on your USB armory using F-Secure signing keys?"):
+		installFirmware(signedByFSecure)
+	case confirm("Is Secure Boot enabled on your USB armory using your own signing keys?"):
+		checkHABArguments()
+		installFirmware(signedByUser)
 	default:
 		log.Fatal("Goodbye")
 	}
@@ -151,6 +167,8 @@ func ota(assets *releaseAssets) {
 }
 
 func installFirmware(mode Mode) {
+	var imx []byte
+
 	assets, err := downloadRelease(conf.releaseVersion)
 
 	if err != nil {
@@ -199,7 +217,13 @@ func installFirmware(mode Mode) {
 		log.Fatal("Goodbye")
 	}
 
-	if err = imxLoad(assets.imx); err != nil {
+	if conf.recovery {
+		imx = append(assets.imx, assets.sdp...)
+	} else {
+		imx = assets.imx
+	}
+
+	if err = imxLoad(imx); err != nil {
 		log.Fatal(err)
 	}
 

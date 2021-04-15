@@ -65,7 +65,7 @@ func detect() (err error) {
 	}
 
 	if conf.dev == nil {
-		err = errors.New("no device found, target missing or invalid permissions (forgot admin shell?)")
+		return errors.New("no device found, target missing or invalid permissions (forgot admin shell?)")
 	}
 
 	return
