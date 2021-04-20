@@ -24,7 +24,7 @@ imx: $(APP).imx
 
 imx_signed: $(APP)-signed.imx
 
-$(APP)-install: GOFLAGS= -trimpath -ldflags "-s -w"
+$(APP)-install: GOFLAGS= -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
 $(APP)-install:
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
