@@ -7,8 +7,13 @@
 package main
 
 import (
+	"io/ioutil"
+	"log"
+	"os"
+	"time"
 	_ "unsafe"
 
+	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 	"github.com/f-secure-foundry/tamago/soc/imx6"
 )
 
@@ -31,12 +36,31 @@ import (
 // operations (i.e. stdout/stderr), is overridden with a NOP. Secondarily UART2
 // is disabled at the first opportunity (init()).
 
+// by default any serial output is supressed before UART2 disabling
+var serialTx = func(c byte) {
+}
+
 func init() {
-	// disable console
-	imx6.UART2.Disable()
+	if imx6.SNVS() {
+		// disable console
+		imx6.UART2.Disable()
+
+		// silence logging
+		log.SetOutput(ioutil.Discard)
+		return
+	}
+
+	log.SetOutput(os.Stdout)
+
+	serialTx = func(c byte) {
+		imx6.UART2.Tx(c)
+	}
+
+	debugConsole, _ := usbarmory.DetectDebugAccessory(250 * time.Millisecond)
+	<-debugConsole
 }
 
 //go:linkname printk runtime.printk
 func printk(c byte) {
-	// ensure that any serial output is supressed before UART2 disabling
+	serialTx(c)
 }

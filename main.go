@@ -8,8 +8,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"runtime"
 	"time"
 
@@ -24,8 +22,6 @@ func init() {
 	if err := imx6.SetARMFreq(900); err != nil {
 		panic(fmt.Sprintf("WARNING: error setting ARM frequency: %v\n", err))
 	}
-
-	log.SetOutput(ioutil.Discard)
 }
 
 func main() {
