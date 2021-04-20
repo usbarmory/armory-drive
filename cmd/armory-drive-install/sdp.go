@@ -152,6 +152,8 @@ func imxLoad(imx []byte) (err error) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
+
+		break
 	}
 
 	ivt, err := sdp.ParseIVT(imx)
