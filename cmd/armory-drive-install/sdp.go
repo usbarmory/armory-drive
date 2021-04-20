@@ -147,8 +147,11 @@ func jumpAddress(addr uint32) (err error) {
 }
 
 func imxLoad(imx []byte) (err error) {
-	if err = detect(); err != nil {
-		return
+	for {
+		if err = detect(); err != nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
 	}
 
 	ivt, err := sdp.ParseIVT(imx)

@@ -213,15 +213,13 @@ func installFirmware(mode Mode) {
 	log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)")
 	log.Printf("to set the target USB armory in SDP mode.")
 
-	if !confirm("Confirm that the target USB armory is plugged to this computer in SDP mode.") {
-		log.Fatal("Goodbye")
-	}
-
 	if conf.recovery {
 		imx = append(assets.imx, assets.sdp...)
 	} else {
 		imx = assets.imx
 	}
+
+	log.Printf("Waiting for target USB armory to be plugged to this computer in SDP mode.")
 
 	if err = imxLoad(imx); err != nil {
 		log.Fatal(err)
