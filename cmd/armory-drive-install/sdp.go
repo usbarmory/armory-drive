@@ -10,11 +10,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/f-secure-foundry/armory-boot/sdp"
 
-	"github.com/flynn/hid"
+	"github.com/f-secure-foundry/hid"
 )
 
 const (
@@ -25,7 +26,7 @@ const (
 	iramOffset = 0x00910000
 
 	// USB command timeout in seconds
-	timeout = 5
+	timeout = 10
 )
 
 // This tool should work with all SoCs from the i.MX series capable of USB HID
@@ -176,9 +177,26 @@ func imxLoad(imx []byte) (err error) {
 	}
 
 	log.Printf("loading imx to %#08x (%d bytes)", ivt.Self, len(imx))
+
+	timer := time.After(time.Duration(timeout) * time.Second)
+imx:
 	err = fileWrite(imx, ivt.Self)
 
 	if err != nil {
+		// On macOS there is access contention with the OS which causes
+		// errors on large reports, as a workaround we retry until we
+		// get the right chance.
+		if runtime.GOOS == "darwin" {
+			select {
+			case <-timer:
+				return
+			default:
+				if err.Error() == "hid: general error" {
+					goto imx
+				}
+			}
+		}
+
 		return
 	}
 

@@ -13,7 +13,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/flynn/hid"
+	"github.com/f-secure-foundry/hid"
 )
 
 type Mode int
