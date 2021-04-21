@@ -4,10 +4,11 @@ github.com/f-secure-foundry/armory-boot v0.0.0-20210412183525-0b1c4de61b0e h1:sq
 github.com/f-secure-foundry/armory-boot v0.0.0-20210412183525-0b1c4de61b0e/go.mod h1:fVkEGj3RQl2rz0AKnavRGRUQRctFxfPryLtLF55UXKo=
 github.com/f-secure-foundry/crucible v0.0.0-20210412160519-6e04f63398d9 h1:vZUhknBD2+OVUEZV5GuiKE50tIMPxYF3/VbldZsbr2k=
 github.com/f-secure-foundry/crucible v0.0.0-20210412160519-6e04f63398d9/go.mod h1:jCHVDC8pjvRFhkb9/a7AyrDdt2J8PVG7r+TCBFp4/Cg=
+github.com/f-secure-foundry/hid v0.0.0-20210318233634-85ced88a1ffe h1:8+kX9Jl7ZGvP2f6NNP88qP5+yRg/yBh+wNylyk6OjFM=
+github.com/f-secure-foundry/hid v0.0.0-20210318233634-85ced88a1ffe/go.mod h1:S9bV7+chp1tCfEy464mAozYyi2eICEGJVp9sRgUHKXA=
 github.com/f-secure-foundry/tamago v0.0.0-20210217103808-875e533027e3/go.mod h1:+xmhdYxGfaNhWUZ/F1mbwFu38H73slg/k/oPjOL7tc8=
 github.com/f-secure-foundry/tamago v0.0.0-20210412174520-306e76ef8c31 h1:bWhr225162lBkO/BTuudBl+671EyMalBq7MwM0YuV5Q=
 github.com/f-secure-foundry/tamago v0.0.0-20210412174520-306e76ef8c31/go.mod h1:Zs5U/3bxiFFQzq23F7KkmS8Gz1jTGH141hbcdFHCk8E=
-github.com/flynn/hid v0.0.0-20190502022136-f1b9b6cc019a h1:fsyWnwbywFpHJS4T55vDW+UUeWP2WomJbB45/jf4If4=
 github.com/flynn/hid v0.0.0-20190502022136-f1b9b6cc019a/go.mod h1:Osz+xPHFsGWK9kZCEVcwXazcF/CHjscCVZosNFgwUIY=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=

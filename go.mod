@@ -5,8 +5,8 @@ go 1.16
 require (
 	github.com/f-secure-foundry/armory-boot v0.0.0-20210412183525-0b1c4de61b0e
 	github.com/f-secure-foundry/crucible v0.0.0-20210412160519-6e04f63398d9
+	github.com/f-secure-foundry/hid v0.0.0-20210318233634-85ced88a1ffe
 	github.com/f-secure-foundry/tamago v0.0.0-20210412174520-306e76ef8c31
-	github.com/flynn/hid v0.0.0-20190502022136-f1b9b6cc019a
 	github.com/google/go-github/v34 v34.0.0
 	github.com/mitchellh/go-fs v0.0.0-20180402235330-b7b9ca407fff
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
