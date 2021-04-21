@@ -114,7 +114,7 @@ func dcdWrite(dcd []byte, addr uint32) (err error) {
 	return
 }
 
-func fileWrite(imx []byte, addr uint32) (n int, err error) {
+func fileWrite(imx []byte, addr uint32) (err error) {
 	r1, r2 := sdp.BuildFileWriteReport(imx, addr)
 
 	_, err = sendHIDReport(1, r1, -1)
@@ -124,22 +124,42 @@ func fileWrite(imx []byte, addr uint32) (n int, err error) {
 	}
 
 	wait := -1
+	timer := time.After(time.Duration(timeout) * time.Second)
 
 	for i, r := range r2 {
 		if i == len(r2)-1 {
 			wait = 4
 		}
-
+	send:
 		_, err = sendHIDReport(2, r, wait)
+
+		if err != nil && runtime.GOOS == "darwin" && err.Error() == "hid: general error" {
+			// On macOS access contention with the OS causes
+			// errors, as a workaround we retry from the transfer
+			// that got caught up.
+			select {
+			case <-timer:
+				return
+			default:
+				off := uint32(i) * 1024
+				r1 := &sdp.SDP{
+					CommandType: sdp.WriteFile,
+					Address:     addr + off,
+					DataCount:   uint32(len(imx)) - off,
+				}
+
+				if _, err = sendHIDReport(1, r1.Bytes(), -1); err != nil {
+					return
+				}
+
+				goto send
+			}
+		}
 
 		if err != nil {
 			break
 		}
-
-		n += sdp.HIDReportSize
 	}
-
-	n = len(imx)
 
 	return
 }
@@ -180,28 +200,8 @@ func imxLoad(imx []byte) (err error) {
 		return
 	}
 
-	addr := ivt.Self
-	timer := time.After(time.Duration(timeout) * time.Second)
-
 	log.Printf("loading imx to %#08x (%d bytes)", ivt.Self, len(imx))
-fw:
-	n, err := fileWrite(imx, addr)
-
-	if err != nil && runtime.GOOS == "darwin" {
-		// On macOS there is access contention with the OS which causes
-		// errors on large reports, as a workaround we retry until we
-		// get the right chance.
-		select {
-		case <-timer:
-			return
-		default:
-			if err.Error() == "hid: general error" {
-				imx = imx[n:]
-				addr = addr + uint32(n)
-				goto fw
-			}
-		}
-	}
+	err = fileWrite(imx, ivt.Self)
 
 	if err != nil {
 		return
