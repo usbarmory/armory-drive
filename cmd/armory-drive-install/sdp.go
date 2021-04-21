@@ -124,13 +124,30 @@ func fileWrite(imx []byte, addr uint32) (err error) {
 	}
 
 	wait := -1
+	timer := time.After(time.Duration(timeout) * time.Second)
 
 	for i, r := range r2 {
 		if i == len(r2)-1 {
 			wait = 4
 		}
-
+send:
 		_, err = sendHIDReport(2, r, wait)
+
+		if err != nil {
+			// On macOS there is access contention with the OS which causes
+			// errors on large reports, as a workaround we retry until we
+			// get the right chance.
+			if runtime.GOOS == "darwin" {
+				select {
+				case <-timer:
+					return
+				default:
+					if err.Error() == "hid: general error" {
+						goto send
+					}
+				}
+			}
+		}
 
 		if err != nil {
 			break
@@ -177,26 +194,9 @@ func imxLoad(imx []byte) (err error) {
 	}
 
 	log.Printf("loading imx to %#08x (%d bytes)", ivt.Self, len(imx))
-
-	timer := time.After(time.Duration(timeout) * time.Second)
-imx:
 	err = fileWrite(imx, ivt.Self)
 
 	if err != nil {
-		// On macOS there is access contention with the OS which causes
-		// errors on large reports, as a workaround we retry until we
-		// get the right chance.
-		if runtime.GOOS == "darwin" {
-			select {
-			case <-timer:
-				return
-			default:
-				if err.Error() == "hid: general error" {
-					goto imx
-				}
-			}
-		}
-
 		return
 	}
 
