@@ -22,9 +22,6 @@ import (
 // OTA authentication key filename
 const OTAPublicKeyFileName = "armory-drive-minisign.pub"
 
-// HAB SRK fuse table filename
-const SRKHashFileName = "SRK_1_2_3_4_fuse.bin"
-
 func init() {
 	log.SetFlags(0)
 	log.SetOutput(os.Stdout)
