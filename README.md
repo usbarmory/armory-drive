@@ -7,8 +7,8 @@ This [TamaGo](https://github.com/f-secure-foundry/tamago) based unikernel
 allows encrypted USB Mass Storage interfacing for a microSD card connected to a
 [USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
 
-The encrypted storage setup and authentication is meant to be performed with the
-[F-Secure Armory mobile application](FIXME) over Bluetooth.
+The encrypted storage setup and authentication is meant to be performed with
+the F-Secure Armory mobile application (TBR) over Bluetooth.
 
 To understand the firmware capabilities and use see this
 [Tutorial](https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial).
@@ -23,7 +23,7 @@ Installation of pre-compiled releases
 =====================================
 
 F-Secure provides [binary releases](https://github.com/f-secure-foundry/armory-drive/releases)
-for the Amory Drive firmware.
+for the Armory Drive firmware.
 
 The binary release includes the `armory-drive-installer` to guide through
 initial installation of such releases and Secure Boot activation.
@@ -56,9 +56,8 @@ The installer supports the following installation modes:
   *not recommended for protection of sensitive data* where device tampering is a
   risk.
 
-The `armory-drive-installer` provides an interactive installation for all
-possible installation modes and is the recommended way to use the Armory Drive
-firmware.
+The `armory-drive-installer` provides interactive installation for all modes
+and is the recommended way to use the Armory Drive firmware.
 
 Expert users can compile and sign their own releases with the information
 included in section _Installation of self-compiled releases_.
@@ -85,16 +84,20 @@ like any standard USB drive when unlocked through its paired companion iOS app.
 Firmware update
 ---------------
 
-The firmware update procedure is meant to be used on USB armory devices which
-have been already initialized with the Armory Drive firmware as shown in
-_Pairing and initialization_.
+The `armory-drive-installer` provides interactive upgrade of all installation
+modes and is the recommended way to upgrade the Armory Drive firmware.
+
+Alternatively *only users of F-Secure signed releases or unsigned releases* can
+use the following procedure on USB armory devices which have been already
+initialized with the Armory Drive firmware as shown in _Pairing and
+initialization_.
 
   1. Download file `armory-drive.ota` from the [latest binary release](https://github.com/f-secure-foundry/armory-drive/releases/latest)
   2. If the USB armory contains an SD card, remove it.
   3. Plug the USB armory.
   4. An "F-Secure" disk volume should appear.
-  5. Rename `armory-drive.ota` to "UA-DRIVE.ota".
-  6. Copy "UA-DRIVE.ota" to the "F-Secure" disk.
+  5. Rename `armory-drive.ota` to "UA-DRIVE.OTA".
+  6. Copy "UA-DRIVE.OTA" to the "F-Secure" disk.
   7. Eject the "F-Secure" disk.
   8. The white LED should turn on and then off after the update is complete.
   9. Put the SD card back in.
