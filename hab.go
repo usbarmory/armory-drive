@@ -33,8 +33,6 @@ func initializeHAB() {
 	default:
 		hab(assets.SRKHash)
 	}
-
-	imx6.Reboot()
 }
 
 func fuse(name string, bank int, word int, off int, size int, val []byte) {

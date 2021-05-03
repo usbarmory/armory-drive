@@ -36,9 +36,6 @@ func main() {
 		panic(err)
 	}
 
-	// Secure Boot provisioning as required
-	initializeHAB()
-
 	err = keyring.Init(false)
 
 	if err != nil {
@@ -54,6 +51,9 @@ func main() {
 	startBLE(true)
 
 	if pairing {
+		// Secure Boot provisioning as required
+		initializeHAB()
+
 		pairingMode()
 	}
 
