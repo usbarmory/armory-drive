@@ -44,7 +44,7 @@ $(APP)-install.exe:
 		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$(APP)-install/*.go; \
 	fi
 
-$(APP)-install.dmg: TMPDIR=$(shell mktemp -d)
+$(APP)-install.dmg: TMPDIR := $(shell mktemp -d)
 $(APP)-install.dmg:
 	cd $(CURDIR)/assets && go generate && \
 	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(TMPDIR)/armory-drive-install_darwin-amd64 cmd/$(APP)-install/*.go && \
