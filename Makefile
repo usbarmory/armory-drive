@@ -44,6 +44,16 @@ $(APP)-install.exe:
 		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$(APP)-install/*.go; \
 	fi
 
+$(APP)-install.dmg: TMPDIR=$(shell mktemp -d)
+$(APP)-install.dmg:
+	cd $(CURDIR)/assets && go generate && \
+	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(TMPDIR)/armory-drive-install_darwin-amd64 cmd/$(APP)-install/*.go && \
+	mkdir $(TMPDIR)/dmg && \
+	lipo -create -output $(TMPDIR)/dmg/armory-drive-install $(TMPDIR)/armory-drive-install_darwin-amd64 && \
+	hdiutil create $(TMPDIR)/tmp.dmg -ov -volname "Armory Drive Install" -fs HFS+ -srcfolder $(TMPDIR)/dmg && \
+	hdiutil convert $(TMPDIR)/tmp.dmg -format UDZO -o $(TMPDIR)/armory-drive-install.dmg && \
+	cp $(TMPDIR)/armory-drive-install.dmg $(CURDIR)
+
 #### utilities ####
 
 check_tamago:
