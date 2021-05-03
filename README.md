@@ -8,7 +8,8 @@ allows encrypted USB Mass Storage interfacing for a microSD card connected to a
 [USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
 
 The encrypted storage setup and authentication is meant to be performed with
-the F-Secure Armory mobile application (TBR) over Bluetooth.
+the F-Secure Armory mobile application (to be released - private invites only
+ATM) over Bluetooth (BLE).
 
 To understand the firmware capabilities and use see this
 [Tutorial](https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial).
@@ -25,8 +26,9 @@ Installation of pre-compiled releases
 F-Secure provides [binary releases](https://github.com/f-secure-foundry/armory-drive/releases)
 for the Armory Drive firmware.
 
-The binary release includes the `armory-drive-installer` to guide through
-initial installation of such releases and Secure Boot activation.
+The binary release includes the `armory-drive-installer` tool (for Linux,
+Windows and macOS) to guide through initial installation of such releases and
+Secure Boot activation.
 
 > :warning: loading signed releases triggers secure boot activation which is an
 > a *irreversible operation* to be performed **at your own risk**, carefully
@@ -149,31 +151,14 @@ Build the `armory-drive-signed.imx` application executable:
 make CROSS_COMPILE=arm-none-eabi- HAB_KEYS=<path> OTA_KEYS=<path> imx_signed
 ```
 
-An unsigned test binary can be compiled with the `imx` target.
-
-Executing
----------
-
-The resulting `armory-drive-signed.imx` file can be executed over USB using
-[SDP](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp).
-
-SDP mode requires boot switch configuration towards microSD without any card
-inserted, however this firmware detects microSD card only at startup.
-Therefore, when starting with SDP, to expose the microSD over mass storage,
-follow this procedure:
-
-  1. Remove the microSD card on a powered off device.
-  2. Set microSD boot mode switch.
-  3. Plug the device on a USB port to power it up in SDP mode.
-  4. Insert the microSD card.
-  5. Load `armory-drive-signed.imx` via [SDP](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp).
+An unsigned test/development binary can be compiled with the `imx` target.
 
 Installing
 ----------
 
 To permanently install `armory-drive-signed.imx` on internal non-volatile memory,
-after the steps in _Executing_, the procedure described in _Firmware update_
-can be performed to flash it on the internal eMMC.
+follow [these instructions](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#flashing-bootable-images-on-externalinternal-media)
+for internal eMMC flashing.
 
 Alternatively [armory-ums](https://github.com/f-secure-foundry/armory-ums) can
 be used.
