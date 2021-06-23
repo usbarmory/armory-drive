@@ -31,14 +31,14 @@ const sigLimit = 1024
 const OTAName = "UA-DRIVE.OTA"
 
 func ota() {
-	img, err := os.OpenFile(QR_DISK_PATH, os.O_RDWR|os.O_TRUNC, 0600)
+	img, err := os.OpenFile(QRDiskPath, os.O_RDWR|os.O_TRUNC, 0600)
 
 	if err != nil {
 		panic(err)
 	}
 
 	card := cards[0].(*QRCard)
-	_, err = img.Write(card.diskData[QR_PARTITION_OFFSET:])
+	_, err = img.Write(card.diskData[QRPartitionOffset:])
 
 	if err != nil {
 		panic(err)
