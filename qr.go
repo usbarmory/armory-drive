@@ -20,23 +20,25 @@ import (
 	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
 )
 
-const README = `
+const readme = `
 Please download the F-Secure Armory application from the iOS App Store and scan file QR.png
 `
 
-// pairing disk paths
+// pairing disk paths (8.3 format)
 const (
-	QRCodeFilePath = "QR.png"
-	ReadmeFilePath = "README.txt"
-	ChkPntFilePath = "checkpoint"
+	OTA     = "UA-DRIVE.OTA"
+	QRCODE  = "QR.PNG"
+	README  = "README.TXT"
+	VERSION = "VERSION.TXT"
+	LASTLOG = "LASTLOG"
 )
 
 const (
-	QRPartitionOffset = 2048 * 512
-	QRDiskPath      = "qr.disk"
-	QRDiskBlockSize = 512
-	QRDiskSectors   = 16800
-	QRCodeSize      = 117
+	QR_PARTITION_OFFSET = 2048 * 512
+	QR_DISK_PATH        = "qr.disk"
+	QR_DISK_BLOCK_SIZE  = 512
+	QR_DISK_BLOCKS      = 16800
+	QR_CODE_SIZE        = 117
 )
 
 const bootSignature = 0xaa55
@@ -73,14 +75,14 @@ func (q *QRCard) Detect() error {
 
 func (q *QRCard) Info() (info usdhc.CardInfo) {
 	info.SD = true
-	info.BlockSize = QRDiskBlockSize
-	info.Blocks = QRDiskSectors
+	info.BlockSize = QR_DISK_BLOCK_SIZE
+	info.Blocks = QR_DISK_BLOCKS
 
 	return
 }
 
 func (q *QRCard) ReadBlocks(lba int, buf []byte) (err error) {
-	start := lba * QRDiskBlockSize
+	start := lba * QR_DISK_BLOCK_SIZE
 	end := start + len(buf)
 
 	if end > len(q.diskData) {
@@ -93,7 +95,7 @@ func (q *QRCard) ReadBlocks(lba int, buf []byte) (err error) {
 }
 
 func (q *QRCard) WriteBlocks(lba int, buf []byte) (err error) {
-	start := lba * QRDiskBlockSize
+	start := lba * QR_DISK_BLOCK_SIZE
 
 	if start+len(buf) > len(q.diskData) {
 		return errors.New("write operation exceeds disk size")
@@ -111,13 +113,13 @@ func QRFS() (card *QRCard) {
 		panic(err)
 	}
 
-	img, err := os.OpenFile(QRDiskPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0600)
+	img, err := os.OpenFile(QR_DISK_PATH, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0600)
 
 	if err != nil {
 		panic(err)
 	}
 
-	if err = img.Truncate(QRDiskSectors * QRDiskBlockSize); err != nil {
+	if err = img.Truncate(QR_DISK_BLOCKS * QR_DISK_BLOCK_SIZE); err != nil {
 		panic(err)
 	}
 
@@ -127,13 +129,13 @@ func QRFS() (card *QRCard) {
 		panic(err)
 	}
 
-	conf := &fat.SuperFloppyConfig{
+	floppyConf := &fat.SuperFloppyConfig{
 		FATType: fat.FAT16,
 		Label:   "F-Secure",
 		OEMName: "F-Secure",
 	}
 
-	if err = fat.FormatSuperFloppy(dev, conf); err != nil {
+	if err = fat.FormatSuperFloppy(dev, floppyConf); err != nil {
 		panic(err)
 	}
 
@@ -149,12 +151,16 @@ func QRFS() (card *QRCard) {
 		panic(err)
 	}
 
-	if err = addFile(root, QRCodeFilePath, code); err != nil {
+	if err = addFile(root, QRCODE, code); err != nil {
 		panic(err)
 	}
 
-	_ = addFile(root, ReadmeFilePath, []byte(README))
-	_ = addFile(root, "VERSION.txt", []byte(Revision))
+	if err = addFile(root, LASTLOG, conf.Checkpoint); err != nil {
+		panic(err)
+	}
+
+	_ = addFile(root, README, []byte(readme))
+	_ = addFile(root, VERSION, []byte(Revision))
 
 	img.Close()
 
@@ -179,7 +185,7 @@ func QRFS() (card *QRCard) {
 	mbr.BootSignature = bootSignature
 
 	diskData := mbr.Bytes()
-	diskData = append(diskData, make([]byte, QRPartitionOffset-512)...)
+	diskData = append(diskData, make([]byte, QR_PARTITION_OFFSET-QR_DISK_BLOCK_SIZE)...)
 	diskData = append(diskData, partitionData...)
 
 	card = &QRCard{
@@ -240,5 +246,5 @@ func QR() (code []byte, err error) {
 		return
 	}
 
-	return qr.PNG(QRCodeSize)
+	return qr.PNG(QR_CODE_SIZE)
 }

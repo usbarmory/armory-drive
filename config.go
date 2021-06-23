@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	MMC_CONF_BLOCK   = 2097152
-	MMC_CONF_SECTORS = 2
+	MMC_CONF_BLOCK  = 2097152
+	CONF_MIN_BLOCKS = 2
+	CONF_MAX_BLOCKS = 4
 )
 
 var conf *PersistentConfiguration
@@ -27,6 +28,9 @@ type PersistentConfiguration struct {
 
 	// BLE API Configuration
 	Settings *Configuration
+
+	// Transparency Log Checkpoint
+	Checkpoint []byte
 }
 
 func (conf *PersistentConfiguration) save() (err error) {
@@ -39,7 +43,7 @@ func (conf *PersistentConfiguration) save() (err error) {
 		return
 	}
 
-	snvs, err := encryptSNVS(buf.Bytes(), MMC_CONF_SECTORS*blockSize)
+	snvs, err := encryptSNVS(buf.Bytes(), CONF_MAX_BLOCKS*blockSize)
 
 	if err != nil {
 		return
@@ -48,11 +52,10 @@ func (conf *PersistentConfiguration) save() (err error) {
 	return usbarmory.MMC.WriteBlocks(MMC_CONF_BLOCK, snvs)
 }
 
-func LoadConfiguration() (conf *PersistentConfiguration, err error) {
+func load(lba int, blocks int) (conf *PersistentConfiguration, err error) {
 	blockSize := usbarmory.MMC.Info().BlockSize
-
-	snvs := make([]byte, blockSize*MMC_CONF_SECTORS)
-	err = usbarmory.MMC.ReadBlocks(MMC_CONF_BLOCK, snvs)
+	snvs := make([]byte, blocks*blockSize)
+	err = usbarmory.MMC.ReadBlocks(lba, snvs)
 
 	if err != nil {
 		return
@@ -66,6 +69,19 @@ func LoadConfiguration() (conf *PersistentConfiguration, err error) {
 
 	conf = &PersistentConfiguration{}
 	err = gob.NewDecoder(bytes.NewBuffer(buf)).Decode(conf)
+
+	return
+}
+
+func LoadConfiguration() (conf *PersistentConfiguration, err error) {
+	// support changes in configuration size over time
+	for blocks := CONF_MAX_BLOCKS; blocks >= CONF_MIN_BLOCKS; blocks-- {
+		conf, err = load(MMC_CONF_BLOCK, blocks)
+
+		if err == nil {
+			return
+		}
+	}
 
 	return
 }

@@ -28,17 +28,18 @@ import (
 
 const sigLimit = 1024
 
-const OTAName = "UA-DRIVE.OTA"
-
 func ota() {
-	img, err := os.OpenFile(QRDiskPath, os.O_RDWR|os.O_TRUNC, 0600)
+	var OTAFile fs.File
+	var logFile fs.File
+
+	img, err := os.OpenFile(QR_DISK_PATH, os.O_RDWR|os.O_TRUNC, 0600)
 
 	if err != nil {
 		panic(err)
 	}
 
 	card := cards[0].(*QRCard)
-	_, err = img.Write(card.diskData[QRPartitionOffset:])
+	_, err = img.Write(card.diskData[QR_PARTITION_OFFSET:])
 
 	if err != nil {
 		panic(err)
@@ -65,21 +66,25 @@ func ota() {
 	}
 
 	for _, entry := range root.Entries() {
-		if entry.Name() == OTAName {
-			update(entry)
-			return
+		switch entry.Name() {
+		case OTA:
+			OTAFile, err = entry.File()
+		case LASTLOG:
+			logFile, err = entry.File()
 		}
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if OTAFile != nil {
+		update(OTAFile, logFile)
 	}
 }
 
-func update(entry fs.DirectoryEntry) {
+func update(ota fs.File, log fs.File) {
 	var exit = make(chan bool)
-
-	file, err := entry.File()
-
-	if err != nil {
-		panic(err)
-	}
 
 	go func() {
 		var on bool
@@ -100,13 +105,13 @@ func update(entry fs.DirectoryEntry) {
 		}
 	}()
 
-	buf, err := ioutil.ReadAll(file)
+	buf, err := ioutil.ReadAll(ota)
 
 	if err != nil {
 		panic(err)
 	}
 
-	valid, bin, err := verify(buf)
+	valid, imx, err := verify(buf)
 
 	if err != nil {
 		panic(err)
@@ -116,7 +121,20 @@ func update(entry fs.DirectoryEntry) {
 		panic("invalid firmware signature")
 	}
 
-	err = usbarmory.MMC.WriteBlocks(2, bin)
+	if log != nil {
+		if buf, err = ioutil.ReadAll(log); err != nil {
+			panic(err)
+		}
+
+		// TODO: add verification logic
+		conf.Checkpoint = buf
+
+		if err = conf.save(); err != nil {
+			panic(err)
+		}
+	}
+
+	err = usbarmory.MMC.WriteBlocks(2, imx)
 
 	if err != nil {
 		panic(err)
