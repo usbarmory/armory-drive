@@ -194,8 +194,8 @@ func essiv(buf []byte, iv []byte) (err error) {
 
 // equivalent to aes-cbc-plain (hw)
 func cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup) {
-	payloads, ivs := dma.Reserve(blocks*aes.BlockSize, 4)
-	defer dma.Release(payloads)
+	addr, ivs := dma.Reserve(blocks*aes.BlockSize, 4)
+	defer dma.Release(addr)
 
 	for i := 0; i < blocks; i++ {
 		off := i * aes.BlockSize
