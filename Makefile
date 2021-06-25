@@ -81,7 +81,7 @@ dcd:
 
 clean:
 	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).ota $(APP).csf $(APP).sdp $(APP).dcd *.pb.go $(CURDIR)/assets/tmp*.go
-	@rm -fr $(APP)-install $(APP)-install.exe
+	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
 
 #### dependencies ####
 
