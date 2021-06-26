@@ -4,7 +4,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package main
+package ble
 
 import (
 	"bytes"
@@ -19,22 +19,32 @@ import (
 var BLEStartupPattern = regexp.MustCompile(`(\+STARTUP)`)
 var BLENamePattern = regexp.MustCompile(`\+UBTLN:"([^"]+)"`)
 
-func txPacket(ble *usbarmory.ANNA, buf []byte) {
+type eventHandler func([]byte) []byte
+
+type BLE struct {
+	Name string
+
+	anna         *usbarmory.ANNA
+	eventHandler eventHandler
+	data         []byte
+}
+
+func (b *BLE) txPacket(buf []byte) {
 	// detect USB armory Mk II β errata fix
-	if ble.UART.Flow {
-		ble.UART.Write(buf)
+	if b.anna.UART.Flow {
+		b.anna.UART.Write(buf)
 		return
 	}
 
 	for i := 0; i < len(buf); i++ {
-		for !ble.RTS() {
+		for !b.anna.RTS() {
 		}
 
-		ble.UART.Tx(buf[i])
+		b.anna.UART.Tx(buf[i])
 	}
 }
 
-func rxPackets(ble *usbarmory.ANNA) {
+func (b *BLE) rxPackets() {
 	var pkt []byte
 	var length uint16
 
@@ -42,17 +52,17 @@ func rxPackets(ble *usbarmory.ANNA) {
 
 	for {
 		// detect USB armory Mk II β errata fix
-		if ble.UART.Flow {
+		if b.anna.UART.Flow {
 			buf := make([]byte, 1024)
-			n := ble.UART.Read(buf)
+			n := b.anna.UART.Read(buf)
 
 			if n != 0 {
 				pkt = append(pkt, buf[:n]...)
 			}
 		} else {
-			ble.CTS(true)
-			c, ok := ble.UART.Rx()
-			ble.CTS(false)
+			b.anna.CTS(true)
+			c, ok := b.anna.UART.Rx()
+			b.anna.CTS(false)
 
 			if ok {
 				pkt = append(pkt, c)
@@ -87,7 +97,7 @@ func rxPackets(ble *usbarmory.ANNA) {
 			}
 		} else if length != 0 && len(pkt) >= int(length) {
 			if pkt[length-1] == EDM_STOP {
-				handleEvent(ble, pkt[3:length-1])
+				b.handleEvent(pkt[3 : length-1])
 			}
 
 			pkt = pkt[length:]
@@ -96,19 +106,19 @@ func rxPackets(ble *usbarmory.ANNA) {
 	}
 }
 
-func rxATResponse(ble *usbarmory.ANNA, pattern *regexp.Regexp) (match [][]byte) {
+func (b *BLE) rxATResponse(pattern *regexp.Regexp) (match [][]byte) {
 	var buf []byte
 
 	for len(match) == 0 {
-		ble.CTS(true)
+		b.anna.CTS(true)
 
-		c, ok := ble.UART.Rx()
+		c, ok := b.anna.UART.Rx()
 
 		if !ok {
 			continue
 		}
 
-		ble.CTS(false)
+		b.anna.CTS(false)
 
 		buf = append(buf, c)
 		match = pattern.FindSubmatch(buf)
@@ -117,26 +127,28 @@ func rxATResponse(ble *usbarmory.ANNA, pattern *regexp.Regexp) (match [][]byte) 
 	return
 }
 
-func startBLE(dataMode bool) {
+func Start(fn eventHandler) (b *BLE) {
 	usbarmory.BLE.Init()
 	time.Sleep(usbarmory.RESET_GRACE_TIME)
 
-	rxATResponse(usbarmory.BLE, BLEStartupPattern)
-
-	usbarmory.BLE.UART.Write([]byte("AT+UBTLN?\r"))
-	m := rxATResponse(usbarmory.BLE, BLENamePattern)
-	remote.name = string(m[1])
-
-	if !dataMode {
-		usbarmory.LED("blue", true)
-		return
+	b = &BLE{
+		anna:         usbarmory.BLE,
+		eventHandler: fn,
 	}
 
+	b.rxATResponse(BLEStartupPattern)
+
+	b.anna.UART.Write([]byte("AT+UBTLN?\r"))
+	m := b.rxATResponse(BLENamePattern)
+	b.Name = string(m[1])
+
 	// enter data mode
-	usbarmory.BLE.UART.Write([]byte("ATO2\r"))
+	b.anna.UART.Write([]byte("ATO2\r"))
 	usbarmory.LED("blue", true)
 
 	go func() {
-		rxPackets(usbarmory.BLE)
+		b.rxPackets()
 	}()
+
+	return
 }

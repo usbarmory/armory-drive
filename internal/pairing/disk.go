@@ -34,8 +34,8 @@ const (
 	DiskPath        = "pairing.disk"
 	PartitionOffset = 2048 * 512
 
-	blockSize  = 512
-	blocks     = 16800
+	blockSize = 512
+	blocks    = 16800
 
 	bootSignature = 0xaa55
 )

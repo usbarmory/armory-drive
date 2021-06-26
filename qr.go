@@ -28,8 +28,8 @@ func newPairingCode() (code []byte, err error) {
 	}
 
 	pb := &PairingQRCode{
-		BLEName: remote.name,
-		Nonce:   remote.pairingNonce,
+		BLEName: session.PeerName,
+		Nonce:   session.PairingNonce,
 		PubKey:  key,
 	}
 

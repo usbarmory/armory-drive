@@ -11,40 +11,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
-
-type Remote struct {
-	sync.Mutex
-
-	name    string
-	last    int64
-	skew    time.Duration
-	session bool
-
-	pairingMode  bool
-	pairingNonce uint64
-
-	buf []byte
-}
-
-var remote = &Remote{}
-
-func (r *Remote) Reset() {
-	r.session = false
-	keyring.sessionKey = []byte{}
-	keyring.armoryEphemeral = nil
-	keyring.mobileEphemeral = nil
-}
-
-func (r *Remote) Time() int64 {
-	return time.Now().Add(r.skew).UnixNano() / (1000 * 1000)
-}
 
 func parseEnvelope(buf []byte) (msg *Message, err error) {
 	env := &Envelope{}
@@ -62,10 +34,11 @@ func parseEnvelope(buf []byte) (msg *Message, err error) {
 	}
 
 	if msg.OpCode == OpCode_SESSION {
-		remote.Reset()
+		keyring.Reset()
+		session.Reset()
 	}
 
-	if !remote.pairingMode && keyring.MobileLongterm != nil {
+	if !session.PairingMode && keyring.MobileLongterm != nil {
 		err = env.Verify()
 
 		if err != nil {
@@ -81,18 +54,18 @@ func parseEnvelope(buf []byte) (msg *Message, err error) {
 		}
 	}
 
-	if msg.Timestamp <= remote.last {
+	if msg.Timestamp <= session.Last {
 		return nil, errors.New("invalid timestamp")
 	}
 
-	remote.last = msg.Timestamp
+	session.Last = msg.Timestamp
 
 	return
 }
 
 func buildResponse(opCode OpCode) (msg *Message) {
 	return &Message{
-		Timestamp: remote.Time(),
+		Timestamp: session.Time(),
 		Response:  true,
 		OpCode:    opCode,
 	}
@@ -123,7 +96,7 @@ func handleEnvelope(req []byte) (res []byte) {
 		}
 
 		if resMsg.OpCode == OpCode_SESSION && resMsg.Error == 0 {
-			remote.session = true
+			session.Active = true
 		}
 
 		res = resEnv.Bytes()
@@ -143,7 +116,7 @@ func handleEnvelope(req []byte) (res []byte) {
 }
 
 func handleMessage(reqMsg *Message, resMsg *Message) {
-	if remote.pairingMode {
+	if session.PairingMode {
 		if reqMsg.OpCode != OpCode_PAIR {
 			resMsg.Error = ErrorCode_INVALID_MESSAGE
 			return
@@ -159,11 +132,11 @@ func handleMessage(reqMsg *Message, resMsg *Message) {
 	}
 
 	if reqMsg.OpCode == OpCode_SESSION {
-		session(reqMsg, resMsg)
+		newSession(reqMsg, resMsg)
 		return
 	}
 
-	if !remote.session {
+	if !session.Active {
 		resMsg.Error = ErrorCode_INVALID_SESSION
 		return
 	}
@@ -197,7 +170,7 @@ func pair(reqMsg *Message, resMsg *Message) {
 		}
 	}()
 
-	if keyExchange.Nonce != remote.pairingNonce {
+	if keyExchange.Nonce != session.PairingNonce {
 		err = errors.New("nonce mismatch")
 		return
 	}
@@ -219,7 +192,7 @@ func pair(reqMsg *Message, resMsg *Message) {
 	pairingComplete <- true
 }
 
-func session(reqMsg *Message, resMsg *Message) {
+func newSession(reqMsg *Message, resMsg *Message) {
 	keyExchange := &KeyExchange{}
 	err := proto.Unmarshal(reqMsg.Payload, keyExchange)
 
@@ -231,7 +204,8 @@ func session(reqMsg *Message, resMsg *Message) {
 	defer func() {
 		if err != nil {
 			// invalidate previous session on any error
-			remote.Reset()
+			keyring.Reset()
+			session.Reset()
 			resMsg.Error = ErrorCode_SESSION_KEY_NEGOTIATION_FAILED
 		}
 	}()
@@ -255,14 +229,14 @@ func session(reqMsg *Message, resMsg *Message) {
 		return
 	}
 
-	remote.skew = time.Until(time.Unix(0, reqMsg.Timestamp*1000*1000))
+	session.Skew = time.Until(time.Unix(0, reqMsg.Timestamp*1000*1000))
 
 	keyExchange = &KeyExchange{
 		Key:   key,
 		Nonce: binary.BigEndian.Uint64(nonce),
 	}
 
-	resMsg.Timestamp = remote.Time()
+	resMsg.Timestamp = session.Time()
 	resMsg.Payload = keyExchange.Bytes()
 }
 
@@ -270,7 +244,7 @@ func unlock(reqMsg *Message, resMsg *Message) {
 	keyExchange := &KeyExchange{}
 	err := proto.Unmarshal(reqMsg.Payload, keyExchange)
 
-	remote.Lock()
+	session.Lock()
 
 	defer func() {
 		ready = (err == nil)
@@ -278,7 +252,7 @@ func unlock(reqMsg *Message, resMsg *Message) {
 
 		// rate limit unlock operation
 		time.Sleep(1 * time.Second)
-		remote.Unlock()
+		session.Unlock()
 	}()
 
 	if err != nil {

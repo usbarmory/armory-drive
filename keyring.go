@@ -64,9 +64,9 @@ type Keyring struct {
 
 var keyring = &Keyring{}
 
-func (keyring *Keyring) Init(overwrite bool) (err error) {
+func (k *Keyring) Init(overwrite bool) (err error) {
 	// derive persistent storage encryption key
-	if keyring.snvs, err = deriveKey([]byte(SNVS_DIV), SNVS_KEY, true); err != nil {
+	if k.snvs, err = deriveKey([]byte(SNVS_DIV), SNVS_KEY, true); err != nil {
 		return
 	}
 
@@ -75,15 +75,15 @@ func (keyring *Keyring) Init(overwrite bool) (err error) {
 	if err != nil || overwrite {
 		var armoryLongterm []byte
 
-		if keyring.ArmoryLongterm == nil {
-			err = keyring.NewLongtermKey()
+		if k.ArmoryLongterm == nil {
+			err = k.NewLongtermKey()
 
 			if err != nil {
 				return
 			}
 		}
 
-		armoryLongterm, err = keyring.Export(UA_LONGTERM_KEY, true)
+		armoryLongterm, err = k.Export(UA_LONGTERM_KEY, true)
 
 		if err != nil {
 			return
@@ -103,36 +103,42 @@ func (keyring *Keyring) Init(overwrite bool) (err error) {
 		}
 	}
 
-	err = keyring.Import(UA_LONGTERM_KEY, true, conf.ArmoryLongterm)
+	err = k.Import(UA_LONGTERM_KEY, true, conf.ArmoryLongterm)
 
 	if err != nil {
 		return
 	}
 
 	// we might not be paired yet, so ignore errors
-	keyring.Import(MD_LONGTERM_KEY, false, conf.MobileLongterm)
+	k.Import(MD_LONGTERM_KEY, false, conf.MobileLongterm)
 
 	// Derive salt, used for ESSIV computation as well as BLOCK_KEY derivation.
-	if keyring.salt, err = deriveKey([]byte(ESSIV_DIV), ESSIV_KEY, true); err != nil {
+	if k.salt, err = deriveKey([]byte(ESSIV_DIV), ESSIV_KEY, true); err != nil {
 		return
 	}
 
 	return
 }
 
-func (keyring *Keyring) Export(index int, private bool) ([]byte, error) {
+func (k *Keyring) Reset() {
+	k.sessionKey = []byte{}
+	k.armoryEphemeral = nil
+	k.mobileEphemeral = nil
+}
+
+func (k *Keyring) Export(index int, private bool) ([]byte, error) {
 	var pubKey *ecdsa.PublicKey
 	var privKey *ecdsa.PrivateKey
 
 	switch index {
 	case UA_LONGTERM_KEY:
-		privKey = keyring.ArmoryLongterm
+		privKey = k.ArmoryLongterm
 	case UA_EPHEMERAL_KEY:
-		privKey = keyring.armoryEphemeral
+		privKey = k.armoryEphemeral
 	case MD_LONGTERM_KEY:
-		pubKey = keyring.MobileLongterm
+		pubKey = k.MobileLongterm
 	case MD_EPHEMERAL_KEY:
-		pubKey = keyring.mobileEphemeral
+		pubKey = k.mobileEphemeral
 	default:
 		return nil, errors.New("invalid key index")
 	}
@@ -156,19 +162,19 @@ func (keyring *Keyring) Export(index int, private bool) ([]byte, error) {
 	}
 }
 
-func (keyring *Keyring) Import(index int, private bool, der []byte) (err error) {
+func (k *Keyring) Import(index int, private bool, der []byte) (err error) {
 	var pubKey *ecdsa.PublicKey
 	var privKey *ecdsa.PrivateKey
 
 	if private {
 		privKey, err = x509.ParseECPrivateKey(der)
 	} else {
-		var k interface{}
+		var pk interface{}
 
-		k, err = x509.ParsePKIXPublicKey(der)
+		pk, err = x509.ParsePKIXPublicKey(der)
 
 		if err == nil {
-			switch key := k.(type) {
+			switch key := pk.(type) {
 			case *ecdsa.PublicKey:
 				pubKey = key
 			default:
@@ -183,11 +189,11 @@ func (keyring *Keyring) Import(index int, private bool, der []byte) (err error) 
 
 	switch index {
 	case UA_LONGTERM_KEY:
-		keyring.ArmoryLongterm = privKey
+		k.ArmoryLongterm = privKey
 	case MD_LONGTERM_KEY:
-		keyring.MobileLongterm = pubKey
+		k.MobileLongterm = pubKey
 	case MD_EPHEMERAL_KEY:
-		keyring.mobileEphemeral = pubKey
+		k.mobileEphemeral = pubKey
 	default:
 		return errors.New("invalid key index")
 	}
@@ -195,34 +201,34 @@ func (keyring *Keyring) Import(index int, private bool, der []byte) (err error) 
 	return
 }
 
-func (keyring *Keyring) NewLongtermKey() (err error) {
-	keyring.ArmoryLongterm, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+func (k *Keyring) NewLongtermKey() (err error) {
+	k.ArmoryLongterm, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	return
 }
 
-func (keyring *Keyring) NewSessionKeys(nonce []byte) (err error) {
-	keyring.armoryEphemeral, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+func (k *Keyring) NewSessionKeys(nonce []byte) (err error) {
+	k.armoryEphemeral, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 
 	if err != nil {
 		return
 	}
 
-	peerX := keyring.mobileEphemeral.X
-	peerY := keyring.mobileEphemeral.Y
-	privX := keyring.armoryEphemeral.D.Bytes()
+	peerX := k.mobileEphemeral.X
+	peerY := k.mobileEphemeral.Y
+	privX := k.armoryEphemeral.D.Bytes()
 
-	length := (keyring.mobileEphemeral.Params().BitSize + 7) >> 3
-	keyring.preMaster = make([]byte, length)
+	length := (k.mobileEphemeral.Params().BitSize + 7) >> 3
+	k.preMaster = make([]byte, length)
 
-	s, _ := keyring.mobileEphemeral.ScalarMult(peerX, peerY, privX)
+	s, _ := k.mobileEphemeral.ScalarMult(peerX, peerY, privX)
 	shared := s.Bytes()
 
-	copy(keyring.preMaster[len(keyring.preMaster)-len(shared):], shared)
+	copy(k.preMaster[len(k.preMaster)-len(shared):], shared)
 
-	hkdf := hkdf.New(sha256.New, keyring.preMaster, nonce, nil)
+	hkdf := hkdf.New(sha256.New, k.preMaster, nonce, nil)
 
-	keyring.sessionKey = make([]byte, 32)
-	_, err = io.ReadFull(hkdf, keyring.sessionKey)
+	k.sessionKey = make([]byte, 32)
+	_, err = io.ReadFull(hkdf, k.sessionKey)
 
 	return
 }

@@ -7,9 +7,9 @@
 package ota
 
 import (
-	"os"
 	"io/ioutil"
 	"log"
+	"os"
 	"runtime"
 	"time"
 
@@ -19,7 +19,7 @@ import (
 	"github.com/mitchellh/go-fs/fat"
 )
 
-const updatePath  = "UPDATE.ZIP"
+const updatePath = "UPDATE.ZIP"
 
 func Check(buf []byte, path string, off int) {
 	img, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC, 0600)

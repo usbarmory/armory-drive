@@ -214,7 +214,7 @@ func readCapacity10(card Card) (data []byte, err error) {
 		return nil, fmt.Errorf("invalid block count %d", info.Blocks)
 	}
 
-	if remote.pairingMode {
+	if session.PairingMode {
 		mult = 1
 	}
 
@@ -256,7 +256,7 @@ func readFormatCapacities(card Card) (data []byte, err error) {
 	mult := BLOCK_SIZE_MULTIPLIER
 	info := card.Info()
 
-	if remote.pairingMode {
+	if session.PairingMode {
 		mult = 1
 	}
 
@@ -282,7 +282,7 @@ func read(card Card, lba int, blocks int) (err error) {
 	info := card.Info()
 	dec := true
 
-	if remote.pairingMode {
+	if session.PairingMode {
 		mult = 1
 		dec = false
 	}
@@ -333,7 +333,7 @@ func write(card Card, lba int, buf []byte) (err error) {
 	info := card.Info()
 	enc := true
 
-	if remote.pairingMode {
+	if session.PairingMode {
 		mult = 1
 		enc = false
 	}
@@ -403,13 +403,13 @@ func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error
 			// locked drive cannot be started
 			csw.Status = usb.CSW_STATUS_COMMAND_FAILED
 			// lock drive at eject
-		} else if ready && !start && !remote.pairingMode {
+		} else if ready && !start && !session.PairingMode {
 			lock(nil, nil)
 		} else {
 			ready = start
 		}
 
-		if !ready && remote.pairingMode {
+		if !ready && session.PairingMode {
 			pairingComplete <- true
 
 			go func() {
@@ -434,7 +434,7 @@ func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error
 		lba := int(binary.BigEndian.Uint32(cmd[2:]))
 		blocks := int(binary.BigEndian.Uint16(cmd[7:]))
 
-		if remote.pairingMode {
+		if session.PairingMode {
 			mult = 1
 		}
 

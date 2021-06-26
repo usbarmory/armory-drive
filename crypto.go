@@ -341,7 +341,7 @@ func decryptSNVS(input []byte) (output []byte, err error) {
 }
 
 func encryptOFB(plaintext []byte) (ciphertext []byte, err error) {
-	if !remote.session {
+	if !session.Active {
 		return nil, errors.New("invalid session")
 	}
 
@@ -369,7 +369,7 @@ func encryptOFB(plaintext []byte) (ciphertext []byte, err error) {
 }
 
 func decryptOFB(ciphertext []byte) (plaintext []byte, err error) {
-	if !remote.session {
+	if !session.Active {
 		return nil, errors.New("invalid session")
 	}
 
@@ -402,7 +402,7 @@ func decryptOFB(ciphertext []byte) (plaintext []byte, err error) {
 func signECDSA(data []byte) (sig *Signature, err error) {
 	var sigKey *ecdsa.PrivateKey
 
-	if remote.session {
+	if session.Active {
 		sigKey = keyring.armoryEphemeral
 	} else {
 		sigKey = keyring.ArmoryLongterm
@@ -430,7 +430,7 @@ func signECDSA(data []byte) (sig *Signature, err error) {
 func verifyECDSA(data []byte, sig *Signature) (err error) {
 	var verKey *ecdsa.PublicKey
 
-	if remote.session {
+	if session.Active {
 		verKey = keyring.mobileEphemeral
 	} else {
 		verKey = keyring.MobileLongterm
