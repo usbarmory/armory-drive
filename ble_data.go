@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/f-secure-foundry/armory-drive/internal/pairing"
+
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
 
@@ -190,7 +192,13 @@ func pairingMode() {
 	remote.pairingMode = true
 	remote.pairingNonce = binary.BigEndian.Uint64(nonce)
 
-	cards = append(cards, QRFS())
+	code, err := newPairingCode()
+
+	if err != nil {
+		panic(err)
+	}
+
+	cards = append(cards, pairing.Disk(code, Revision))
 	ready = true
 
 	go func() {

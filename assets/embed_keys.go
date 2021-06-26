@@ -13,14 +13,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"strconv"
 
 	"github.com/f-secure-foundry/armory-drive/assets"
 )
-
-// OTA authentication key filename
-const OTAPublicKeyFileName = "armory-drive-minisign.pub"
 
 func init() {
 	log.SetFlags(0)
@@ -32,8 +28,8 @@ func main() {
 
 	var OTAPublicKey []byte
 
-	if p := os.Getenv("OTA_KEYS"); len(p) > 0 {
-		pub, err := os.ReadFile(path.Join(p, OTAPublicKeyFileName))
+	if p := os.Getenv("OTA_KEY"); len(p) > 0 {
+		pub, err := os.ReadFile(p)
 
 		if err != nil {
 			log.Fatal(err)
@@ -45,10 +41,8 @@ func main() {
 		OTAPublicKey = lines[len(lines)-1]
 
 		if len(OTAPublicKey) == 0 {
-			log.Fatalf("could not parse %s", path.Join(p, OTAPublicKeyFileName))
+			log.Fatalf("could not parse %s", p)
 		}
-	} else {
-		log.Fatal("OTA_KEYS environment variable must be defined (see README.md)")
 	}
 
 	out, err := os.Create("tmp_keys.go")

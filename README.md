@@ -41,6 +41,10 @@ The installer supports the following installation modes:
   target USB armory, fully converting the device to exclusive use with Armory
   Drive releases signed by F-Secure.
 
+  These releases also enable authenticated updates through
+  [tamper-evident logs](https://github.com/f-secure-foundry/armory-drive-log) powered
+  by Google [transparency](https://transparency.dev/) framework.
+
 * User signed releases: the installation of such firmware images
   causes user own secure boot keys to be created and *permanently fused* on the
   target USB armory, fully converting the device to exclusive use with user
@@ -94,12 +98,11 @@ use the following procedure on USB armory devices which have been already
 initialized with the Armory Drive firmware as shown in _Pairing and
 initialization_.
 
-  1. Download file `armory-drive.ota` from the [latest binary release](https://github.com/f-secure-foundry/armory-drive/releases/latest)
+  1. Download file `update.zip` from the [latest binary release](https://github.com/f-secure-foundry/armory-drive/releases/latest)
   2. If the USB armory contains an SD card, remove it.
   3. Plug the USB armory.
   4. An "F-Secure" disk volume should appear.
-  5. Rename `armory-drive.ota` to "UA-DRIVE.OTA".
-  6. Copy "UA-DRIVE.OTA" to the "F-Secure" disk.
+  6. Copy `update.zip` to the "F-Secure" disk.
   7. Eject the "F-Secure" disk.
   8. The white LED should turn on and then off after the update is complete.
   9. Put the SD card back in.
@@ -136,20 +139,10 @@ The firmware is meant to be executed on secure booted systems, therefore
 [secure boot keys](https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II))
 should be created and passed with the `HAB_KEYS` environment variable.
 
-To build and install firmware updates to be passed over USB Mass Storage (see
-_Firmware update_) the `OTA_KEYS` variable must be set to a path containing the
-output of [minisign](https://jedisct1.github.io/minisign/) keys generated as
-follows:
-
-```
-minisign -G -p $OTA_KEYS/armory-drive-minisign.pub -s armory-drive-minisign.sec
-
-```
-
 Build the `armory-drive-signed.imx` application executable:
 
 ```
-make CROSS_COMPILE=arm-none-eabi- HAB_KEYS=<path> OTA_KEYS=<path> imx_signed
+make CROSS_COMPILE=arm-none-eabi- HAB_KEYS=<path> imx_signed
 ```
 
 An unsigned test/development binary can be compiled with the `imx` target.

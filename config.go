@@ -10,6 +10,8 @@ import (
 	"bytes"
 	"encoding/gob"
 
+	ftapi "github.com/f-secure-foundry/armory-drive-log/api"
+
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
 
@@ -30,7 +32,7 @@ type PersistentConfiguration struct {
 	Settings *Configuration
 
 	// Transparency Log Checkpoint
-	Checkpoint []byte
+	ProofBundle ftapi.ProofBundle
 }
 
 func (conf *PersistentConfiguration) save() (err error) {

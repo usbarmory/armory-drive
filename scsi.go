@@ -12,6 +12,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/f-secure-foundry/armory-drive/internal/ota"
+	"github.com/f-secure-foundry/armory-drive/internal/pairing"
+
 	"github.com/f-secure-foundry/tamago/dma"
 	"github.com/f-secure-foundry/tamago/soc/imx6/usb"
 	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
@@ -410,7 +413,8 @@ func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error
 			pairingComplete <- true
 
 			go func() {
-				ota()
+				card := cards[0].(*pairing.PairingDisk)
+				ota.Check(card.Data, pairing.DiskPath, pairing.PartitionOffset)
 			}()
 		}
 	case MODE_SENSE_6, MODE_SENSE_10:

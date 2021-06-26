@@ -80,15 +80,15 @@ dcd:
 	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
 
 clean:
-	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).ota $(APP).csf $(APP).sdp $(APP).dcd *.pb.go $(CURDIR)/assets/tmp*.go
+	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).zip $(APP).csf $(APP).sdp $(APP).dcd *.pb.go $(CURDIR)/assets/tmp*.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
 
 #### dependencies ####
 
 $(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Revision=${REV}'"
 $(APP): check_tamago proto
-	@if [ "${OTA_KEYS}" != "" ]; then \
-		echo '** WARNING ** Enabling OTA verification with public key ${OTA_KEYS}/armory-drive-minisign.pub'; \
+	@if [ "${OTA_KEY}" != "" ]; then \
+		echo '** WARNING ** Enabling OTA verification with public key ${OTA_KEY}'; \
 	else \
 		echo '** WARNING ** OTA verification is disabled'; \
 	fi
@@ -138,7 +138,5 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-o $(APP).csf && \
 	cat $(APP).imx $(APP).csf > $(APP)-signed.imx
 	@if [ "${OTA_KEYS}" != "" ]; then \
-		echo -e "\n" | minisign -S -s ${OTA_KEYS}/armory-drive-minisign.sec -m $(APP)-signed.imx -x $(APP).sig -c `stat -L -c %s ${APP}-signed.imx` && \
-		minisign -V -p ${OTA_KEYS}/armory-drive-minisign.pub -m $(APP)-signed.imx -x $(APP).sig && \
-		cat $(APP).sig $(APP)-signed.imx > $(APP).ota; \
+		zip update.zip $(APP)-signed.imx; \
 	fi
