@@ -13,14 +13,14 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/f-secure-foundry/tamago/dma"
 	"github.com/f-secure-foundry/tamago/soc/imx6"
 	"github.com/f-secure-foundry/tamago/soc/imx6/usb"
 
 	"github.com/f-secure-foundry/armory-drive/internal/ble"
 	"github.com/f-secure-foundry/armory-drive/internal/hab"
-	"github.com/f-secure-foundry/armory-drive/internal/remote"
 	"github.com/f-secure-foundry/armory-drive/internal/pairing"
+	"github.com/f-secure-foundry/armory-drive/internal/remote"
+	"github.com/f-secure-foundry/armory-drive/internal/ums"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
@@ -28,9 +28,7 @@ import (
 // initialized at compile time (see Makefile)
 var Revision string
 
-var session = &remote.Session{}
-
-var pairingComplete = make(chan bool)
+var session *remote.Session
 
 func init() {
 	if err := imx6.SetARMFreq(900); err != nil {
@@ -58,44 +56,52 @@ func main() {
 		panic(err)
 	}
 
-	err = detect(usbarmory.SD)
+	drive := &ums.Drive{
+		Cipher: cipherFn,
+		Mult:   ums.BLOCK_SIZE_MULTIPLIER,
+		Lock: func() {
+			lock(nil, nil)
+		},
+	}
 
-	if err != nil {
+	drive.Init()
+	drive.Detect(usbarmory.SD)
+
+	if drive.Card == nil {
 		pairing = true
 	}
 
 	b := ble.Start(handleEnvelope)
-	session.PeerName = b.Name
+
+	session = &remote.Session{
+		PeerName: b.Name,
+		Drive:    drive,
+	}
 
 	if pairing {
-		// Secure Boot provisioning as required
+		// provision Secure Boot as required
 		hab.Init()
 
 		session.PairingMode = true
 		session.PairingNonce = binary.BigEndian.Uint64(rng(8))
 
-		pairingMode()
+		pairingMode(drive)
+
+		drive.Cipher = nil
+		drive.Mult = 1
 	}
 
-	device := &usb.Device{
-		Setup: setup,
-	}
-	configureDevice(device)
-
-	iface := buildMassStorageInterface()
-	device.Configurations[0].AddInterface(iface)
-
-	dma.Init(dmaStart, dmaSize)
+	device := drive.ConfigureUSB()
 
 	usb.USB1.Init()
 	usb.USB1.DeviceMode()
 
 	// To further reduce the attack surface, start the USB stack only when
 	// the card is unlocked (or in pairing mode).
-	if !ready {
+	if !drive.Ready {
 		usb.USB1.Stop()
 
-		for !ready {
+		for !drive.Ready {
 			runtime.Gosched()
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -109,22 +115,22 @@ func main() {
 	usb.USB1.Start(device)
 }
 
-func pairingMode() {
+func pairingMode(d *ums.Drive) {
 	code, err := newPairingCode()
 
 	if err != nil {
 		panic(err)
 	}
 
-	cards = append(cards, pairing.Disk(code, Revision))
-	ready = true
+	d.Card = pairing.Disk(code, Revision)
+	d.Ready = true
 
 	go func() {
 		var on bool
 
 		for {
 			select {
-			case <-pairingComplete:
+			case <-d.PairingComplete:
 				usbarmory.LED("blue", false)
 				return
 			default:

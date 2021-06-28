@@ -9,6 +9,8 @@ package remote
 import (
 	"sync"
 	"time"
+
+	"github.com/f-secure-foundry/armory-drive/internal/ums"
 )
 
 type Session struct {
@@ -22,6 +24,8 @@ type Session struct {
 
 	PairingMode  bool
 	PairingNonce uint64
+
+	Drive *ums.Drive
 
 	Data []byte
 }

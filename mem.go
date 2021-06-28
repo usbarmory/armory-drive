@@ -8,6 +8,8 @@ package main
 
 import (
 	_ "unsafe"
+
+	"github.com/f-secure-foundry/tamago/dma"
 )
 
 // Override usbarmory pkg ramSize and `mem` allocation, as this application
@@ -20,3 +22,7 @@ var dmaStart uint32 = 0x90000000
 
 // 256MB
 var dmaSize = 0x10000000
+
+func init() {
+	dma.Init(dmaStart, dmaSize)
+}

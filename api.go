@@ -189,7 +189,7 @@ func pair(reqMsg *Message, resMsg *Message) {
 	conf.MobileLongterm = keyExchange.Key
 	err = conf.save()
 
-	pairingComplete <- true
+	session.Drive.PairingComplete <- true
 }
 
 func newSession(reqMsg *Message, resMsg *Message) {
@@ -247,8 +247,8 @@ func unlock(reqMsg *Message, resMsg *Message) {
 	session.Lock()
 
 	defer func() {
-		ready = (err == nil)
-		usbarmory.LED("white", ready)
+		session.Drive.Ready = (err == nil)
+		usbarmory.LED("white", session.Drive.Ready)
 
 		// rate limit unlock operation
 		time.Sleep(1 * time.Second)
@@ -278,10 +278,10 @@ func lock(reqMsg *Message, resMsg *Message) {
 	var err error
 
 	// no matter what, we invalidate the drive
-	ready = false
+	session.Drive.Ready = false
 	err = setCipher(Cipher_NONE, zero)
 
-	usbarmory.LED("white", ready)
+	usbarmory.LED("white", session.Drive.Ready)
 
 	if err != nil {
 		resMsg.Error = ErrorCode_GENERIC_ERROR
@@ -291,15 +291,15 @@ func lock(reqMsg *Message, resMsg *Message) {
 func status(reqMsg *Message, resMsg *Message) {
 	var capacity uint64
 
-	if len(cards) > 0 {
-		info := cards[0].Info()
+	if card := session.Drive.Card; card != nil {
+		info := card.Info()
 		capacity = uint64(info.Blocks) * uint64(info.BlockSize)
 	}
 
 	s := &Status{
 		Version:       fmt.Sprintf("%s", Revision),
 		Capacity:      capacity,
-		Locked:        !ready,
+		Locked:        !session.Drive.Ready,
 		Configuration: conf.Settings,
 	}
 
@@ -310,7 +310,7 @@ func configuration(reqMsg *Message, resMsg *Message) {
 	settings := &Configuration{}
 	err := proto.Unmarshal(reqMsg.Payload, settings)
 
-	if err != nil || ready {
+	if err != nil || session.Drive.Ready {
 		resMsg.Error = ErrorCode_INVALID_MESSAGE
 		return
 	}
