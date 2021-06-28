@@ -147,7 +147,7 @@ func (b *BLE) handleEvent(buf []byte) {
 		return
 	}
 
-	res := b.eventHandler(event)
+	res := b.handleEnvelope(event)
 
 	for i := 0; i < len(res); i += PROTOBUF_MAX_LENGTH {
 		if i+PROTOBUF_MAX_LENGTH > len(res) {

@@ -13,6 +13,9 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+	"github.com/f-secure-foundry/armory-drive/internal/ums"
+
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
 
@@ -22,11 +25,17 @@ var BLENamePattern = regexp.MustCompile(`\+UBTLN:"([^"]+)"`)
 type eventHandler func([]byte) []byte
 
 type BLE struct {
-	Name string
+	Drive   *ums.Drive
+	Keyring *crypto.Keyring
 
-	anna         *usbarmory.ANNA
-	eventHandler eventHandler
-	data         []byte
+	name    string
+	session *Session
+
+	pairingMode  bool
+	pairingNonce uint64
+
+	anna *usbarmory.ANNA
+	data []byte
 }
 
 func (b *BLE) txPacket(buf []byte) {
@@ -127,20 +136,20 @@ func (b *BLE) rxATResponse(pattern *regexp.Regexp) (match [][]byte) {
 	return
 }
 
-func Start(fn eventHandler) (b *BLE) {
-	usbarmory.BLE.Init()
-	time.Sleep(usbarmory.RESET_GRACE_TIME)
-
+func Start() (b *BLE) {
 	b = &BLE{
-		anna:         usbarmory.BLE,
-		eventHandler: fn,
+		anna:    usbarmory.BLE,
+		session: &Session{},
 	}
+
+	b.anna.Init()
+	time.Sleep(usbarmory.RESET_GRACE_TIME)
 
 	b.rxATResponse(BLEStartupPattern)
 
 	b.anna.UART.Write([]byte("AT+UBTLN?\r"))
 	m := b.rxATResponse(BLENamePattern)
-	b.Name = string(m[1])
+	b.name = string(m[1])
 
 	// enter data mode
 	b.anna.UART.Write([]byte("ATO2\r"))

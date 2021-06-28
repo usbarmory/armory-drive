@@ -4,13 +4,14 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package main
+package crypto
 
 import (
 	"bytes"
 	"encoding/gob"
 
 	ftapi "github.com/f-secure-foundry/armory-drive-log/api"
+	"github.com/f-secure-foundry/armory-drive/api"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
@@ -21,31 +22,56 @@ const (
 	CONF_MAX_BLOCKS = 4
 )
 
-var conf *PersistentConfiguration
-
 type PersistentConfiguration struct {
 	// serialized long term BLE peer authentication keys
 	ArmoryLongterm []byte
 	MobileLongterm []byte
 
 	// BLE API Configuration
-	Settings *Configuration
+	Settings *api.Configuration
 
 	// Transparency Log Checkpoint
 	ProofBundle ftapi.ProofBundle
 }
 
-func (conf *PersistentConfiguration) save() (err error) {
-	blockSize := usbarmory.MMC.Info().BlockSize
+func (k *Keyring) reset() (err error) {
+	var armoryLongterm []byte
 
-	buf := new(bytes.Buffer)
-	err = gob.NewEncoder(buf).Encode(conf)
+	if k.ArmoryLongterm == nil {
+		err = k.NewLongtermKey()
+
+		if err != nil {
+			return
+		}
+	}
+
+	armoryLongterm, err = k.Export(UA_LONGTERM_KEY, true)
 
 	if err != nil {
 		return
 	}
 
-	snvs, err := encryptSNVS(buf.Bytes(), CONF_MAX_BLOCKS*blockSize)
+	k.Conf = &PersistentConfiguration{
+		ArmoryLongterm: armoryLongterm,
+		Settings: &api.Configuration{
+			Cipher: api.Cipher_AES128_CBC_PLAIN,
+		},
+	}
+
+	return k.Save()
+}
+
+func (k *Keyring) Save() (err error) {
+	blockSize := usbarmory.MMC.Info().BlockSize
+
+	buf := new(bytes.Buffer)
+	err = gob.NewEncoder(buf).Encode(k.Conf)
+
+	if err != nil {
+		return
+	}
+
+	snvs, err := k.encryptSNVS(buf.Bytes(), CONF_MAX_BLOCKS*blockSize)
 
 	if err != nil {
 		return
@@ -54,7 +80,7 @@ func (conf *PersistentConfiguration) save() (err error) {
 	return usbarmory.MMC.WriteBlocks(MMC_CONF_BLOCK, snvs)
 }
 
-func load(lba int, blocks int) (conf *PersistentConfiguration, err error) {
+func (k *Keyring) loadAt(lba int, blocks int) (err error) {
 	blockSize := usbarmory.MMC.Info().BlockSize
 	snvs := make([]byte, blocks*blockSize)
 	err = usbarmory.MMC.ReadBlocks(lba, snvs)
@@ -63,24 +89,22 @@ func load(lba int, blocks int) (conf *PersistentConfiguration, err error) {
 		return
 	}
 
-	buf, err := decryptSNVS(snvs)
+	buf, err := k.decryptSNVS(snvs)
 
 	if err != nil {
 		return
 	}
 
-	conf = &PersistentConfiguration{}
-	err = gob.NewDecoder(bytes.NewBuffer(buf)).Decode(conf)
+	k.Conf = &PersistentConfiguration{}
+	err = gob.NewDecoder(bytes.NewBuffer(buf)).Decode(k.Conf)
 
 	return
 }
 
-func LoadConfiguration() (conf *PersistentConfiguration, err error) {
+func (k *Keyring) load() (err error) {
 	// support changes in configuration size over time
 	for blocks := CONF_MAX_BLOCKS; blocks >= CONF_MIN_BLOCKS; blocks-- {
-		conf, err = load(MMC_CONF_BLOCK, blocks)
-
-		if err == nil {
+		if err = k.loadAt(MMC_CONF_BLOCK, blocks); err == nil {
 			return
 		}
 	}

@@ -7,7 +7,7 @@
 package ums
 
 import (
-	"sync"
+	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
 	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
 )
@@ -21,8 +21,8 @@ type Card interface {
 
 // Drive represents an encrypted drive instance.
 type Drive struct {
-	// Cipher is the (optional) encryption cipher function
-	Cipher func(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup)
+	// Keyring instance
+	Keyring *crypto.Keyring
 
 	// Lock is the function which locks the encrypted drive
 	Lock func()

@@ -4,7 +4,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package main
+package crypto
 
 import (
 	"crypto/aes"
@@ -20,7 +20,7 @@ type dcpCipher struct {
 // NewDCPKeyRAMCipher creates and returns a new cipher.Block. The keyIndex
 // argument represents a key RAM slot, set with either dcp.DeriveKey() or
 // dcp.SetKey(), for hardware accelerated AES-128 encryption.
-func NewDCPKeyRAMCipher(keyIndex int) (c cipher.Block, err error) {
+func newDCPKeyRAMCipher(keyIndex int) (c cipher.Block, err error) {
 	c = &dcpCipher{
 		keyIndex: keyIndex,
 	}
@@ -32,7 +32,7 @@ func NewDCPKeyRAMCipher(keyIndex int) (c cipher.Block, err error) {
 // be a 16 bytes AES key for hardware accelerated AES-128.
 //
 // The passed key is placed in DCP RAM slot 0 for use.
-func NewDCPCipher(key []byte) (c cipher.Block, err error) {
+func newDCPCipher(key []byte) (c cipher.Block, err error) {
 	c = &dcpCipher{
 		keyIndex: BLOCK_KEY,
 	}

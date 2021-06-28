@@ -4,7 +4,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package main
+package crypto
 
 import (
 	"crypto/cipher"
@@ -15,6 +15,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"io"
+	"sync"
 
 	"golang.org/x/crypto/hkdf"
 	"golang.org/x/crypto/xts"
@@ -48,6 +49,12 @@ type Keyring struct {
 	// persistent storage encryption key
 	snvs []byte
 
+	// FDE function
+	Cipher func(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup)
+
+	// Configuration instance
+	Conf *PersistentConfiguration
+
 	// long term BLE peer authentication keys
 	ArmoryLongterm *ecdsa.PrivateKey
 	MobileLongterm *ecdsa.PublicKey
@@ -62,65 +69,40 @@ type Keyring struct {
 	sessionKey []byte
 }
 
-var keyring = &Keyring{}
-
 func (k *Keyring) Init(overwrite bool) (err error) {
 	// derive persistent storage encryption key
-	if k.snvs, err = deriveKey([]byte(SNVS_DIV), SNVS_KEY, true); err != nil {
+	if k.snvs, err = k.deriveKey([]byte(SNVS_DIV), SNVS_KEY, true); err != nil {
 		return
 	}
 
-	conf, err = LoadConfiguration()
+	err = k.load()
 
 	if err != nil || overwrite {
-		var armoryLongterm []byte
-
-		if k.ArmoryLongterm == nil {
-			err = k.NewLongtermKey()
-
-			if err != nil {
-				return
-			}
-		}
-
-		armoryLongterm, err = k.Export(UA_LONGTERM_KEY, true)
-
-		if err != nil {
-			return
-		}
-
-		conf = &PersistentConfiguration{
-			ArmoryLongterm: armoryLongterm,
-			Settings: &Configuration{
-				Cipher: Cipher_AES128_CBC_PLAIN,
-			},
-		}
-
-		err = conf.save()
+		err = k.reset()
 
 		if err != nil {
 			return
 		}
 	}
 
-	err = k.Import(UA_LONGTERM_KEY, true, conf.ArmoryLongterm)
+	err = k.Import(UA_LONGTERM_KEY, true, k.Conf.ArmoryLongterm)
 
 	if err != nil {
 		return
 	}
 
 	// we might not be paired yet, so ignore errors
-	k.Import(MD_LONGTERM_KEY, false, conf.MobileLongterm)
+	k.Import(MD_LONGTERM_KEY, false, k.Conf.MobileLongterm)
 
 	// Derive salt, used for ESSIV computation as well as BLOCK_KEY derivation.
-	if k.salt, err = deriveKey([]byte(ESSIV_DIV), ESSIV_KEY, true); err != nil {
+	if k.salt, err = k.deriveKey([]byte(ESSIV_DIV), ESSIV_KEY, true); err != nil {
 		return
 	}
 
 	return
 }
 
-func (k *Keyring) Reset() {
+func (k *Keyring) ResetSession() {
 	k.sessionKey = []byte{}
 	k.armoryEphemeral = nil
 	k.mobileEphemeral = nil

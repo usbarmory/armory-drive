@@ -72,7 +72,7 @@ check_hab_keys:
 proto:
 	@echo "generating protobuf classes"
 	-rm -f *.pb.go
-	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') ${PROTOC} --go_out=. armory.proto
+	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') cd $(CURDIR)/api && ${PROTOC} --go_out=. armory.proto
 
 dcd:
 	echo $(GOMODCACHE)

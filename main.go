@@ -7,7 +7,6 @@
 package main
 
 import (
-	"encoding/binary"
 	"fmt"
 	"log"
 	"runtime"
@@ -16,10 +15,11 @@ import (
 	"github.com/f-secure-foundry/tamago/soc/imx6"
 	"github.com/f-secure-foundry/tamago/soc/imx6/usb"
 
+	"github.com/f-secure-foundry/armory-drive/api"
 	"github.com/f-secure-foundry/armory-drive/internal/ble"
+	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 	"github.com/f-secure-foundry/armory-drive/internal/hab"
 	"github.com/f-secure-foundry/armory-drive/internal/pairing"
-	"github.com/f-secure-foundry/armory-drive/internal/remote"
 	"github.com/f-secure-foundry/armory-drive/internal/ums"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
@@ -27,8 +27,6 @@ import (
 
 // initialized at compile time (see Makefile)
 var Revision string
-
-var session *remote.Session
 
 func init() {
 	if err := imx6.SetARMFreq(900); err != nil {
@@ -39,55 +37,51 @@ func init() {
 }
 
 func main() {
-	var pairing bool
-
 	usbarmory.LED("blue", false)
 	usbarmory.LED("white", false)
 
-	err := usbarmory.MMC.Detect()
-
-	if err != nil {
+	if err := usbarmory.MMC.Detect(); err != nil {
 		panic(err)
 	}
 
-	err = keyring.Init(false)
+	keyring := &crypto.Keyring{}
+
+	err := keyring.Init(false)
 
 	if err != nil {
 		panic(err)
 	}
 
 	drive := &ums.Drive{
-		Cipher: cipherFn,
-		Mult:   ums.BLOCK_SIZE_MULTIPLIER,
+		Keyring: keyring,
+		Mult:    ums.BLOCK_SIZE_MULTIPLIER,
 		Lock: func() {
-			lock(nil, nil)
+			keyring.SetCipher(api.Cipher_NONE, nil)
+			usbarmory.LED("white", false)
 		},
 	}
 
 	drive.Init()
 	drive.Detect(usbarmory.SD)
 
+	b := ble.Start()
+
+	b.Drive = drive
+	b.Keyring = keyring
+
 	if drive.Card == nil {
-		pairing = true
-	}
-
-	b := ble.Start(handleEnvelope)
-
-	session = &remote.Session{
-		PeerName: b.Name,
-		Drive:    drive,
-	}
-
-	if pairing {
 		// provision Secure Boot as required
 		hab.Init()
 
-		session.PairingMode = true
-		session.PairingNonce = binary.BigEndian.Uint64(rng(8))
+		code, err := b.PairingMode()
 
-		pairingMode(drive)
+		if err != nil {
+			panic(err)
+		}
 
-		drive.Cipher = nil
+		pairingMode(drive, code)
+
+		drive.Keyring = nil
 		drive.Mult = 1
 	}
 
@@ -115,13 +109,7 @@ func main() {
 	usb.USB1.Start(device)
 }
 
-func pairingMode(d *ums.Drive) {
-	code, err := newPairingCode()
-
-	if err != nil {
-		panic(err)
-	}
-
+func pairingMode(d *ums.Drive, code []byte) {
 	d.Card = pairing.Disk(code, Revision)
 	d.Ready = true
 

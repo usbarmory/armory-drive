@@ -266,9 +266,9 @@ func (d *Drive) read(lba int, blocks int) (err error) {
 			return
 		}
 
-		if d.Cipher != nil {
+		if d.Keyring != nil {
 			wg.Add(1)
-			go d.Cipher(slice, lba+i, batch, blockSize, false, wg)
+			go d.Keyring.Cipher(slice, lba+i, batch, blockSize, false, wg)
 		}
 	}
 
@@ -300,8 +300,8 @@ func (d *Drive) write(lba int, buf []byte) (err error) {
 		end := start + blockSize*batch
 		slice := buf[start:end]
 
-		if d.Cipher != nil {
-			d.Cipher(slice, lba+i, batch, blockSize, true, nil)
+		if d.Keyring != nil {
+			d.Keyring.Cipher(slice, lba+i, batch, blockSize, true, nil)
 		}
 
 		sliceBlock := (lba + i) * d.Mult
@@ -345,13 +345,14 @@ func (d *Drive) handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte
 			// locked drive cannot be started
 			csw.Status = usb.CSW_STATUS_COMMAND_FAILED
 			// lock drive at eject
-		} else if d.Ready && !start && d.Cipher != nil {
+		} else if d.Ready && !start && d.Keyring != nil {
+			d.Ready = false
 			d.Lock()
 		} else {
 			d.Ready = start
 		}
 
-		if !d.Ready && d.Cipher == nil {
+		if !d.Ready && d.Keyring == nil {
 			d.PairingComplete <- true
 
 			go func() {

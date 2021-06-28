@@ -4,28 +4,19 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package remote
+package ble
 
 import (
 	"sync"
 	"time"
-
-	"github.com/f-secure-foundry/armory-drive/internal/ums"
 )
 
 type Session struct {
 	sync.Mutex
 
-	PeerName string
-
 	Last   int64
 	Skew   time.Duration
 	Active bool
-
-	PairingMode  bool
-	PairingNonce uint64
-
-	Drive *ums.Drive
 
 	Data []byte
 }
