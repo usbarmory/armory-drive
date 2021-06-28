@@ -50,20 +50,15 @@ type Drive struct {
 	dataPending *writeOp
 }
 
-func (d *Drive) Init() {
-	d.PairingComplete = make(chan bool)
-	d.send = make(chan []byte, 2)
-	d.free = make(chan uint32, 1)
-}
-
-func (d *Drive) Detect(card *usdhc.USDHC) (err error) {
-	err = card.Detect()
-
-	if err != nil {
+func (d *Drive) Init(card *usdhc.USDHC) (err error) {
+	if err = card.Detect(); err != nil {
 		return
 	}
 
 	d.Card = card
+	d.PairingComplete = make(chan bool)
+	d.send = make(chan []byte, 2)
+	d.free = make(chan uint32, 1)
 
 	return
 }

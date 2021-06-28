@@ -136,23 +136,23 @@ func (b *BLE) rxATResponse(pattern *regexp.Regexp) (match [][]byte) {
 	return
 }
 
-func Start() (b *BLE) {
-	b = &BLE{
-		anna:    usbarmory.BLE,
-		session: &Session{},
+func (b *BLE) Init() (err error) {
+	if err = b.anna.Init(); err != nil {
+		return
 	}
 
-	b.anna.Init()
 	time.Sleep(usbarmory.RESET_GRACE_TIME)
-
 	b.rxATResponse(BLEStartupPattern)
 
 	b.anna.UART.Write([]byte("AT+UBTLN?\r"))
 	m := b.rxATResponse(BLENamePattern)
+
 	b.name = string(m[1])
+	b.session = &Session{}
 
 	// enter data mode
 	b.anna.UART.Write([]byte("ATO2\r"))
+
 	usbarmory.LED("blue", true)
 
 	go func() {

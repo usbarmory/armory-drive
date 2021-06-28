@@ -17,8 +17,7 @@ type Session struct {
 	Last   int64
 	Skew   time.Duration
 	Active bool
-
-	Data []byte
+	Data   []byte
 }
 
 func (s *Session) Reset() {

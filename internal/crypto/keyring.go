@@ -37,18 +37,6 @@ const (
 )
 
 type Keyring struct {
-	// CPU bound ESSIV cipher
-	cbiv cipher.Block
-	// CPU bound block cipher
-	cb cipher.Block
-	// CPU bound xts block cipher
-	cbxts *xts.Cipher
-
-	// IV encryption key for ESSIV computation
-	salt []byte
-	// persistent storage encryption key
-	snvs []byte
-
 	// FDE function
 	Cipher func(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup)
 
@@ -67,6 +55,18 @@ type Keyring struct {
 	preMaster []byte
 	// BLE shared session key
 	sessionKey []byte
+
+	// CPU bound ESSIV cipher
+	cbiv cipher.Block
+	// CPU bound block cipher
+	cb cipher.Block
+	// CPU bound xts block cipher
+	cbxts *xts.Cipher
+
+	// IV encryption key for ESSIV computation
+	salt []byte
+	// persistent storage encryption key
+	snvs []byte
 }
 
 func (k *Keyring) Init(overwrite bool) (err error) {
@@ -75,7 +75,7 @@ func (k *Keyring) Init(overwrite bool) (err error) {
 		return
 	}
 
-	err = k.load()
+	err = k.Load()
 
 	if err != nil || overwrite {
 		err = k.reset()

@@ -61,25 +61,6 @@ func (k *Keyring) reset() (err error) {
 	return k.Save()
 }
 
-func (k *Keyring) Save() (err error) {
-	blockSize := usbarmory.MMC.Info().BlockSize
-
-	buf := new(bytes.Buffer)
-	err = gob.NewEncoder(buf).Encode(k.Conf)
-
-	if err != nil {
-		return
-	}
-
-	snvs, err := k.encryptSNVS(buf.Bytes(), CONF_MAX_BLOCKS*blockSize)
-
-	if err != nil {
-		return
-	}
-
-	return usbarmory.MMC.WriteBlocks(MMC_CONF_BLOCK, snvs)
-}
-
 func (k *Keyring) loadAt(lba int, blocks int) (err error) {
 	blockSize := usbarmory.MMC.Info().BlockSize
 	snvs := make([]byte, blocks*blockSize)
@@ -101,7 +82,7 @@ func (k *Keyring) loadAt(lba int, blocks int) (err error) {
 	return
 }
 
-func (k *Keyring) load() (err error) {
+func (k *Keyring) Load() (err error) {
 	// support changes in configuration size over time
 	for blocks := CONF_MAX_BLOCKS; blocks >= CONF_MIN_BLOCKS; blocks-- {
 		if err = k.loadAt(MMC_CONF_BLOCK, blocks); err == nil {
@@ -110,4 +91,23 @@ func (k *Keyring) load() (err error) {
 	}
 
 	return
+}
+
+func (k *Keyring) Save() (err error) {
+	blockSize := usbarmory.MMC.Info().BlockSize
+
+	buf := new(bytes.Buffer)
+	err = gob.NewEncoder(buf).Encode(k.Conf)
+
+	if err != nil {
+		return
+	}
+
+	snvs, err := k.encryptSNVS(buf.Bytes(), CONF_MAX_BLOCKS*blockSize)
+
+	if err != nil {
+		return
+	}
+
+	return usbarmory.MMC.WriteBlocks(MMC_CONF_BLOCK, snvs)
 }

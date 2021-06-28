@@ -46,9 +46,7 @@ func main() {
 
 	keyring := &crypto.Keyring{}
 
-	err := keyring.Init(false)
-
-	if err != nil {
+	if err := keyring.Init(false); err != nil {
 		panic(err)
 	}
 
@@ -60,14 +58,13 @@ func main() {
 			usbarmory.LED("white", false)
 		},
 	}
+	drive.Init(usbarmory.SD)
 
-	drive.Init()
-	drive.Detect(usbarmory.SD)
-
-	b := ble.Start()
-
-	b.Drive = drive
-	b.Keyring = keyring
+	b := &ble.BLE{
+		Drive:   drive,
+		Keyring: keyring,
+	}
+	b.Init()
 
 	if drive.Card == nil {
 		// provision Secure Boot as required
@@ -79,10 +76,12 @@ func main() {
 			panic(err)
 		}
 
-		pairingMode(drive, code)
-
+		drive.Card = pairing.Disk(code, Revision)
 		drive.Keyring = nil
 		drive.Mult = 1
+		drive.Ready = true
+
+		go pairingFeedback(drive.PairingComplete)
 	}
 
 	device := drive.ConfigureUSB()
@@ -104,31 +103,24 @@ func main() {
 	}
 
 	usb.USB1.Reset()
-
-	// never returns
 	usb.USB1.Start(device)
 }
 
-func pairingMode(d *ums.Drive, code []byte) {
-	d.Card = pairing.Disk(code, Revision)
-	d.Ready = true
+func pairingFeedback(done chan bool) {
+	var on bool
 
-	go func() {
-		var on bool
-
-		for {
-			select {
-			case <-d.PairingComplete:
-				usbarmory.LED("blue", false)
-				return
-			default:
-			}
-
-			on = !on
-			usbarmory.LED("blue", on)
-
-			runtime.Gosched()
-			time.Sleep(1 * time.Second)
+	for {
+		select {
+		case <-done:
+			usbarmory.LED("blue", false)
+			return
+		default:
 		}
-	}()
+
+		on = !on
+		usbarmory.LED("blue", on)
+
+		runtime.Gosched()
+		time.Sleep(1 * time.Second)
+	}
 }

@@ -97,7 +97,6 @@ func update(entry fs.DirectoryEntry) {
 	}
 
 	log.Println("extracting OTA file")
-
 	imx, _, err := extract(buf)
 
 	if err != nil {
@@ -111,7 +110,6 @@ func update(entry fs.DirectoryEntry) {
 	//conf.UpdateProofBundle(proof)
 
 	log.Println("flashing IMX file")
-
 	err = usbarmory.MMC.WriteBlocks(2, imx)
 
 	if err != nil {
@@ -119,7 +117,6 @@ func update(entry fs.DirectoryEntry) {
 	}
 
 	log.Println("OTA complete")
-
 	exit <- true
 
 	usbarmory.LED("blue", false)

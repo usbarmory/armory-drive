@@ -23,16 +23,14 @@ import (
 
 func (b *BLE) parseEnvelope(buf []byte) (msg *api.Message, err error) {
 	env := &api.Envelope{}
-	err = proto.Unmarshal(buf, env)
 
-	if err != nil {
+	if err = proto.Unmarshal(buf, env); err != nil {
 		return
 	}
 
 	msg = &api.Message{}
-	err = proto.Unmarshal(env.Message, msg)
 
-	if err != nil {
+	if err = proto.Unmarshal(env.Message, msg); err != nil {
 		return
 	}
 
@@ -42,17 +40,13 @@ func (b *BLE) parseEnvelope(buf []byte) (msg *api.Message, err error) {
 	}
 
 	if !b.pairingMode && b.Keyring.MobileLongterm != nil {
-		err = b.verifyEnvelope(env)
-
-		if err != nil {
+		if err = b.verifyEnvelope(env); err != nil {
 			return
 		}
 	}
 
 	if msg.OpCode != api.OpCode_PAIR && msg.OpCode != api.OpCode_SESSION {
-		err = b.decryptPayload(msg)
-
-		if err != nil {
+		if err = b.decryptPayload(msg); err != nil {
 			return
 		}
 	}
@@ -77,9 +71,7 @@ func (b *BLE) handleEnvelope(req []byte) (res []byte) {
 		var err error
 
 		if resMsg.OpCode != api.OpCode_PAIR && resMsg.OpCode != api.OpCode_SESSION {
-			err = b.encryptPayload(resMsg)
-
-			if err != nil {
+			if err = b.encryptPayload(resMsg); err != nil {
 				return
 			}
 		}
@@ -88,9 +80,7 @@ func (b *BLE) handleEnvelope(req []byte) (res []byte) {
 			Message: resMsg.Bytes(),
 		}
 
-		err = b.signEnvelope(resEnv)
-
-		if err != nil {
+		if err = b.signEnvelope(resEnv); err != nil {
 			return
 		}
 
@@ -175,9 +165,7 @@ func (b *BLE) pair(reqMsg *api.Message, resMsg *api.Message) {
 	b.Keyring.Init(true)
 
 	// Import the MD longterm key.
-	err = b.Keyring.Import(crypto.MD_LONGTERM_KEY, false, keyExchange.Key)
-
-	if err != nil {
+	if err = b.Keyring.Import(crypto.MD_LONGTERM_KEY, false, keyExchange.Key); err != nil {
 		return
 	}
 
@@ -206,16 +194,13 @@ func (b *BLE) newSession(reqMsg *api.Message, resMsg *api.Message) {
 		}
 	}()
 
-	err = b.Keyring.Import(crypto.MD_EPHEMERAL_KEY, false, keyExchange.Key)
-
-	if err != nil {
+	if err = b.Keyring.Import(crypto.MD_EPHEMERAL_KEY, false, keyExchange.Key); err != nil {
 		return
 	}
 
 	nonce := crypto.Rand(8)
-	err = b.Keyring.NewSessionKeys(nonce)
 
-	if err != nil {
+	if err = b.Keyring.NewSessionKeys(nonce); err != nil {
 		return
 	}
 
@@ -277,9 +262,7 @@ func (b *BLE) lock(reqMsg *api.Message, resMsg *api.Message) {
 	b.Drive.Ready = false
 	usbarmory.LED("white", false)
 
-	err = b.Keyring.SetCipher(api.Cipher_NONE, nil)
-
-	if err != nil {
+	if err = b.Keyring.SetCipher(api.Cipher_NONE, nil); err != nil {
 		resMsg.Error = api.ErrorCode_GENERIC_ERROR
 	}
 }
