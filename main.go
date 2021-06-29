@@ -12,15 +12,15 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/f-secure-foundry/tamago/soc/imx6"
-	"github.com/f-secure-foundry/tamago/soc/imx6/usb"
-
 	"github.com/f-secure-foundry/armory-drive/api"
 	"github.com/f-secure-foundry/armory-drive/internal/ble"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 	"github.com/f-secure-foundry/armory-drive/internal/hab"
 	"github.com/f-secure-foundry/armory-drive/internal/pairing"
 	"github.com/f-secure-foundry/armory-drive/internal/ums"
+
+	"github.com/f-secure-foundry/tamago/soc/imx6"
+	"github.com/f-secure-foundry/tamago/soc/imx6/usb"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
@@ -51,13 +51,13 @@ func main() {
 	}
 
 	drive := &ums.Drive{
-		Cipher: true,
+		Cipher:  true,
 		Keyring: keyring,
 		Lock: func() {
 			keyring.SetCipher(api.Cipher_NONE, nil)
 			usbarmory.LED("white", false)
 		},
-		Mult:    ums.BLOCK_SIZE_MULTIPLIER,
+		Mult: ums.BLOCK_SIZE_MULTIPLIER,
 	}
 	drive.Init(usbarmory.SD)
 

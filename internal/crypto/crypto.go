@@ -22,11 +22,11 @@ import (
 
 	"github.com/f-secure-foundry/armory-drive/api"
 
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/crypto/xts"
-
 	"github.com/f-secure-foundry/tamago/dma"
 	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
+
+	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/crypto/xts"
 )
 
 const (

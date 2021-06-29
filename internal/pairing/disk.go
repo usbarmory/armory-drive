@@ -13,10 +13,10 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
+
 	"github.com/mitchellh/go-fs"
 	"github.com/mitchellh/go-fs/fat"
-
-	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
 )
 
 const readme = `

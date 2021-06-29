@@ -112,7 +112,6 @@ func (k *Keyring) Save() (err error) {
 	return usbarmory.MMC.WriteBlocks(MMC_CONF_BLOCK, snvs)
 }
 
-
 func (k *Keyring) UpdateProof(pb *logapi.ProofBundle) {
 	if k.Conf == nil {
 		return

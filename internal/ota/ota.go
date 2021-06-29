@@ -99,17 +99,20 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 	}
 
 	log.Println("extracting OTA file")
-	imx, proof, err := extract(buf)
+	imx, csf, proof, err := extract(buf)
 
 	if err != nil {
 		panic(err)
 	}
 
-	pb, err := verify(imx, proof)
+	pb, err := verify(imx, csf, proof)
 
 	if err != nil {
 		panic("invalid firmware proof")
 	}
+
+	// append HAB signature
+	imx = append(imx, csf...)
 
 	log.Println("flashing IMX file")
 	err = usbarmory.MMC.WriteBlocks(2, imx)

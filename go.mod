@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/f-secure-foundry/armory-boot v0.0.0-20210609191433-abf025efe71c
-	github.com/f-secure-foundry/armory-drive-log v0.0.0-20210629065400-1c35dfbc33b0
+	github.com/f-secure-foundry/armory-drive-log v0.0.0-20210629083715-c7e2e05f2d61
 	github.com/f-secure-foundry/crucible v0.0.0-20210519190101-b84eb54532b9
 	github.com/f-secure-foundry/hid v0.0.0-20210318233634-85ced88a1ffe
 	github.com/f-secure-foundry/tamago v0.0.0-20210615175023-a3a2165874e8

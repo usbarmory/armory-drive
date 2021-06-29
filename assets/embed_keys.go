@@ -26,7 +26,7 @@ func read(env string) (buf []byte, err error) {
 	p := os.Getenv(env)
 
 	if len(p) == 0 {
-		return
+		return nil, fmt.Errorf("%s must be defined", env)
 	}
 
 	if buf, err = os.ReadFile(p); err != nil {
@@ -34,14 +34,14 @@ func read(env string) (buf []byte, err error) {
 	}
 
 	if len(buf) == 0 {
-		log.Fatalf("%s is empty", p)
+		return nil, fmt.Errorf("%s is empty", p)
 	}
 
 	return
 }
 
 func main() {
-	FRPublicKey, err := read("MANIFEST_PUBKEY")
+	FRPublicKey, err := read("FR_PUBKEY")
 
 	if err != nil {
 		log.Fatal(err)

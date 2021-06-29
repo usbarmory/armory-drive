@@ -13,12 +13,12 @@ import (
 	"log"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-
 	"github.com/f-secure-foundry/armory-drive/api"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
+
+	"google.golang.org/protobuf/proto"
 )
 
 func (b *BLE) parseEnvelope(buf []byte) (msg *api.Message, err error) {

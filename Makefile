@@ -80,8 +80,10 @@ dcd:
 	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
 
 clean:
-	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig update.zip $(APP).csf $(APP).sdp $(APP).dcd $(CURDIR)/api/*.pb.go $(CURDIR)/assets/tmp*.go
+	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd
+	@rm -fr $(CURDIR)/api/*.pb.go $(CURDIR)/assets/tmp*.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
+	@rm -fr $(APP).release update.zip
 
 #### dependencies ####
 
@@ -144,14 +146,15 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 
 $(APP).release: TAG = $(shell date +v%Y.%m.%d)
 $(APP).release: PLATFORM = UA-MKII-ULZ
-$(APP).release:
-	@if [ "${FR_PRIVKEY}" -= "" ]; then \
+$(APP).release: $(APP)-signed.imx
+	@if [ "${FR_PRIVKEY}" == "" ]; then \
 		echo 'FR_PRIVKEY must be set'; \
 		exit 1; \
 	fi
 	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
 	$(shell ${TAMAGO} env GOPATH)/bin/create_release \
 		--logtostderr \
+		--output $(APP).release \
 		--description="$(APP) ${TAG}" \
 		--platform_id=${PLATFORM} \
 		--commit_hash=${REV} \
@@ -159,4 +162,4 @@ $(APP).release:
 		--revision_tag=${TAG} \
 		--artifacts='$(CURDIR)/$(APP).*' \
 		--private_key=${FR_PRIVKEY} > $(APP).release && \
-	zip update.zip $(APP)-signed.imx $(APP).release
+	zip update.zip $(APP).imx $(APP).csf $(APP).release

@@ -9,14 +9,29 @@ package ota
 import (
 	"archive/zip"
 	"bytes"
-	"errors"
+	"fmt"
 	"io"
 )
 
-const imxFileName = "armory-drive-signed.imx"
-const proofFileName = "armory-drive.release"
+const (
+	imxPath = "armory-drive.imx"
+	csfPath = "armory-drive.csf"
+	proofPath = "armory-drive.release"
+)
 
-func extract(buf []byte) (imx []byte, proof []byte, err error) {
+func open(reader *zip.Reader, p string) (buf []byte, err error) {
+	f, err := reader.Open(p)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s", p)
+	}
+	defer f.Close()
+
+	return io.ReadAll(f)
+}
+
+
+func extract(buf []byte) (imx []byte, csf []byte, proof []byte, err error) {
 	r := bytes.NewReader(buf)
 
 	reader, err := zip.NewReader(r, r.Size())
@@ -25,26 +40,19 @@ func extract(buf []byte) (imx []byte, proof []byte, err error) {
 		return
 	}
 
-	imxFile, err := reader.Open(imxFileName)
-
-	if err != nil {
-		return nil, nil, errors.New("invalid update file, missing imx file")
-	}
-	defer func() { _ = imxFile.Close() }() // make errcheck happy
-
-	if imx, err = io.ReadAll(imxFile); err != nil {
-		return nil, nil, errors.New("invalid update file, could not read imx file")
+	if imx, err = open(reader, imxPath); err != nil {
+		err = fmt.Errorf("could not open %s, %v", imxPath, err)
+		return
 	}
 
-	proofFile, err := reader.Open(proofFileName)
-
-	if err != nil {
-		return nil, nil, errors.New("invalid update file, missing proof file")
+	if csf, err = open(reader, csfPath); err != nil {
+		err = fmt.Errorf("could not open %s, %v", csfPath, err)
+		return
 	}
-	defer func() { _ = proofFile.Close() }() // make errcheck happy
 
-	if proof, err = io.ReadAll(proofFile); err != nil {
-		return nil, nil, errors.New("invalid update file, could not read proof file")
+	if proof, err = open(reader, proofPath); err != nil {
+		err = fmt.Errorf("could not open %s, %v", proofPath, err)
+		return
 	}
 
 	return
