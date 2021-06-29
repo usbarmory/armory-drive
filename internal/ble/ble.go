@@ -137,6 +137,8 @@ func (b *BLE) rxATResponse(pattern *regexp.Regexp) (match [][]byte) {
 }
 
 func (b *BLE) Init() (err error) {
+	b.anna = usbarmory.BLE
+
 	if err = b.anna.Init(); err != nil {
 		return
 	}
