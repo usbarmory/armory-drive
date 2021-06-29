@@ -21,6 +21,9 @@ type Card interface {
 
 // Drive represents an encrypted drive instance.
 type Drive struct {
+	// Cipher controls whether FDE should be applied
+	Cipher bool
+
 	// Keyring instance
 	Keyring *crypto.Keyring
 
@@ -50,7 +53,7 @@ type Drive struct {
 	dataPending *writeOp
 }
 
-func (d *Drive) Init(card *usdhc.USDHC) (err error) {
+func (d *Drive) Init(card Card) (err error) {
 	if err = card.Detect(); err != nil {
 		return
 	}

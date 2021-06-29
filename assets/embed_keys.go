@@ -9,7 +9,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -23,26 +22,35 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
+func read(env string) (buf []byte, err error) {
+	p := os.Getenv(env)
+
+	if len(p) == 0 {
+		return
+	}
+
+	if buf, err = os.ReadFile(p); err != nil {
+		return
+	}
+
+	if len(buf) == 0 {
+		log.Fatalf("%s is empty", p)
+	}
+
+	return
+}
+
 func main() {
-	var err error
+	FRPublicKey, err := read("MANIFEST_PUBKEY")
 
-	var OTAPublicKey []byte
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	if p := os.Getenv("OTA_KEY"); len(p) > 0 {
-		pub, err := os.ReadFile(p)
+	LogPublicKey, err := read("LOG_PUBKEY")
 
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// remove untrusted comment
-		pub = bytes.TrimRight(pub, "\n\r")
-		lines := bytes.Split(pub, []byte("\n"))
-		OTAPublicKey = lines[len(lines)-1]
-
-		if len(OTAPublicKey) == 0 {
-			log.Fatalf("could not parse %s", p)
-		}
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	out, err := os.Create("tmp_keys.go")
@@ -56,7 +64,8 @@ package assets
 
 func init() {
 `)
-	out.WriteString(fmt.Sprintf("\tOTAPublicKey = []byte(%s)\n", strconv.Quote(string(OTAPublicKey))))
+	out.WriteString(fmt.Sprintf("\tFRPublicKey = []byte(%s)\n", strconv.Quote(string(FRPublicKey))))
+	out.WriteString(fmt.Sprintf("\tLogPublicKey = []byte(%s)\n", strconv.Quote(string(LogPublicKey))))
 	out.WriteString(fmt.Sprintf("\tSRKHash = []byte(%s)\n", strconv.Quote(string(assets.DummySRKHash()))))
 	out.WriteString(`
 }

@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"encoding/gob"
 
-	ftapi "github.com/f-secure-foundry/armory-drive-log/api"
+	logapi "github.com/f-secure-foundry/armory-drive-log/api"
 	"github.com/f-secure-foundry/armory-drive/api"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
@@ -31,7 +31,7 @@ type PersistentConfiguration struct {
 	Settings *api.Configuration
 
 	// Transparency Log Checkpoint
-	ProofBundle ftapi.ProofBundle
+	ProofBundle *logapi.ProofBundle
 }
 
 func (k *Keyring) reset() (err error) {
@@ -110,4 +110,14 @@ func (k *Keyring) Save() (err error) {
 	}
 
 	return usbarmory.MMC.WriteBlocks(MMC_CONF_BLOCK, snvs)
+}
+
+
+func (k *Keyring) UpdateProof(pb *logapi.ProofBundle) {
+	if k.Conf == nil {
+		return
+	}
+
+	k.Conf.ProofBundle = pb
+	k.Save()
 }

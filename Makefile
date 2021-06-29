@@ -47,12 +47,12 @@ $(APP)-install.exe:
 $(APP)-install.dmg: TMPDIR = $(shell mktemp -d)
 $(APP)-install.dmg:
 	cd $(CURDIR)/assets && go generate && \
-	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(TMPDIR)/armory-drive-install_darwin-amd64 cmd/$(APP)-install/*.go && \
+	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(TMPDIR)/$(APP)-install_darwin-amd64 cmd/$(APP)-install/*.go && \
 	mkdir $(TMPDIR)/dmg && \
-	lipo -create -output $(TMPDIR)/dmg/armory-drive-install $(TMPDIR)/armory-drive-install_darwin-amd64 && \
+	lipo -create -output $(TMPDIR)/dmg/$(APP)-install $(TMPDIR)/$(APP)-install_darwin-amd64 && \
 	hdiutil create $(TMPDIR)/tmp.dmg -ov -volname "Armory Drive Install" -fs HFS+ -srcfolder $(TMPDIR)/dmg && \
-	hdiutil convert $(TMPDIR)/tmp.dmg -format UDZO -o $(TMPDIR)/armory-drive-install.dmg && \
-	cp $(TMPDIR)/armory-drive-install.dmg $(CURDIR)
+	hdiutil convert $(TMPDIR)/tmp.dmg -format UDZO -o $(TMPDIR)/$(APP)-install.dmg && \
+	cp $(TMPDIR)/$(APP)-install.dmg $(CURDIR)
 
 #### utilities ####
 
@@ -87,10 +87,10 @@ clean:
 
 $(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Revision=${REV}'"
 $(APP): check_tamago proto
-	@if [ "${OTA_KEY}" != "" ]; then \
-		echo '** WARNING ** Enabling OTA verification with public key ${OTA_KEY}'; \
+	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
+		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \
 	else \
-		echo '** WARNING ** OTA verification is disabled'; \
+		echo '** WARNING ** firmware updates authentication is disabled'; \
 	fi
 	cd $(CURDIR)/assets && ${TAMAGO} generate && \
 	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP} || (rm -f $(CURDIR)/assets/tmp*.go && exit 1)
@@ -112,6 +112,8 @@ $(APP).imx: $(APP).bin $(APP).dcd
 	mkimage -n $(APP).dcd -T imximage -e $(TEXT_START) -d $(APP).bin $(APP).imx
 	# Copy entry point from ELF file
 	dd if=$(APP) of=$(APP).imx bs=1 count=4 skip=24 seek=4 conv=notrunc
+	# Cleanup
+	rm $(APP).bin
 
 #### secure boot ####
 
@@ -137,6 +139,24 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-i $(APP).imx \
 		-o $(APP).csf && \
 	cat $(APP).imx $(APP).csf > $(APP)-signed.imx
-	@if [ "${OTA_KEYS}" != "" ]; then \
-		zip update.zip $(APP)-signed.imx; \
+
+#### firmware release ####
+
+$(APP).release: TAG = $(shell date +v%Y.%m.%d)
+$(APP).release: PLATFORM = UA-MKII-ULZ
+$(APP).release:
+	@if [ "${FR_PRIVKEY}" -= "" ]; then \
+		echo 'FR_PRIVKEY must be set'; \
+		exit 1; \
 	fi
+	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
+	$(shell ${TAMAGO} env GOPATH)/bin/create_release \
+		--logtostderr \
+		--description="$(APP) ${TAG}" \
+		--platform_id=${PLATFORM} \
+		--commit_hash=${REV} \
+		--tool_chain="tama$(shell ${TAMAGO} version)" \
+		--revision_tag=${TAG} \
+		--artifacts='$(CURDIR)/$(APP).*' \
+		--private_key=${FR_PRIVKEY} > $(APP).release && \
+	zip update.zip $(APP)-signed.imx $(APP).release

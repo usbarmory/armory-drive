@@ -14,7 +14,7 @@ import (
 )
 
 const imxFileName = "armory-drive-signed.imx"
-const proofFileName = "armory-drive.manifest"
+const proofFileName = "armory-drive.release"
 
 func extract(buf []byte) (imx []byte, proof []byte, err error) {
 	r := bytes.NewReader(buf)
@@ -36,16 +36,16 @@ func extract(buf []byte) (imx []byte, proof []byte, err error) {
 		return nil, nil, errors.New("invalid update file, could not read imx file")
 	}
 
-	//proofFile, err := reader.Open(proofFileName)
+	proofFile, err := reader.Open(proofFileName)
 
-	//if err != nil {
-	//	return nil, nil, errors.New("invalid update file, missing proof file")
-	//}
-	//defer func() { _ = proofFile.Close() }() // make errcheck happy
+	if err != nil {
+		return nil, nil, errors.New("invalid update file, missing proof file")
+	}
+	defer func() { _ = proofFile.Close() }() // make errcheck happy
 
-	//if proof, err = io.ReadAll(proofFile); err != nil {
-	//	return nil, nil, errors.New("invalid update file, could not read proof file")
-	//}
+	if proof, err = io.ReadAll(proofFile); err != nil {
+		return nil, nil, errors.New("invalid update file, could not read proof file")
+	}
 
 	return
 }

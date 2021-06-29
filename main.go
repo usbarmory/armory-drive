@@ -51,12 +51,13 @@ func main() {
 	}
 
 	drive := &ums.Drive{
+		Cipher: true,
 		Keyring: keyring,
-		Mult:    ums.BLOCK_SIZE_MULTIPLIER,
 		Lock: func() {
 			keyring.SetCipher(api.Cipher_NONE, nil)
 			usbarmory.LED("white", false)
 		},
+		Mult:    ums.BLOCK_SIZE_MULTIPLIER,
 	}
 	drive.Init(usbarmory.SD)
 
@@ -76,10 +77,11 @@ func main() {
 			panic(err)
 		}
 
-		drive.Card = pairing.Disk(code, Revision)
-		drive.Keyring = nil
+		drive.Cipher = false
 		drive.Mult = 1
 		drive.Ready = true
+
+		drive.Init(pairing.Disk(code, Revision))
 
 		go pairingFeedback(drive.PairingComplete)
 	}

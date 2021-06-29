@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 
 	"github.com/mitchellh/go-fs"
@@ -21,7 +23,7 @@ import (
 
 const updatePath = "UPDATE.ZIP"
 
-func Check(buf []byte, path string, off int) {
+func Check(buf []byte, path string, off int, keyring *crypto.Keyring) {
 	img, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC, 0600)
 
 	if err != nil {
@@ -56,13 +58,13 @@ func Check(buf []byte, path string, off int) {
 
 	for _, entry := range root.Entries() {
 		if entry.Name() == updatePath {
-			update(entry)
+			update(entry, keyring)
 			return
 		}
 	}
 }
 
-func update(entry fs.DirectoryEntry) {
+func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 	var exit = make(chan bool)
 
 	file, err := entry.File()
@@ -97,17 +99,17 @@ func update(entry fs.DirectoryEntry) {
 	}
 
 	log.Println("extracting OTA file")
-	imx, _, err := extract(buf)
+	imx, proof, err := extract(buf)
 
 	if err != nil {
 		panic(err)
 	}
 
-	// if !ota.Verify(hash, proof) {
-	//	panic("invalid firmware signature")
-	// }
+	pb, err := verify(imx, proof)
 
-	//conf.UpdateProofBundle(proof)
+	if err != nil {
+		panic("invalid firmware proof")
+	}
 
 	log.Println("flashing IMX file")
 	err = usbarmory.MMC.WriteBlocks(2, imx)
@@ -115,6 +117,8 @@ func update(entry fs.DirectoryEntry) {
 	if err != nil {
 		panic(err)
 	}
+
+	keyring.UpdateProof(pb)
 
 	log.Println("OTA complete")
 	exit <- true

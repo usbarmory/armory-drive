@@ -266,7 +266,7 @@ func (d *Drive) read(lba int, blocks int) (err error) {
 			return
 		}
 
-		if d.Keyring != nil {
+		if d.Cipher {
 			wg.Add(1)
 			go d.Keyring.Cipher(slice, lba+i, batch, blockSize, false, wg)
 		}
@@ -300,7 +300,7 @@ func (d *Drive) write(lba int, buf []byte) (err error) {
 		end := start + blockSize*batch
 		slice := buf[start:end]
 
-		if d.Keyring != nil {
+		if d.Cipher {
 			d.Keyring.Cipher(slice, lba+i, batch, blockSize, true, nil)
 		}
 
@@ -345,19 +345,19 @@ func (d *Drive) handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte
 			// locked drive cannot be started
 			csw.Status = usb.CSW_STATUS_COMMAND_FAILED
 			// lock drive at eject
-		} else if d.Ready && !start && d.Keyring != nil {
+		} else if d.Ready && !start && d.Cipher {
 			d.Ready = false
 			d.Lock()
 		} else {
 			d.Ready = start
 		}
 
-		if !d.Ready && d.Keyring == nil {
+		if !d.Ready && !d.Cipher {
 			d.PairingComplete <- true
 
 			go func() {
 				card := d.Card.(*pairing.PairingDisk)
-				ota.Check(card.Data, pairing.DiskPath, pairing.PartitionOffset)
+				ota.Check(card.Data, pairing.DiskPath, pairing.PartitionOffset, d.Keyring)
 			}()
 		}
 	case MODE_SENSE_6, MODE_SENSE_10:

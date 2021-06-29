@@ -18,8 +18,12 @@ const SRKSize = 32
 // SRKHash represents the Secure Boot SRK fuse table
 var SRKHash []byte
 
-// OTAPublicKey represents the OTA authentication key
-var OTAPublicKey []byte
+// FRPublicKey represents the firmware releases manifest authentication key
+var FRPublicKey []byte
+
+// LogPublicKey represents the firmware releases transparency log
+// authentication key
+var LogPublicKey []byte
 
 // DummySRKHash generates a known placeholder for the SRK hash to allow its
 // identification and replacement within the binary, by `armory-drive-install`,
