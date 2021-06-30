@@ -4,7 +4,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package pairing
+package ums
 
 import (
 	"bytes"
@@ -31,11 +31,11 @@ const (
 )
 
 const (
-	DiskPath        = "pairing.disk"
-	PartitionOffset = 2048 * 512
-
 	blockSize = 512
-	blocks    = 16800
+
+	pairingDiskPath   = "pairing.disk"
+	pairingDiskOffset = 2048 * blockSize
+	pairingDiskBlocks = 16800
 
 	bootSignature = 0xaa55
 )
@@ -72,7 +72,7 @@ func (q *PairingDisk) Detect() error {
 func (q *PairingDisk) Info() (info usdhc.CardInfo) {
 	info.SD = true
 	info.BlockSize = blockSize
-	info.Blocks = blocks
+	info.Blocks = pairingDiskBlocks
 
 	return
 }
@@ -102,14 +102,14 @@ func (q *PairingDisk) WriteBlocks(lba int, buf []byte) (err error) {
 	return
 }
 
-func Disk(code []byte, version string) (card *PairingDisk) {
-	img, err := os.OpenFile(DiskPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0600)
+func Pairing(code []byte, version string) (card *PairingDisk) {
+	img, err := os.OpenFile(pairingDiskPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0600)
 
 	if err != nil {
 		panic(err)
 	}
 
-	if err = img.Truncate(blocks * blockSize); err != nil {
+	if err = img.Truncate(pairingDiskBlocks * blockSize); err != nil {
 		panic(err)
 	}
 
@@ -121,8 +121,8 @@ func Disk(code []byte, version string) (card *PairingDisk) {
 
 	conf := &fat.SuperFloppyConfig{
 		FATType: fat.FAT16,
-		Label:   "F-Secure",
-		OEMName: "F-Secure",
+		Label:   VendorID,
+		OEMName: VendorID,
 	}
 
 	if err = fat.FormatSuperFloppy(dev, conf); err != nil {
@@ -171,7 +171,7 @@ func Disk(code []byte, version string) (card *PairingDisk) {
 	mbr.BootSignature = bootSignature
 
 	data := mbr.Bytes()
-	data = append(data, make([]byte, PartitionOffset-blockSize)...)
+	data = append(data, make([]byte, pairingDiskOffset-blockSize)...)
 	data = append(data, partitionData...)
 
 	card = &PairingDisk{

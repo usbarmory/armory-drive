@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	imxPath = "armory-drive.imx"
-	csfPath = "armory-drive.csf"
+	imxPath   = "armory-drive.imx"
+	csfPath   = "armory-drive.csf"
 	proofPath = "armory-drive.release"
 )
 
@@ -29,7 +29,6 @@ func open(reader *zip.Reader, p string) (buf []byte, err error) {
 
 	return io.ReadAll(f)
 }
-
 
 func extract(buf []byte) (imx []byte, csf []byte, proof []byte, err error) {
 	r := bytes.NewReader(buf)

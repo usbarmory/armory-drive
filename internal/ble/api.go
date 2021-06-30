@@ -35,7 +35,7 @@ func (b *BLE) parseEnvelope(buf []byte) (msg *api.Message, err error) {
 	}
 
 	if msg.OpCode == api.OpCode_SESSION {
-		b.Keyring.ResetSession()
+		b.Keyring.ClearSessionKeys()
 		b.session.Reset()
 	}
 
@@ -188,8 +188,8 @@ func (b *BLE) newSession(reqMsg *api.Message, resMsg *api.Message) {
 	defer func() {
 		if err != nil {
 			// invalidate previous session on any error
+			b.Keyring.ClearSessionKeys()
 			b.session.Reset()
-			b.Keyring.ResetSession()
 			resMsg.Error = api.ErrorCode_SESSION_KEY_NEGOTIATION_FAILED
 		}
 	}()
@@ -256,28 +256,15 @@ func (b *BLE) unlock(reqMsg *api.Message, resMsg *api.Message) {
 }
 
 func (b *BLE) lock(reqMsg *api.Message, resMsg *api.Message) {
-	var err error
-
-	// no matter what, we invalidate the drive
-	b.Drive.Ready = false
-	usbarmory.LED("white", false)
-
-	if err = b.Keyring.SetCipher(api.Cipher_NONE, nil); err != nil {
+	if err := b.Drive.Lock(); err != nil {
 		resMsg.Error = api.ErrorCode_GENERIC_ERROR
 	}
 }
 
 func (b *BLE) status(reqMsg *api.Message, resMsg *api.Message) {
-	var capacity uint64
-
-	if card := b.Drive.Card; card != nil {
-		info := card.Info()
-		capacity = uint64(info.Blocks) * uint64(info.BlockSize)
-	}
-
 	s := &api.Status{
 		Version:       "v1",
-		Capacity:      capacity,
+		Capacity:      b.Drive.Capacity(),
 		Locked:        !b.Drive.Ready,
 		Configuration: b.Keyring.Conf.Settings,
 	}

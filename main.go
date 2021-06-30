@@ -12,11 +12,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/f-secure-foundry/armory-drive/api"
 	"github.com/f-secure-foundry/armory-drive/internal/ble"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 	"github.com/f-secure-foundry/armory-drive/internal/hab"
-	"github.com/f-secure-foundry/armory-drive/internal/pairing"
 	"github.com/f-secure-foundry/armory-drive/internal/ums"
 
 	"github.com/f-secure-foundry/tamago/soc/imx6"
@@ -53,25 +51,20 @@ func main() {
 	drive := &ums.Drive{
 		Cipher:  true,
 		Keyring: keyring,
-		Lock: func() {
-			keyring.SetCipher(api.Cipher_NONE, nil)
-			usbarmory.LED("white", false)
-		},
-		Mult: ums.BLOCK_SIZE_MULTIPLIER,
+		Mult:    ums.BLOCK_SIZE_MULTIPLIER,
 	}
-	drive.Init(usbarmory.SD)
 
-	b := &ble.BLE{
+	ble := &ble.BLE{
 		Drive:   drive,
 		Keyring: keyring,
 	}
-	b.Init()
+	ble.Init()
 
-	if drive.Card == nil {
+	if drive.Init(usbarmory.SD) != nil {
 		// provision Secure Boot as required
 		hab.Init()
 
-		code, err := b.PairingMode()
+		code, err := ble.PairingMode()
 
 		if err != nil {
 			panic(err)
@@ -81,7 +74,7 @@ func main() {
 		drive.Mult = 1
 		drive.Ready = true
 
-		drive.Init(pairing.Disk(code, Revision))
+		drive.Init(ums.Pairing(code, Revision))
 
 		go pairingFeedback(drive.PairingComplete)
 	}

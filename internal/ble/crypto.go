@@ -11,24 +11,11 @@ import (
 )
 
 func (b *BLE) verifyEnvelope(env *api.Envelope) (err error) {
-	var ephemeral bool
-
-	if b.session.Active {
-		ephemeral = true
-	}
-
-	return b.Keyring.VerifyECDSA(env.Message, env.Signature, ephemeral)
+	return b.Keyring.VerifyECDSA(env.Message, env.Signature, b.session.Active)
 }
 
 func (b *BLE) signEnvelope(env *api.Envelope) (err error) {
-	var ephemeral bool
-
-	if b.session.Active {
-		ephemeral = true
-	}
-
-	env.Signature, err = b.Keyring.SignECDSA(env.Message, ephemeral)
-
+	env.Signature, err = b.Keyring.SignECDSA(env.Message, b.session.Active)
 	return
 }
 

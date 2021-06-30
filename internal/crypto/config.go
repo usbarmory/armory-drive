@@ -64,9 +64,8 @@ func (k *Keyring) reset() (err error) {
 func (k *Keyring) loadAt(lba int, blocks int) (err error) {
 	blockSize := usbarmory.MMC.Info().BlockSize
 	snvs := make([]byte, blocks*blockSize)
-	err = usbarmory.MMC.ReadBlocks(lba, snvs)
 
-	if err != nil {
+	if err = usbarmory.MMC.ReadBlocks(lba, snvs); err != nil {
 		return
 	}
 
@@ -110,13 +109,4 @@ func (k *Keyring) Save() (err error) {
 	}
 
 	return usbarmory.MMC.WriteBlocks(MMC_CONF_BLOCK, snvs)
-}
-
-func (k *Keyring) UpdateProof(pb *logapi.ProofBundle) {
-	if k.Conf == nil {
-		return
-	}
-
-	k.Conf.ProofBundle = pb
-	k.Save()
 }

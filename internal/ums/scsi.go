@@ -13,7 +13,6 @@ import (
 	"sync"
 
 	"github.com/f-secure-foundry/armory-drive/internal/ota"
-	"github.com/f-secure-foundry/armory-drive/internal/pairing"
 
 	"github.com/f-secure-foundry/tamago/dma"
 	"github.com/f-secure-foundry/tamago/soc/imx6/usb"
@@ -57,15 +56,6 @@ const (
 	// uSDHC read/write.
 	READ_PIPELINE_SIZE  = 12
 	WRITE_PIPELINE_SIZE = 20
-)
-
-const (
-	// exactly 8 bytes required
-	VendorID = "F-Secure"
-	// exactly 16 bytes required
-	ProductID = "USB armory Mk II"
-	// exactly 4 bytes required
-	ProductRevision = "1.00"
 )
 
 type writeOp struct {
@@ -177,7 +167,7 @@ func reportLUNs(length int) (data []byte, err error) {
 
 // p155, 3.22 READ CAPACITY (10) command, SCSI Commands Reference Manual, Rev. J
 func (d *Drive) readCapacity10() (data []byte, err error) {
-	info := d.Card.Info()
+	info := d.card.Info()
 
 	if info.Blocks <= 0 {
 		return nil, fmt.Errorf("invalid block count %d", info.Blocks)
@@ -196,7 +186,7 @@ func (d *Drive) readCapacity10() (data []byte, err error) {
 
 // p157, 3.23 READ CAPACITY (16) command, SCSI Commands Reference Manual, Rev. J
 func (d *Drive) readCapacity16(length int) (data []byte, err error) {
-	info := d.Card.Info()
+	info := d.card.Info()
 	buf := new(bytes.Buffer)
 
 	if info.Blocks <= 0 {
@@ -218,7 +208,7 @@ func (d *Drive) readCapacity16(length int) (data []byte, err error) {
 
 // p33, 4.10, USB Mass Storage Class – UFI Command Specification Rev. 1.0
 func (d *Drive) readFormatCapacities() (data []byte, err error) {
-	info := d.Card.Info()
+	info := d.card.Info()
 
 	blocks := uint32(info.Blocks / d.Mult)
 	blockSize := uint32(info.BlockSize * d.Mult)
@@ -237,7 +227,7 @@ func (d *Drive) readFormatCapacities() (data []byte, err error) {
 
 func (d *Drive) read(lba int, blocks int) (err error) {
 	batch := READ_PIPELINE_SIZE
-	info := d.Card.Info()
+	info := d.card.Info()
 
 	blockSize := info.BlockSize * d.Mult
 
@@ -259,7 +249,7 @@ func (d *Drive) read(lba int, blocks int) (err error) {
 		end := start + blockSize*batch
 		slice := buf[start:end]
 
-		err = d.Card.ReadBlocks((lba+i)*d.Mult, slice)
+		err = d.card.ReadBlocks((lba+i)*d.Mult, slice)
 
 		if err != nil {
 			dma.Release(addr)
@@ -280,7 +270,7 @@ func (d *Drive) read(lba int, blocks int) (err error) {
 
 func (d *Drive) write(lba int, buf []byte) (err error) {
 	batch := WRITE_PIPELINE_SIZE
-	info := d.Card.Info()
+	info := d.card.Info()
 
 	blockSize := info.BlockSize * d.Mult
 	blocks := len(buf) / blockSize
@@ -307,7 +297,7 @@ func (d *Drive) write(lba int, buf []byte) (err error) {
 		sliceBlock := (lba + i) * d.Mult
 
 		eg.Go(func() error {
-			return d.Card.WriteBlocks(sliceBlock, slice)
+			return d.card.WriteBlocks(sliceBlock, slice)
 		})
 	}
 
@@ -346,7 +336,6 @@ func (d *Drive) handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte
 			csw.Status = usb.CSW_STATUS_COMMAND_FAILED
 			// lock drive at eject
 		} else if d.Ready && !start && d.Cipher {
-			d.Ready = false
 			d.Lock()
 		} else {
 			d.Ready = start
@@ -356,8 +345,8 @@ func (d *Drive) handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte
 			d.PairingComplete <- true
 
 			go func() {
-				card := d.Card.(*pairing.PairingDisk)
-				ota.Check(card.Data, pairing.DiskPath, pairing.PartitionOffset, d.Keyring)
+				card := d.card.(*PairingDisk)
+				ota.Check(card.Data, pairingDiskPath, pairingDiskOffset, d.Keyring)
 			}()
 		}
 	case MODE_SENSE_6, MODE_SENSE_10:
@@ -379,7 +368,7 @@ func (d *Drive) handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte
 		if op == READ_10 {
 			err = d.read(lba, blocks)
 		} else {
-			blockSize := d.Card.Info().BlockSize * d.Mult
+			blockSize := d.card.Info().BlockSize * d.Mult
 			size := int(cbw.DataTransferLength)
 
 			if blockSize*blocks != size {

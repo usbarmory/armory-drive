@@ -7,9 +7,20 @@
 package ums
 
 import (
+	"github.com/f-secure-foundry/armory-drive/api"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
+	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
+)
+
+const (
+	// exactly 8 bytes required
+	VendorID = "F-Secure"
+	// exactly 16 bytes required
+	ProductID = "USB armory Mk II"
+	// exactly 4 bytes required
+	ProductRevision = "1.00"
 )
 
 type Card interface {
@@ -27,9 +38,6 @@ type Drive struct {
 	// Keyring instance
 	Keyring *crypto.Keyring
 
-	// Lock is the function which locks the encrypted drive
-	Lock func()
-
 	// Ready represents the logical device status
 	Ready bool
 
@@ -40,7 +48,7 @@ type Drive struct {
 	Mult int
 
 	// Card represents the underlying storage instance
-	Card Card
+	card Card
 
 	// send is the queue for IN device responses
 	send chan []byte
@@ -58,10 +66,29 @@ func (d *Drive) Init(card Card) (err error) {
 		return
 	}
 
-	d.Card = card
+	d.card = card
 	d.PairingComplete = make(chan bool)
 	d.send = make(chan []byte, 2)
 	d.free = make(chan uint32, 1)
+
+	return
+}
+
+func (d *Drive) Capacity() uint64 {
+	info := d.card.Info()
+	return uint64(info.Blocks) * uint64(info.BlockSize)
+}
+
+func (d *Drive) Lock() (err error) {
+	// invalidate the drive
+	d.Ready = false
+
+	// clear FDE key
+	if err = d.Keyring.SetCipher(api.Cipher_NONE, nil); err != nil {
+		return
+	}
+
+	usbarmory.LED("white", false)
 
 	return
 }

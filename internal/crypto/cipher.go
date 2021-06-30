@@ -90,6 +90,9 @@ func (k *Keyring) deriveKey(diversifier []byte, index int, export bool) (key []b
 	if export {
 		key, err = dcp.DeriveKey(diversifier, iv, -1)
 	} else {
+		// Move the derived key directly to the internal DCP key RAM
+		// slot, without ever exposing it to external RAM or the Go
+		// runtime.
 		_, err = dcp.DeriveKey(diversifier, iv, index)
 	}
 
@@ -119,27 +122,26 @@ func (k *Keyring) SetCipher(kind api.Cipher, diversifier []byte) (err error) {
 		}
 
 		if DCP {
-			_, err = k.deriveKey(diversifier, BLOCK_KEY, false)
-
-			k.Cipher = k.cipherDCP
-		} else {
-			dek, err = k.deriveKey(diversifier, BLOCK_KEY, true)
-
-			if err != nil {
+			if _, err = k.deriveKey(diversifier, BLOCK_KEY, false); err != nil {
 				return
 			}
 
-			k.cb, err = aes.NewCipher(dek)
+			k.Cipher = k.cipherDCP
+		} else {
+			if dek, err = k.deriveKey(diversifier, BLOCK_KEY, true); err != nil {
+				return
+			}
+
+			if k.cb, err = aes.NewCipher(dek); err != nil {
+				return
+			}
 
 			k.Cipher = k.cipherAES
 		}
 
-		if err != nil {
-			return
-		}
-
 		if ESSIV && !DCPIV {
 			k.cbiv, err = aes.NewCipher(k.salt)
+			return
 		}
 	case api.Cipher_AES128_XTS_PLAIN, api.Cipher_AES256_XTS_PLAIN:
 		var size int
@@ -226,6 +228,8 @@ func (k *Keyring) cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc 
 
 // equivalent to aes-cbc-plain (sw)
 func (k *Keyring) cipherAES(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup) {
+	var mode cipher.BlockMode
+
 	for i := 0; i < blocks; i++ {
 		start := i * blockSize
 		end := start + blockSize
@@ -238,8 +242,6 @@ func (k *Keyring) cipherAES(buf []byte, lba int, blocks int, blockSize int, enc 
 				panic(err)
 			}
 		}
-
-		var mode cipher.BlockMode
 
 		if enc {
 			mode = cipher.NewCBCEncrypter(k.cb, iv)
@@ -454,9 +456,8 @@ func (k *Keyring) VerifyECDSA(data []byte, sig *api.Signature, ephemeral bool) (
 
 func Rand(n int) []byte {
 	buf := make([]byte, n)
-	_, err := rand.Read(buf)
 
-	if err != nil {
+	if _, err := rand.Read(buf); err != nil {
 		panic(err)
 	}
 

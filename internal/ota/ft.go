@@ -12,8 +12,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/armory-drive-log/api"
+	"github.com/f-secure-foundry/armory-drive/assets"
 
 	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
 )

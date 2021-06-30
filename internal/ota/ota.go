@@ -8,7 +8,6 @@ package ota
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"runtime"
 	"time"
@@ -30,9 +29,7 @@ func Check(buf []byte, path string, off int, keyring *crypto.Keyring) {
 		panic(err)
 	}
 
-	_, err = img.Write(buf[off:])
-
-	if err != nil {
+	if _, err = img.Write(buf[off:]); err != nil {
 		panic(err)
 	}
 
@@ -98,7 +95,6 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 		panic(err)
 	}
 
-	log.Println("extracting OTA file")
 	imx, csf, proof, err := extract(buf)
 
 	if err != nil {
@@ -114,16 +110,15 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 	// append HAB signature
 	imx = append(imx, csf...)
 
-	log.Println("flashing IMX file")
 	err = usbarmory.MMC.WriteBlocks(2, imx)
 
 	if err != nil {
 		panic(err)
 	}
 
-	keyring.UpdateProof(pb)
+	keyring.Conf.ProofBundle = pb
+	keyring.Save()
 
-	log.Println("OTA complete")
 	exit <- true
 
 	usbarmory.LED("blue", false)

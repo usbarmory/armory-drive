@@ -38,10 +38,10 @@ func (d *Drive) ConfigureUSB() (device *usb.Device) {
 
 	device.Descriptor.Device = 0x0001
 
-	iManufacturer, _ := device.AddString(`F-Secure`)
+	iManufacturer, _ := device.AddString(VendorID)
 	device.Descriptor.Manufacturer = iManufacturer
 
-	iProduct, _ := device.AddString(`Armory`)
+	iProduct, _ := device.AddString(ProductID)
 	device.Descriptor.Product = iProduct
 
 	// p9, 4.1.1 Serial Number, USB Mass Storage Class 1.0

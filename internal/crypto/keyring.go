@@ -102,12 +102,6 @@ func (k *Keyring) Init(overwrite bool) (err error) {
 	return
 }
 
-func (k *Keyring) ResetSession() {
-	k.sessionKey = []byte{}
-	k.armoryEphemeral = nil
-	k.mobileEphemeral = nil
-}
-
 func (k *Keyring) Export(index int, private bool) ([]byte, error) {
 	var pubKey *ecdsa.PublicKey
 	var privKey *ecdsa.PrivateKey
@@ -213,4 +207,10 @@ func (k *Keyring) NewSessionKeys(nonce []byte) (err error) {
 	_, err = io.ReadFull(hkdf, k.sessionKey)
 
 	return
+}
+
+func (k *Keyring) ClearSessionKeys() {
+	k.sessionKey = []byte{}
+	k.armoryEphemeral = nil
+	k.mobileEphemeral = nil
 }
