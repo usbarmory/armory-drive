@@ -167,5 +167,5 @@ $(APP).release: $(APP)-signed.imx
 		--release $(APP).release \
 		--output $(APP).proofbundle \
 		--log_url $(LOG_URL) \
-		--log_pubkey '$(shell cat ${LOG_PUBKEY})' \
+		--log_pubkey_file ${LOG_PUBKEY} \
 	zip update.zip $(APP).imx $(APP).csf $(APP).proofbundle
