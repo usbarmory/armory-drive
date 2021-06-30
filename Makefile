@@ -6,6 +6,7 @@
 
 BUILD_TAGS = "linkramsize,linkprintk"
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
+LOG_URL=https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
 
 SHELL = /bin/bash
 PROTOC ?= /usr/bin/protoc
@@ -83,7 +84,7 @@ clean:
 	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd
 	@rm -fr $(CURDIR)/api/*.pb.go $(CURDIR)/assets/tmp*.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
-	@rm -fr $(APP).release update.zip
+	@rm -fr update.zip $(APP).release $(APP).proofbundle
 
 #### dependencies ####
 
@@ -152,8 +153,8 @@ $(APP).release: $(APP)-signed.imx
 		exit 1; \
 	fi
 	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
+	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_proofbundle
 	$(shell ${TAMAGO} env GOPATH)/bin/create_release \
-		--logtostderr \
 		--output $(APP).release \
 		--description="$(APP) ${TAG}" \
 		--platform_id=${PLATFORM} \
@@ -161,5 +162,10 @@ $(APP).release: $(APP)-signed.imx
 		--tool_chain="tama$(shell ${TAMAGO} version)" \
 		--revision_tag=${TAG} \
 		--artifacts='$(CURDIR)/$(APP).*' \
-		--private_key=${FR_PRIVKEY} > $(APP).release && \
-	zip update.zip $(APP).imx $(APP).csf $(APP).release
+		--private_key=${FR_PRIVKEY} && \
+	$(shell ${TAMAGO} env GOPATH)/bin/create_proofbundle \
+		--release $(APP).release \
+		--output $(APP).proofbundle \
+		--log_url $(LOG_URL) \
+		--log_pubkey '$(shell echo ${LOG_PUBKEY})' \
+	zip update.zip $(APP).imx $(APP).csf $(APP).proofbundle
