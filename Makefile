@@ -155,6 +155,7 @@ $(APP).release: $(APP)-signed.imx
 	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
 	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_proofbundle
 	$(shell ${TAMAGO} env GOPATH)/bin/create_release \
+		--logtostderr \
 		--output $(APP).release \
 		--description="$(APP) ${TAG}" \
 		--platform_id=${PLATFORM} \
@@ -164,8 +165,9 @@ $(APP).release: $(APP)-signed.imx
 		--artifacts='$(CURDIR)/$(APP).*' \
 		--private_key=${FR_PRIVKEY} && \
 	$(shell ${TAMAGO} env GOPATH)/bin/create_proofbundle \
-		--release $(APP).release \
+		--logtostderr \
 		--output $(APP).proofbundle \
+		--release $(APP).release \
 		--log_url $(LOG_URL) \
 		--log_pubkey_file ${LOG_PUBKEY} \
 	zip update.zip $(APP).imx $(APP).csf $(APP).proofbundle
