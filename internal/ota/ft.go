@@ -63,6 +63,9 @@ func verifyProof(imx []byte, csf []byte, proof []byte, keyring *crypto.Keyring) 
 		return
 	}
 
+	// leaf hashes are not needed so we can save space
+	pb.LeafHashes = nil
+
 	keyring.Conf.ProofBundle = pb
 	keyring.Save()
 

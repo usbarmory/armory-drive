@@ -19,7 +19,7 @@ import (
 const (
 	MMC_CONF_BLOCK  = 2097152
 	CONF_MIN_BLOCKS = 2
-	CONF_MAX_BLOCKS = 4
+	CONF_MAX_BLOCKS = 2048
 )
 
 type PersistentConfiguration struct {
