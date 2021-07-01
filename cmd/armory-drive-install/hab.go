@@ -127,7 +127,7 @@ func sign(assets *releaseAssets) (err error) {
 	// simplify key management. This has no security impact as the
 	// executable is authenticated at boot using secure boot.
 	assets.sig = nil
-	assets.imx = clearOTAPublicKey(assets.imx)
+	assets.imx = clearFRPublicKey(assets.imx)
 
 	log.Printf("generating HAB signatures")
 	if assets.csf, err = hab.Sign(assets.imx, opts); err != nil {
