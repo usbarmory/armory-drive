@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	MMC_CONF_BLOCK  = 2097152
-	CONF_MIN_BLOCKS = 2
-	CONF_MAX_BLOCKS = 2048
+	MMC_CONF_BLOCK = 2097152
+	CONF_BLOCKS_V1 = 2
+	CONF_BLOCKS_V2 = 2048
 )
 
 type PersistentConfiguration struct {
@@ -82,12 +82,11 @@ func (k *Keyring) loadAt(lba int, blocks int) (err error) {
 }
 
 func (k *Keyring) Load() (err error) {
-	// support changes in configuration size over time
-	for blocks := CONF_MAX_BLOCKS; blocks >= CONF_MIN_BLOCKS; blocks-- {
-		if err = k.loadAt(MMC_CONF_BLOCK, blocks); err == nil {
-			return
-		}
+	if err = k.loadAt(MMC_CONF_BLOCK, CONF_BLOCKS_V2); err == nil {
+		return
 	}
+
+	err = k.loadAt(MMC_CONF_BLOCK, CONF_BLOCKS_V1)
 
 	return
 }
@@ -102,7 +101,7 @@ func (k *Keyring) Save() (err error) {
 		return
 	}
 
-	snvs, err := k.encryptSNVS(buf.Bytes(), CONF_MAX_BLOCKS*blockSize)
+	snvs, err := k.encryptSNVS(buf.Bytes(), CONF_BLOCKS_V2*blockSize)
 
 	if err != nil {
 		return
