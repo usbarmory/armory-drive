@@ -13,6 +13,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+
 	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
 
 	"github.com/mitchellh/go-fs"
@@ -27,7 +29,7 @@ Please download the F-Secure Armory application from the iOS App Store and scan 
 const (
 	codePath    = "QR.PNG"
 	readmePath  = "README.TXT"
-	versionPath = "VERSION.TXT"
+	checkpointPath = "LASTCHKP.BIN"
 )
 
 const (
@@ -102,7 +104,7 @@ func (q *PairingDisk) WriteBlocks(lba int, buf []byte) (err error) {
 	return
 }
 
-func Pairing(code []byte, version string) (card *PairingDisk) {
+func Pairing(code []byte, keyring *crypto.Keyring) (card *PairingDisk) {
 	img, err := os.OpenFile(pairingDiskPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0600)
 
 	if err != nil {
@@ -146,7 +148,12 @@ func Pairing(code []byte, version string) (card *PairingDisk) {
 	}
 
 	_ = addFile(root, readmePath, []byte(readme))
-	_ = addFile(root, versionPath, []byte(version))
+
+	if pb := keyring.Conf.ProofBundle; pb != nil {
+		if err = addFile(root, checkpointPath, pb.NewCheckpoint); err != nil {
+			panic(err)
+		}
+	}
 
 	img.Close()
 

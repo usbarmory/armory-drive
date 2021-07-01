@@ -74,7 +74,7 @@ func main() {
 		drive.Mult = 1
 		drive.Ready = true
 
-		drive.Init(ums.Pairing(code, Revision))
+		drive.Init(ums.Pairing(code, keyring))
 
 		go pairingFeedback(drive.PairingComplete)
 	}
