@@ -7,50 +7,64 @@
 package ota
 
 import (
-	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 
-	"github.com/f-secure-foundry/armory-drive-log/api"
 	"github.com/f-secure-foundry/armory-drive/assets"
+	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+	"github.com/f-secure-foundry/armory-drive-log/api"
+	"github.com/f-secure-foundry/armory-drive-log/api/verify"
 
 	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
+
+	"golang.org/x/mod/sumdb/note"
 )
 
-func compareHash(buf []byte, s string) (valid bool) {
-	sum, err := dcp.Sum256(buf)
-
-	if err != nil {
-		return false
-	}
-
-	hash, err := hex.DecodeString(s)
-
-	if err != nil {
-		return false
-	}
-
-	return bytes.Equal(sum[:], hash)
-}
-
-func verify(imx []byte, csf []byte, proof []byte) (pb *api.ProofBundle, err error) {
-	if len(assets.FRPublicKey) == 0 || len(assets.LogPublicKey) == 0 {
-		return nil, errors.New("missing OTA authentication keys")
-	}
-
+func verifyProof(imx []byte, csf []byte, proof []byte, keyring *crypto.Keyring) (err error) {
 	if len(proof) == 0 {
-		return nil, errors.New("missing proof")
+		return errors.New("missing proof")
 	}
 
-	pb = &api.ProofBundle{}
+	pb := &api.ProofBundle{}
 
-	if err = json.Unmarshal(proof, &pb); err != nil {
+	if err = json.Unmarshal(proof, pb); err != nil {
 		return
 	}
 
-	// compareHash(imx, pb.FirmwareRelease().ArtifactSHA256[imxFileName])
-	// compareHash(csf, pb.FirmwareRelease().ArtifactSHA256[csfFileName])
+	var oldCP api.Checkpoint
 
-	return nil, errors.New("TOOD")
+	if keyring.Conf.ProofBundle != nil {
+		if err = oldCP.Unmarshal(keyring.Conf.ProofBundle.NewCheckpoint); err != nil {
+			return
+		}
+	}
+
+	logSigV, err := note.NewVerifier(string(assets.LogPublicKey))
+
+	if err != nil {
+		return
+	}
+
+	frSigV, err := note.NewVerifier(string(assets.FRPublicKey))
+
+	if err != nil {
+		return
+	}
+
+	firmwareHash, err := dcp.Sum256(imx)
+
+	if err != nil {
+		return
+	}
+
+	// TODO: verify csf
+
+	if err = verify.Bundle(*pb, oldCP, logSigV, frSigV, firmwareHash[:]); err != nil {
+		return
+	}
+
+	keyring.Conf.ProofBundle = pb
+	keyring.Save()
+
+	return
 }

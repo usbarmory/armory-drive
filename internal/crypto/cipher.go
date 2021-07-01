@@ -17,6 +17,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"log"
 	"math/big"
 	"sync"
 
@@ -210,7 +211,7 @@ func (k *Keyring) cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc 
 
 		if ESSIV {
 			if err := k.essiv(ivs[off:], zero); err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		}
 	}
@@ -218,7 +219,7 @@ func (k *Keyring) cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc 
 	err := dcp.CipherChain(buf, ivs, blocks, blockSize, BLOCK_KEY, enc)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	if wg != nil {
@@ -239,7 +240,7 @@ func (k *Keyring) cipherAES(buf []byte, lba int, blocks int, blockSize int, enc 
 
 		if ESSIV {
 			if err := k.essiv(iv, zero); err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		}
 
@@ -458,7 +459,7 @@ func Rand(n int) []byte {
 	buf := make([]byte, n)
 
 	if _, err := rand.Read(buf); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	return buf

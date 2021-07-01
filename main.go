@@ -39,13 +39,13 @@ func main() {
 	usbarmory.LED("white", false)
 
 	if err := usbarmory.MMC.Detect(); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	keyring := &crypto.Keyring{}
 
 	if err := keyring.Init(false); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	drive := &ums.Drive{
@@ -67,7 +67,7 @@ func main() {
 		code, err := ble.PairingMode()
 
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		drive.Cipher = false

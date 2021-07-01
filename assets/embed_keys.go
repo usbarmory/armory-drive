@@ -41,15 +41,21 @@ func read(env string) (buf []byte, err error) {
 }
 
 func main() {
+	auth := true
+
+	if p := os.Getenv("DISABLE_FR_AUTH"); len(p) != 0 {
+		auth = false
+	}
+
 	FRPublicKey, err := read("FR_PUBKEY")
 
-	if err != nil {
+	if auth && err != nil {
 		log.Fatal(err)
 	}
 
 	LogPublicKey, err := read("LOG_PUBKEY")
 
-	if err != nil {
+	if auth && err != nil {
 		log.Fatal(err)
 	}
 

@@ -13,6 +13,7 @@ require (
 	github.com/mitchellh/go-fs v0.0.0-20180402235330-b7b9ca407fff
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
+	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

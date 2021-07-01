@@ -92,8 +92,11 @@ $(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) 
 $(APP): check_tamago proto
 	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
 		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \
-	else \
+	elif [ "${DISABLE_FR_AUTHENTICATION}" != "" ]; then \
 		echo '** WARNING ** firmware updates authentication is disabled'; \
+	else \
+		echo '** WARNING ** when variables FR_PUBKEY and LOG_PUBKEY are missing DISABLE_FR_AUTH must be set to confirm'; \
+		exit 1; \
 	fi
 	cd $(CURDIR)/assets && ${TAMAGO} generate && \
 	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP} || (rm -f $(CURDIR)/assets/tmp*.go && exit 1)

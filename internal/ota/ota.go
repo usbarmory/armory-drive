@@ -8,10 +8,12 @@ package ota
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"runtime"
 	"time"
 
+	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
@@ -98,26 +100,24 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 	imx, csf, proof, err := extract(buf)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	pb, err := verify(imx, csf, proof)
+	if len(assets.FRPublicKey) != 0 && len(assets.LogPublicKey) != 0 {
+		// firmware authentication
+		err = verifyProof(imx, csf, proof, keyring)
 
-	if err != nil {
-		panic("invalid firmware proof")
+		if err != nil {
+			log.Fatal("invalid firmware proof, %v", err)
+		}
 	}
 
 	// append HAB signature
 	imx = append(imx, csf...)
 
-	err = usbarmory.MMC.WriteBlocks(2, imx)
-
-	if err != nil {
-		panic(err)
+	if err = usbarmory.MMC.WriteBlocks(2, imx); err != nil {
+		log.Fatal(err)
 	}
-
-	keyring.Conf.ProofBundle = pb
-	keyring.Save()
 
 	exit <- true
 
