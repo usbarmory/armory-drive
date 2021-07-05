@@ -70,6 +70,12 @@ check_hab_keys:
 		exit 1; \
 	fi
 
+check_git_clean:
+	@if [ "$(shell git status -s)" != "" ]; then \
+		echo 'Dirty git checkout directory detected. Aborting.'; \
+		exit 1; \
+	fi
+
 proto:
 	@echo "generating protobuf classes"
 	-rm -f *.pb.go
@@ -150,7 +156,7 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 
 $(APP).release: TAG = $(shell date +v%Y.%m.%d)
 $(APP).release: PLATFORM = UA-MKII-ULZ
-$(APP).release: $(APP)-signed.imx
+$(APP).release: check_git_clean $(APP)-signed.imx
 	@if [ "${FR_PRIVKEY}" == "" ]; then \
 		echo 'FR_PRIVKEY must be set'; \
 		exit 1; \
