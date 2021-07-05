@@ -166,11 +166,14 @@ $(APP).release: $(APP)-signed.imx
 		--tool_chain="tama$(shell ${TAMAGO} version)" \
 		--revision_tag=${TAG} \
 		--artifacts='$(CURDIR)/$(APP).*' \
-		--private_key=${FR_PRIVKEY} && \
+		--private_key=${FR_PRIVKEY}
+	@echo "$(APP).release created."
+	@read -p "Please, add release to the log, then press enter to continue."
 	$(shell ${TAMAGO} env GOPATH)/bin/create_proofbundle \
 		--logtostderr \
 		--output $(APP).proofbundle \
 		--release $(APP).release \
 		--log_url $(LOG_URL) \
-		--log_pubkey_file ${LOG_PUBKEY} \
+		--log_pubkey_file ${LOG_PUBKEY}
+	@echo "$(APP).proofbundle created."
 	zip update.zip $(APP).imx $(APP).csf $(APP).proofbundle
