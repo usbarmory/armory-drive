@@ -199,6 +199,8 @@ func verifyRelease(release *github.RepositoryRelease) (err error) {
 		err = client.CheckConsistency(ctx, rfc6962.DefaultHasher, logFetcher, checkpoints)
 	}
 
+	// FIXME: verify release assets
+
 	return
 }
 
