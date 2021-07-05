@@ -45,8 +45,8 @@ type releaseAssets struct {
 	csf []byte
 	// secure boot signature for serial download mode
 	sdp []byte
-	// OTA signature
-	sig []byte
+	// firmware transparency proof
+	log []byte
 }
 
 func (a *releaseAssets) complete() bool {
@@ -54,7 +54,7 @@ func (a *releaseAssets) complete() bool {
 		len(a.srk) > 0 &&
 		len(a.csf) > 0 &&
 		len(a.sdp) > 0 &&
-		len(a.sig) > 0)
+		len(a.log) > 0)
 }
 
 func githubClient() (*github.Client, bool) {
@@ -119,8 +119,8 @@ func downloadRelease(version string) (assets *releaseAssets, err error) {
 			if assets.sdp, err = downloadAsset("recovery signature", release, asset, client); err != nil {
 				return
 			}
-		case "armory-drive.sig":
-			if assets.sig, err = downloadAsset("OTA signature", release, asset, client); err != nil {
+		case "armory-drive.proofbundle":
+			if assets.log, err = downloadAsset("proof bundle", release, asset, client); err != nil {
 				return
 			}
 		}

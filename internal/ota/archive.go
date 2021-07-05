@@ -14,16 +14,16 @@ import (
 )
 
 const (
-	imxPath   = "armory-drive.imx"
-	csfPath   = "armory-drive.csf"
-	proofPath = "armory-drive.release"
+	imxPath = "armory-drive.imx"
+	csfPath = "armory-drive.csf"
+	logPath = "armory-drive.log"
 )
 
 func open(reader *zip.Reader, p string) (buf []byte, err error) {
 	f, err := reader.Open(p)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not open %s", p)
+		return
 	}
 	defer f.Close()
 
@@ -49,8 +49,8 @@ func extract(buf []byte) (imx []byte, csf []byte, proof []byte, err error) {
 		return
 	}
 
-	if proof, err = open(reader, proofPath); err != nil {
-		err = fmt.Errorf("could not open %s, %v", proofPath, err)
+	if proof, err = open(reader, logPath); err != nil {
+		err = fmt.Errorf("could not open %s, %v", logPath, err)
 		return
 	}
 

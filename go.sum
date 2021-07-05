@@ -199,6 +199,8 @@ github.com/f-secure-foundry/armory-drive-log v0.0.0-20210629193535-9c08fdbed4a4 
 github.com/f-secure-foundry/armory-drive-log v0.0.0-20210629193535-9c08fdbed4a4/go.mod h1:YjBYcRu1hYscusexMN8NMELMF0Wio+8w6Ssbn/kZOvg=
 github.com/f-secure-foundry/armory-drive-log v0.0.0-20210630114746-29255676ef51 h1:QYRaiyv16ogx9wA3IjFTsqSBkGY78wXtfKcfZFuv12k=
 github.com/f-secure-foundry/armory-drive-log v0.0.0-20210630114746-29255676ef51/go.mod h1:YjBYcRu1hYscusexMN8NMELMF0Wio+8w6Ssbn/kZOvg=
+github.com/f-secure-foundry/armory-drive-log v0.0.0-20210705144639-49c340f32d07 h1:QZsAgF7sH5jbH88yQooc7+hvkd5p/xGhsQbaZ4npmvQ=
+github.com/f-secure-foundry/armory-drive-log v0.0.0-20210705144639-49c340f32d07/go.mod h1:nz9nS+qFlDBycbF+tI8JfafHCMiRc01el3xp4sjR+IA=
 github.com/f-secure-foundry/crucible v0.0.0-20210519190101-b84eb54532b9 h1:azI6aa8SlifFH2ZCumSUdz8rqc1gNediUe0WObJov1U=
 github.com/f-secure-foundry/crucible v0.0.0-20210519190101-b84eb54532b9/go.mod h1:lKwj0vB9le2qIIiq3mKqiIcTlgrp8f3l1mD9ScgAzTc=
 github.com/f-secure-foundry/hid v0.0.0-20210318233634-85ced88a1ffe h1:8+kX9Jl7ZGvP2f6NNP88qP5+yRg/yBh+wNylyk6OjFM=
@@ -352,6 +354,7 @@ github.com/google/trillian-examples v0.0.0-20210630165623-267fb50f0b55 h1:eTDTFW
 github.com/google/trillian-examples v0.0.0-20210630165623-267fb50f0b55/go.mod h1:a2C4yPF27ApsiDb+4Zs/Y9zfwEmGv1gKwm/rlPYFE+w=
 github.com/google/trillian-examples v0.0.0-20210702150510-0feb839dc5bb h1:CK+qBaec6tMHkAwfez8pBYKtkop733JacH+zAWwahyg=
 github.com/google/trillian-examples v0.0.0-20210702150510-0feb839dc5bb/go.mod h1:a2C4yPF27ApsiDb+4Zs/Y9zfwEmGv1gKwm/rlPYFE+w=
+github.com/google/trillian-examples v0.0.0-20210702151045-67ecd6bab7e0/go.mod h1:a2C4yPF27ApsiDb+4Zs/Y9zfwEmGv1gKwm/rlPYFE+w=
 github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
