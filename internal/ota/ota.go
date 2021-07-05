@@ -110,12 +110,15 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 
 	if len(assets.FRPublicKey) != 0 && len(assets.LogPublicKey) != 0 {
 		// firmware authentication
-		err = verifyProof(imx, csf, proof, keyring)
+		pb, err := verifyProof(imx, csf, proof, keyring.Conf.ProofBundle)
 
 		if err != nil {
 			log.Printf("firmware update proof error, %v", err)
 			return
 		}
+
+		keyring.Conf.ProofBundle = pb
+		keyring.Save()
 	}
 
 	// append HAB signature

@@ -13,19 +13,16 @@ import (
 	"github.com/f-secure-foundry/armory-drive-log/api"
 	"github.com/f-secure-foundry/armory-drive-log/api/verify"
 	"github.com/f-secure-foundry/armory-drive/assets"
-	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
 	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
 
 	"golang.org/x/mod/sumdb/note"
 )
 
-func verifyProof(imx []byte, csf []byte, proof []byte, keyring *crypto.Keyring) (err error) {
+func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle) (pb *api.ProofBundle, err error) {
 	if len(proof) == 0 {
-		return errors.New("missing proof")
+		return nil, errors.New("missing proof")
 	}
-
-	pb := &api.ProofBundle{}
 
 	if err = json.Unmarshal(proof, pb); err != nil {
 		return
@@ -33,8 +30,8 @@ func verifyProof(imx []byte, csf []byte, proof []byte, keyring *crypto.Keyring) 
 
 	var oldCP api.Checkpoint
 
-	if keyring.Conf.ProofBundle != nil {
-		if err = oldCP.Unmarshal(keyring.Conf.ProofBundle.NewCheckpoint); err != nil {
+	if oldProof != nil {
+		if err = oldCP.Unmarshal(oldProof.NewCheckpoint); err != nil {
 			return
 		}
 	}
@@ -65,9 +62,6 @@ func verifyProof(imx []byte, csf []byte, proof []byte, keyring *crypto.Keyring) 
 
 	// leaf hashes are not needed so we can save space
 	pb.LeafHashes = nil
-
-	keyring.Conf.ProofBundle = pb
-	keyring.Save()
 
 	return
 }
