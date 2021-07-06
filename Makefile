@@ -155,17 +155,14 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 #### firmware release ####
 
 $(APP).release: PLATFORM = UA-MKII-ULZ
+$(APP).release: TAG=$(shell git tag --points-at HEAD)
 $(APP).release: check_git_clean $(APP)-signed.imx
 	@if [ "${FR_PRIVKEY}" == "" ]; then \
 		echo 'FR_PRIVKEY must be set'; \
 		exit 1; \
 	fi
 	@if [ "${TAG}" == "" ]; then \
-		echo 'TAG must be set'; \
-		exit 1; \
-	fi
-	@if [ "$(shell git tag -l ${TAG})" != "${TAG}" ]; then \
-		echo 'TAG not found. Aborting.'; \
+		echo 'No release tag defined on checked-out commit. Aborting.'; \
 		exit 1; \
 	fi
 	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
