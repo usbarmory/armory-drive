@@ -6,7 +6,7 @@
 
 BUILD_TAGS = "linkramsize,linkprintk"
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
-LOG_URL=https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
+LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
 
 SHELL = /bin/bash
 PROTOC ?= /usr/bin/protoc
@@ -25,7 +25,7 @@ imx: $(APP).imx
 
 imx_signed: $(APP)-signed.imx
 
-$(APP)-install: GOFLAGS= -tags netgo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
+$(APP)-install: GOFLAGS = -tags netgo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
 $(APP)-install:
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
@@ -94,7 +94,7 @@ clean:
 
 #### dependencies ####
 
-$(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Revision=${REV}'"
+$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Revision=${REV}'"
 $(APP): check_tamago proto
 	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
 		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \
@@ -109,8 +109,8 @@ $(APP): check_tamago proto
 	rm -f $(CURDIR)/assets/tmp*.go
 
 $(APP).dcd: check_tamago
-$(APP).dcd: GOMODCACHE=$(shell ${TAMAGO} env GOMODCACHE)
-$(APP).dcd: TAMAGO_PKG=$(shell grep "github.com/f-secure-foundry/tamago v" go.mod | awk '{print $$1"@"$$2}')
+$(APP).dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)
+$(APP).dcd: TAMAGO_PKG = $(shell grep "github.com/f-secure-foundry/tamago v" go.mod | awk '{print $$1"@"$$2}')
 $(APP).dcd: dcd
 
 $(APP).bin: $(APP)
@@ -155,7 +155,7 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 #### firmware release ####
 
 $(APP).release: PLATFORM = UA-MKII-ULZ
-$(APP).release: TAG=$(shell git tag --points-at HEAD)
+$(APP).release: TAG = $(shell git tag --points-at HEAD)
 $(APP).release: check_git_clean $(APP)-signed.imx
 	@if [ "${FR_PRIVKEY}" == "" ]; then \
 		echo 'FR_PRIVKEY must be set'; \
