@@ -30,16 +30,6 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 		return
 	}
 
-	var oldCP api.Checkpoint
-
-	if oldProof != nil {
-		if n, _ := note.Open(oldProof.NewCheckpoint, nil); n != nil {
-			if err = oldCP.Unmarshal([]byte(n.Text)); err != nil {
-				return
-			}
-		}
-	}
-
 	logSigV, err := note.NewVerifier(string(assets.LogPublicKey))
 
 	if err != nil {
@@ -50,6 +40,18 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 
 	if err != nil {
 		return
+	}
+
+	var oldCP api.Checkpoint
+
+	if oldProof != nil {
+		verifiers := note.VerifierList(logSigV)
+
+		if n, _ := note.Open(oldProof.NewCheckpoint, verifiers); n != nil {
+			if err = oldCP.Unmarshal([]byte(n.Text)); err != nil {
+				return
+			}
+		}
 	}
 
 	imxHash, err := dcp.Sum256(imx)
