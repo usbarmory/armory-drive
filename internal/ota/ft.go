@@ -33,8 +33,10 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 	var oldCP api.Checkpoint
 
 	if oldProof != nil {
-		if err = oldCP.Unmarshal(oldProof.NewCheckpoint); err != nil {
-			return
+		if n, _ := note.Open(oldProof.NewCheckpoint, nil); n != nil {
+			if err = oldCP.Unmarshal([]byte(n.Text)); err != nil {
+				return
+			}
 		}
 	}
 

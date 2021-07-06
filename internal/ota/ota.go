@@ -129,6 +129,8 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 		return
 	}
 
+	log.Println("firmware update complete")
+
 	usbarmory.LED("blue", false)
 	usbarmory.LED("white", false)
 }
