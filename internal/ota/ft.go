@@ -24,6 +24,8 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 		return nil, errors.New("missing proof")
 	}
 
+	pb = &api.ProofBundle{}
+
 	if err = json.Unmarshal(proof, pb); err != nil {
 		return
 	}
@@ -48,15 +50,24 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 		return
 	}
 
-	firmwareHash, err := dcp.Sum256(imx)
+	imxHash, err := dcp.Sum256(imx)
 
 	if err != nil {
 		return
 	}
 
-	// TODO: verify csf
+	csfHash, err := dcp.Sum256(csf)
 
-	if err = verify.Bundle(*pb, oldCP, logSigV, frSigV, firmwareHash[:]); err != nil {
+	if err != nil {
+		return
+	}
+
+	hashes := map[string][]byte{
+		imxPath: imxHash[:],
+		csfPath: csfHash[:],
+	}
+
+	if err = verify.Bundle(*pb, oldCP, logSigV, frSigV, hashes); err != nil {
 		return
 	}
 

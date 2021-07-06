@@ -201,6 +201,8 @@ github.com/f-secure-foundry/armory-drive-log v0.0.0-20210630114746-29255676ef51 
 github.com/f-secure-foundry/armory-drive-log v0.0.0-20210630114746-29255676ef51/go.mod h1:YjBYcRu1hYscusexMN8NMELMF0Wio+8w6Ssbn/kZOvg=
 github.com/f-secure-foundry/armory-drive-log v0.0.0-20210705144639-49c340f32d07 h1:QZsAgF7sH5jbH88yQooc7+hvkd5p/xGhsQbaZ4npmvQ=
 github.com/f-secure-foundry/armory-drive-log v0.0.0-20210705144639-49c340f32d07/go.mod h1:nz9nS+qFlDBycbF+tI8JfafHCMiRc01el3xp4sjR+IA=
+github.com/f-secure-foundry/armory-drive-log v0.0.0-20210706125836-b613e12fd935 h1:pes3EO0bepEXSUA95w+/5op1QeE3ssWpZ/jvGIKPH3s=
+github.com/f-secure-foundry/armory-drive-log v0.0.0-20210706125836-b613e12fd935/go.mod h1:nz9nS+qFlDBycbF+tI8JfafHCMiRc01el3xp4sjR+IA=
 github.com/f-secure-foundry/crucible v0.0.0-20210519190101-b84eb54532b9 h1:azI6aa8SlifFH2ZCumSUdz8rqc1gNediUe0WObJov1U=
 github.com/f-secure-foundry/crucible v0.0.0-20210519190101-b84eb54532b9/go.mod h1:lKwj0vB9le2qIIiq3mKqiIcTlgrp8f3l1mD9ScgAzTc=
 github.com/f-secure-foundry/hid v0.0.0-20210318233634-85ced88a1ffe h1:8+kX9Jl7ZGvP2f6NNP88qP5+yRg/yBh+wNylyk6OjFM=

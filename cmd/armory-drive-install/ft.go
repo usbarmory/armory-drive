@@ -99,11 +99,19 @@ func verifyProof(imx []byte, csf []byte, proof []byte) (err error) {
 		return
 	}
 
-	firmwareHash := sha256.Sum256(imx)
+	imxHash := sha256.Sum256(imx)
+	csfHash := sha256.Sum256(csf)
 
-	// TODO: verify csf
+	if err != nil {
+		return
+	}
 
-	if err = verify.Bundle(*pb, api.Checkpoint{}, logSigV, frSigV, firmwareHash[:]); err != nil {
+	hashes := map[string][]byte{
+		imxPath: imxHash[:],
+		csfPath: csfHash[:],
+	}
+
+	if err = verify.Bundle(*pb, api.Checkpoint{}, logSigV, frSigV, hashes); err != nil {
 		return
 	}
 
