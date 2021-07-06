@@ -70,6 +70,12 @@ check_hab_keys:
 		exit 1; \
 	fi
 
+check_git_clean:
+	@if [ "$(shell git status -s)" != "" ]; then \
+		echo 'Dirty git checkout directory detected. Aborting.'; \
+		exit 1; \
+	fi
+
 proto:
 	@echo "generating protobuf classes"
 	-rm -f *.pb.go
@@ -148,11 +154,18 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 
 #### firmware release ####
 
-$(APP).release: TAG = $(shell date +v%Y.%m.%d)
 $(APP).release: PLATFORM = UA-MKII-ULZ
-$(APP).release: $(APP)-signed.imx
+$(APP).release: check_git_clean $(APP)-signed.imx
 	@if [ "${FR_PRIVKEY}" == "" ]; then \
 		echo 'FR_PRIVKEY must be set'; \
+		exit 1; \
+	fi
+	@if [ "${TAG}" == "" ]; then \
+		echo 'TAG must be set'; \
+		exit 1; \
+	fi
+	@if [ "$(shell git tag -l ${TAG})" != "${TAG}" ]; then \
+		echo 'TAG not found. Aborting.'; \
 		exit 1; \
 	fi
 	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
@@ -166,11 +179,14 @@ $(APP).release: $(APP)-signed.imx
 		--tool_chain="tama$(shell ${TAMAGO} version)" \
 		--revision_tag=${TAG} \
 		--artifacts='$(CURDIR)/$(APP).*' \
-		--private_key=${FR_PRIVKEY} && \
+		--private_key=${FR_PRIVKEY}
+	@echo "$(APP).release created."
+	@read -p "Please, add release to the log, then press enter to continue."
 	$(shell ${TAMAGO} env GOPATH)/bin/create_proofbundle \
 		--logtostderr \
 		--output $(APP).proofbundle \
 		--release $(APP).release \
 		--log_url $(LOG_URL) \
-		--log_pubkey_file ${LOG_PUBKEY} \
+		--log_pubkey_file ${LOG_PUBKEY}
+	@echo "$(APP).proofbundle created."
 	zip update.zip $(APP).imx $(APP).csf $(APP).proofbundle
