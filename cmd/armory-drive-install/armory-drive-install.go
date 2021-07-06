@@ -7,6 +7,8 @@
 package main
 
 import (
+	"archive/zip"
+	"bytes"
 	"flag"
 	"fmt"
 	"log"
@@ -145,17 +147,42 @@ func ota(assets *releaseAssets) {
 	log.Printf("\nWait for the USB armory blue LED to blink to indicate pairing mode.\nAn F-Secure drive should appear on your system.")
 	mountPoint := prompt("Please specify the path of the mounted F-Secure drive")
 
-	// append HAB signature
-	imx := append(assets.imx, assets.csf...)
-	// prepend OTA signature
-	imx = append(assets.sig, imx...)
+	log.Printf("\nCreating firmware update archive.")
 
-	log.Printf("\nCopying firmware to USB armory in pairing mode at %s", mountPoint)
-	if err := os.WriteFile(path.Join(mountPoint, OTAName), imx, 0600); err != nil {
+	otaFile := new(bytes.Buffer)
+	w := zip.NewWriter(otaFile)
+
+	var files = []struct {
+		Name string
+		Body []byte
+	}{
+		{imxPath, assets.imx},
+		{csfPath, assets.csf},
+		{logPath, assets.log},
+	}
+
+	for _, file := range files {
+		f, err := w.Create(file.Name)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if _, err = f.Write(file.Body); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if err := w.Close(); err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("\nCopied %d bytes to %s", len(imx), path.Join(mountPoint, OTAName))
+	log.Printf("Copying firmware to USB armory in pairing mode at %s", mountPoint)
+
+	if err := os.WriteFile(path.Join(mountPoint, otaPath), otaFile.Bytes(), 0600); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("\nCopied %d bytes to %s", otaFile.Len(), path.Join(mountPoint, otaPath))
 
 	log.Printf("\n1. Please eject the drive mounted at %s to flash the firmware.", mountPoint)
 	log.Printf("2. Wait for the white LED to turn on and then off for the update to complete.")

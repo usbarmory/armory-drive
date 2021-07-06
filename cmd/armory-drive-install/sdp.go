@@ -96,8 +96,6 @@ func sendHIDReport(n int, buf []byte, wait int) (res []byte, err error) {
 			return nil, errors.New("command timeout")
 		}
 	}
-
-	return
 }
 
 func dcdWrite(dcd []byte, addr uint32) (err error) {

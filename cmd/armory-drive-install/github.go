@@ -8,22 +8,13 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"path"
-
-	"github.com/f-secure-foundry/armory-drive/assets"
 
 	"github.com/google/go-github/v34/github"
-	ftlog "github.com/google/trillian-examples/formats/log"
-	"github.com/google/trillian-examples/serverless/client"
-	rfc6962 "github.com/google/trillian/merkle/rfc6962/hasher"
-	"golang.org/x/mod/sumdb/note"
 	"golang.org/x/oauth2"
 )
 
@@ -45,8 +36,8 @@ type releaseAssets struct {
 	csf []byte
 	// secure boot signature for serial download mode
 	sdp []byte
-	// OTA signature
-	sig []byte
+	// firmware transparency proof
+	log []byte
 }
 
 func (a *releaseAssets) complete() bool {
@@ -54,7 +45,7 @@ func (a *releaseAssets) complete() bool {
 		len(a.srk) > 0 &&
 		len(a.csf) > 0 &&
 		len(a.sdp) > 0 &&
-		len(a.sig) > 0)
+		len(a.log) > 0)
 }
 
 func githubClient() (*github.Client, bool) {
@@ -77,7 +68,7 @@ func githubClient() (*github.Client, bool) {
 	return github.NewClient(httpClient), true
 }
 
-func downloadRelease(version string) (assets *releaseAssets, err error) {
+func downloadRelease(version string) (a *releaseAssets, err error) {
 	var release *github.RepositoryRelease
 
 	ctx := context.Background()
@@ -99,42 +90,42 @@ func downloadRelease(version string) (assets *releaseAssets, err error) {
 		client = nil
 	}
 
-	assets = &releaseAssets{}
+	a = &releaseAssets{}
 
 	for _, asset := range release.Assets {
 		switch *asset.Name {
 		case "armory-drive.imx":
-			if assets.imx, err = downloadAsset("binary release", release, asset, client); err != nil {
+			if a.imx, err = downloadAsset("binary release", release, asset, client); err != nil {
 				return
 			}
 		case "armory-drive.srk":
-			if assets.srk, err = downloadAsset("SRK table hash", release, asset, client); err != nil {
+			if a.srk, err = downloadAsset("SRK table hash", release, asset, client); err != nil {
 				return
 			}
 		case "armory-drive.csf":
-			if assets.csf, err = downloadAsset("HAB signature", release, asset, client); err != nil {
+			if a.csf, err = downloadAsset("HAB signature", release, asset, client); err != nil {
 				return
 			}
 		case "armory-drive.sdp":
-			if assets.sdp, err = downloadAsset("recovery signature", release, asset, client); err != nil {
+			if a.sdp, err = downloadAsset("recovery signature", release, asset, client); err != nil {
 				return
 			}
-		case "armory-drive.sig":
-			if assets.sig, err = downloadAsset("OTA signature", release, asset, client); err != nil {
+		case "armory-drive.proofbundle":
+			if a.log, err = downloadAsset("proof bundle", release, asset, client); err != nil {
 				return
 			}
 		}
 	}
 
-	if !assets.complete() {
+	if !a.complete() {
 		return nil, fmt.Errorf("incomplete release")
 	}
 
-	if err := verifyRelease(release); err != nil {
+	if err := verifyRelease(release, a); err != nil {
 		return nil, fmt.Errorf("invalid release: %v", err)
 	}
 
-	log.Printf("\nDownloaded release assets, binary release SHA256 is %x", sha256.Sum256(assets.imx))
+	log.Printf("\nDownloaded verified release assets")
 
 	return
 }
@@ -149,57 +140,6 @@ func logFetcher(ctx context.Context, path string) (buf []byte, err error) {
 	}
 
 	return io.ReadAll(res)
-}
-
-func verifyRelease(release *github.RepositoryRelease) (err error) {
-	var oldCP *ftlog.Checkpoint
-	var checkpoints []ftlog.Checkpoint
-
-	ctx := context.Background()
-
-	if len(assets.LogPublicKey) == 0 {
-		return errors.New("installer compiled without LOG_PUBKEY, could not verify release")
-	}
-
-	logSigV, err := note.NewVerifier(string(assets.LogPublicKey))
-
-	if err != nil {
-		return
-	}
-
-	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV)
-
-	if err != nil {
-		return
-	}
-
-	if cacheDir, err := os.UserCacheDir(); err == nil {
-		p := path.Join(cacheDir, checkpointCachePath)
-
-		buf, err := os.ReadFile(p)
-
-		if err == nil {
-			oldCP = &ftlog.Checkpoint{}
-			oldCP.Unmarshal(buf)
-		}
-
-		defer func() {
-			if len(newCPRaw) > 0 {
-				_ = os.WriteFile(p, newCPRaw, 0600)
-			}
-		}()
-	}
-
-	if oldCP != nil {
-		checkpoints = append(checkpoints, *oldCP)
-	}
-
-	if len(checkpoints) > 0 {
-		checkpoints = append(checkpoints, *newCP)
-		err = client.CheckConsistency(ctx, rfc6962.DefaultHasher, logFetcher, checkpoints)
-	}
-
-	return
 }
 
 func downloadAsset(tag string, release *github.RepositoryRelease, asset *github.ReleaseAsset, client *github.Client) ([]byte, error) {

@@ -27,8 +27,8 @@ Please download the F-Secure Armory application from the iOS App Store and scan 
 
 // pairing disk paths (8.3 format)
 const (
-	codePath    = "QR.PNG"
-	readmePath  = "README.TXT"
+	codePath       = "QR.PNG"
+	readmePath     = "README.TXT"
 	checkpointPath = "LASTCHKP.BIN"
 )
 

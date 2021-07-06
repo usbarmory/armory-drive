@@ -66,6 +66,10 @@ func Check(buf []byte, path string, off int, keyring *crypto.Keyring) {
 func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 	var exit = make(chan bool)
 
+	defer func() {
+		exit <- true
+	}()
+
 	file, err := entry.File()
 
 	if err != nil {
@@ -100,26 +104,30 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 	imx, csf, proof, err := extract(buf)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("firmware update extraction error, %v", err)
+		return
 	}
 
 	if len(assets.FRPublicKey) != 0 && len(assets.LogPublicKey) != 0 {
 		// firmware authentication
-		err = verifyProof(imx, csf, proof, keyring)
+		pb, err := verifyProof(imx, csf, proof, keyring.Conf.ProofBundle)
 
 		if err != nil {
-			log.Fatal("invalid firmware proof, %v", err)
+			log.Printf("firmware update proof error, %v", err)
+			return
 		}
+
+		keyring.Conf.ProofBundle = pb
+		keyring.Save()
 	}
 
 	// append HAB signature
 	imx = append(imx, csf...)
 
 	if err = usbarmory.MMC.WriteBlocks(2, imx); err != nil {
-		log.Fatal(err)
+		log.Printf("firmware update error, %v", err)
+		return
 	}
-
-	exit <- true
 
 	usbarmory.LED("blue", false)
 	usbarmory.LED("white", false)
