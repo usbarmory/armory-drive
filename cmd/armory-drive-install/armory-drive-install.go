@@ -58,7 +58,7 @@ func init() {
 func confirm(msg string) bool {
 	var res string
 
-	fmt.Printf("\n%s (y/n): ", msg)
+	fmt.Printf("\n%s (y/N): ", msg)
 	fmt.Scanln(&res)
 
 	return res == "y"
