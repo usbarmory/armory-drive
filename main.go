@@ -23,8 +23,6 @@ import (
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
 
-// initialized at compile time (see Makefile)
-var Revision string
 
 func init() {
 	if err := imx6.SetARMFreq(900); err != nil {

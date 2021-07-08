@@ -7,6 +7,7 @@
 BUILD_TAGS = "linkramsize,linkprintk"
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
+PKG = github.com/f-secure-foundry/armory-drive
 
 SHELL = /bin/bash
 PROTOC ?= /usr/bin/protoc
@@ -94,7 +95,7 @@ clean:
 
 #### dependencies ####
 
-$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Revision=${REV}'"
+$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}'"
 $(APP): check_tamago proto
 	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
 		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \

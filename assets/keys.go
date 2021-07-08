@@ -25,6 +25,9 @@ var FRPublicKey []byte
 // authentication key
 var LogPublicKey []byte
 
+// Revision represents the firmware version
+var Revision string
+
 // DummySRKHash generates a known placeholder for the SRK hash to allow its
 // identification and replacement within the binary, by `armory-drive-install`,
 // with F-Secure or user secure boot key information.

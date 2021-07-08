@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
 	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
@@ -29,6 +30,7 @@ Please download the F-Secure Armory application from the iOS App Store and scan 
 const (
 	codePath       = "QR.PNG"
 	readmePath     = "README.TXT"
+	versionPath    = "VERSION.TXT"
 	checkpointPath = "LASTCHKP.BIN"
 )
 
@@ -148,6 +150,7 @@ func Pairing(code []byte, keyring *crypto.Keyring) (card *PairingDisk) {
 	}
 
 	_ = addFile(root, readmePath, []byte(readme))
+	_ = addFile(root, versionPath, []byte(assets.Revision))
 
 	if pb := keyring.Conf.ProofBundle; pb != nil {
 		if err = addFile(root, checkpointPath, pb.NewCheckpoint); err != nil {
