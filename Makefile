@@ -132,6 +132,8 @@ $(APP).imx: $(APP).bin $(APP).dcd
 
 $(APP)-signed.imx: check_hab_keys $(APP).imx
 	${TAMAGO} install github.com/f-secure-foundry/crucible/cmd/habtool
+	# Insert F-Secure SRK hash for F-Secure signed releases.
+	./fixup-imx.sh $(APP).imx
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
 		-a ${HAB_KEYS}/CSF_1_crt.pem \
