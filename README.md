@@ -142,7 +142,7 @@ should be created and passed with the `HAB_KEYS` environment variable.
 Build the `armory-drive-signed.imx` application executable:
 
 ```
-make CROSS_COMPILE=arm-none-eabi- HAB_KEYS=<path> imx_signed
+make CROSS_COMPILE=arm-none-eabi- DISABLE_FR_AUTH=1 HAB_KEYS=<path> imx_signed
 ```
 
 An unsigned test/development binary can be compiled with the `imx` target.
