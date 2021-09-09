@@ -31,7 +31,7 @@ Windows and macOS) to guide through initial installation of such releases and
 Secure Boot activation.
 
 > :warning: loading signed releases triggers secure boot activation which is an
-> a *irreversible operation* to be performed **at your own risk**, carefully
+> *irreversible operation* to be performed **at your own risk**, carefully
 > read and understand the following instructions.
 
 The installer supports the following installation modes:
@@ -153,9 +153,6 @@ Installing
 To permanently install `armory-drive-signed.imx` on internal non-volatile memory,
 follow [these instructions](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#flashing-bootable-images-on-externalinternal-media)
 for internal eMMC flashing.
-
-Alternatively [armory-ums](https://github.com/f-secure-foundry/armory-ums) can
-be used.
 
 Support
 =======
