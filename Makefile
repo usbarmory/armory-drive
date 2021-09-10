@@ -26,35 +26,35 @@ imx: $(APP).imx
 
 imx_signed: $(APP)-signed.imx
 
-$(APP)-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
-$(APP)-install:
+%-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
+%-install:
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
-		cd $(CURDIR) && ${TAMAGO} build $(GOFLAGS) cmd/$(APP)-install/*.go; \
+		cd $(CURDIR) && ${TAMAGO} build $(GOFLAGS) cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR)/assets && go generate && \
-		cd $(CURDIR) && go build $(GOFLAGS) cmd/$(APP)-install/*.go; \
+		cd $(CURDIR) && go build $(GOFLAGS) cmd/$*-install/*.go; \
 	fi
 
-$(APP)-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
-$(APP)-install.exe:
+%-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
+%-install.exe:
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build cmd/$(APP)-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR)/assets && go generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$(APP)-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$*-install/*.go; \
 	fi
 
-$(APP)-install.dmg: TMPDIR = $(shell mktemp -d)
-$(APP)-install.dmg:
+%-install.dmg: TMPDIR = $(shell mktemp -d)
+%-install.dmg:
 	cd $(CURDIR)/assets && go generate && \
-	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(TMPDIR)/$(APP)-install_darwin-amd64 cmd/$(APP)-install/*.go && \
+	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(TMPDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go && \
 	mkdir $(TMPDIR)/dmg && \
-	lipo -create -output $(TMPDIR)/dmg/$(APP)-install $(TMPDIR)/$(APP)-install_darwin-amd64 && \
+	lipo -create -output $(TMPDIR)/dmg/$*-install $(TMPDIR)/$*-install_darwin-amd64 && \
 	hdiutil create $(TMPDIR)/tmp.dmg -ov -volname "Armory Drive Install" -fs HFS+ -srcfolder $(TMPDIR)/dmg && \
-	hdiutil convert $(TMPDIR)/tmp.dmg -format UDZO -o $(TMPDIR)/$(APP)-install.dmg && \
-	cp $(TMPDIR)/$(APP)-install.dmg $(CURDIR)
+	hdiutil convert $(TMPDIR)/tmp.dmg -format UDZO -o $(TMPDIR)/$*-install.dmg && \
+	cp $(TMPDIR)/$*-install.dmg $(CURDIR)
 
 #### utilities ####
 
@@ -82,13 +82,9 @@ proto:
 	-rm -f *.pb.go
 	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') cd $(CURDIR)/api && ${PROTOC} --go_out=. armory.proto
 
-dcd:
-	echo $(GOMODCACHE)
-	echo $(TAMAGO_PKG)
-	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
-
 clean:
 	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd
+	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
 	@rm -fr $(CURDIR)/api/*.pb.go $(CURDIR)/assets/tmp*.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
 	@rm -fr update.zip $(APP).release $(APP).proofbundle
@@ -109,37 +105,32 @@ $(APP): check_tamago proto
 	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP} || (rm -f $(CURDIR)/assets/tmp*.go && exit 1)
 	rm -f $(CURDIR)/assets/tmp*.go
 
-$(APP).dcd: check_tamago
-$(APP).dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)
-$(APP).dcd: TAMAGO_PKG = $(shell grep "github.com/f-secure-foundry/tamago v" go.mod | awk '{print $$1"@"$$2}')
-$(APP).dcd: dcd
+%.dcd: check_tamago
+%.dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)
+%.dcd: TAMAGO_PKG = $(shell grep "github.com/f-secure-foundry/tamago v" go.mod | awk '{print $$1"@"$$2}')
+%.dcd:
+	echo $(GOMODCACHE)
+	echo $(TAMAGO_PKG)
+	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
 
-$(APP).bin: $(APP)
+%.bin: %
 	$(CROSS_COMPILE)objcopy -j .text -j .rodata -j .shstrtab -j .typelink \
 	    -j .itablink -j .gopclntab -j .go.buildinfo -j .noptrdata -j .data \
 	    -j .bss --set-section-flags .bss=alloc,load,contents \
 	    -j .noptrbss --set-section-flags .noptrbss=alloc,load,contents \
-	    $(APP) -O binary $(APP).bin
+	    $< -O binary $@
 
-$(APP).imx: $(APP).bin $(APP).dcd
-	mkimage -n $(APP).dcd -T imximage -e $(TEXT_START) -d $(APP).bin $(APP).imx
+%.imx: % %.bin %.dcd
+	mkimage -n $*.dcd -T imximage -e $(TEXT_START) -d $*.bin $@
 	# Copy entry point from ELF file
-	dd if=$(APP) of=$(APP).imx bs=1 count=4 skip=24 seek=4 conv=notrunc
+	dd if=$< of=$@ bs=1 count=4 skip=24 seek=4 conv=notrunc
 	# Cleanup
-	rm $(APP).bin
+	rm $*.bin
 
 #### secure boot ####
 
-$(APP)-signed.imx: check_hab_keys $(APP).imx
+%-signed.imx: check_hab_keys %.imx
 	${TAMAGO} install github.com/f-secure-foundry/crucible/cmd/habtool
-	cp $(APP).imx $(APP).tmp.imx
-	# Insert F-Secure SRK hash for F-Secure signed releases.
-	@if [ -f fixup-imx.sh ]; then \
-		echo '*Warning*: fixup-imx.sh found. F-Secure SRK hash will be inserted in the signed imx.'; \
-		echo 'Press Enter to continue or CTRL+C to abort.'; \
-		read; \
-		./fixup-imx.sh $(APP).tmp.imx; \
-	fi
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
 		-a ${HAB_KEYS}/CSF_1_crt.pem \
@@ -148,8 +139,8 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-t ${HAB_KEYS}/SRK_1_2_3_4_table.bin \
 		-x 1 \
 		-s \
-		-i $(APP).tmp.imx \
-		-o $(APP).sdp && \
+		-i $*.imx \
+		-o $*.sdp && \
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
 		-a ${HAB_KEYS}/CSF_1_crt.pem \
@@ -157,16 +148,41 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-b ${HAB_KEYS}/IMG_1_crt.pem \
 		-t ${HAB_KEYS}/SRK_1_2_3_4_table.bin \
 		-x 1 \
-		-i $(APP).tmp.imx \
-		-o $(APP).csf && \
-	cat $(APP).tmp.imx $(APP).csf > $(APP)-signed.imx
-	rm $(APP).tmp.imx
+		-i $*.imx \
+		-o $*.csf && \
+	cat $*.imx $*.csf > $@
+
+#### SRK fixup ####
+
+# Replace SRK hash before signing.
+# For F-Secure releases the F-Secure SRK will be used.
+
+%-fixup.imx: DUMMY_SRK_HASH=630DCD2966C4336691125448BBB25B4FF412A49C732DB2C8ABC1B8581BD710DD
+%-fixup.imx: check_hab_keys
+%-fixup.imx: %.imx
+	OFFSET=$(shell bgrep -b "${DUMMY_SRK_HASH}" $<) && \
+		if [[ -z $$OFFSET ]]; then \
+			echo "Dummy srk hash not found."; \
+			exit 1; \
+		fi && \
+		if [[ ! -f ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin ]]; then \
+			echo "SRK file ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin not found."; \
+			exit 1; \
+		fi && \
+		echo "Found dummy srk hash at offset: 0x$$OFFSET" && \
+		cp $< $@ && \
+		dd if=${HAB_KEYS}/SRK_1_2_3_4_fuse.bin of=$@ seek=$$((0x$$OFFSET)) bs=1 conv=notrunc
+
+srk_fixup: $(APP)-fixup-signed.imx
+	mv $(APP)-fixup-signed.imx $(APP)-signed.imx
+	mv $(APP)-fixup.sdp $(APP).sdp
+	mv $(APP)-fixup.csf $(APP).csf
 
 #### firmware release ####
 
 $(APP).release: PLATFORM = UA-MKII-ULZ
 $(APP).release: TAG = $(shell git tag --points-at HEAD)
-$(APP).release: check_git_clean $(APP)-signed.imx
+$(APP).release: check_git_clean srk_fixup
 	@if [ "${FR_PRIVKEY}" == "" ]; then \
 		echo 'FR_PRIVKEY must be set'; \
 		exit 1; \
