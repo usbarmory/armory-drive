@@ -8,7 +8,7 @@ allows encrypted USB Mass Storage interfacing for a microSD card connected to a
 [USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
 
 The encrypted storage setup and authentication is meant to be performed with
-the F-Secure Armory mobile application (to be released - private invites only
+the F-Secure Armory Drive mobile application (to be released - private invites only
 ATM) over Bluetooth (BLE).
 
 To understand the firmware capabilities and use see this
