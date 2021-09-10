@@ -102,10 +102,6 @@ func verifyProof(imx []byte, csf []byte, proof []byte) (err error) {
 	imxHash := sha256.Sum256(imx)
 	csfHash := sha256.Sum256(csf)
 
-	if err != nil {
-		return
-	}
-
 	hashes := map[string][]byte{
 		imxPath: imxHash[:],
 		csfPath: csfHash[:],
