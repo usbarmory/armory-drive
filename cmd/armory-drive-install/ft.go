@@ -21,7 +21,7 @@ import (
 	"github.com/google/go-github/v34/github"
 	"github.com/google/trillian-examples/formats/log"
 	"github.com/google/trillian-examples/serverless/client"
-	rfc6962 "github.com/google/trillian/merkle/rfc6962/hasher"
+	rfc6962 "github.com/google/trillian/merkle/rfc6962"
 	"golang.org/x/mod/sumdb/note"
 )
 
@@ -41,7 +41,7 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 		return
 	}
 
-	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV)
+	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, api.OriginV0)
 
 	if err != nil {
 		return
