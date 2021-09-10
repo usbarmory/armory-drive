@@ -23,7 +23,6 @@ import (
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
 
-
 func init() {
 	if err := imx6.SetARMFreq(900); err != nil {
 		panic(fmt.Sprintf("WARNING: error setting ARM frequency: %v\n", err))
