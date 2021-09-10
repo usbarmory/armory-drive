@@ -21,7 +21,7 @@ import (
 	"github.com/google/go-github/v34/github"
 	"github.com/google/trillian-examples/formats/log"
 	"github.com/google/trillian-examples/serverless/client"
-	rfc6962 "github.com/google/trillian/merkle/rfc6962/hasher"
+	"github.com/google/trillian/merkle/rfc6962"
 	"golang.org/x/mod/sumdb/note"
 )
 
@@ -41,7 +41,9 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 		return
 	}
 
-	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV)
+	// TODO(al,andrea): this should be an asset provisioned at the same time the log URL and PubKey are.
+	origin := api.OriginV0
+	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, origin)
 
 	if err != nil {
 		return
