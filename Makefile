@@ -132,8 +132,14 @@ $(APP).imx: $(APP).bin $(APP).dcd
 
 $(APP)-signed.imx: check_hab_keys $(APP).imx
 	${TAMAGO} install github.com/f-secure-foundry/crucible/cmd/habtool
+	cp $(APP).imx $(APP).tmp.imx
 	# Insert F-Secure SRK hash for F-Secure signed releases.
-	#./fixup-imx.sh $(APP).imx
+	@if [ -f fixup-imx.sh ]; then \
+		echo '*Warning*: fixup-imx.sh found. F-Secure SRK hash will be inserted in the signed imx.'; \
+		echo 'Press Enter to continue or CTRL+C to abort.'; \
+		read; \
+		./fixup-imx.sh $(APP).tmp.imx; \
+	fi
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
 		-a ${HAB_KEYS}/CSF_1_crt.pem \
@@ -142,7 +148,7 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-t ${HAB_KEYS}/SRK_1_2_3_4_table.bin \
 		-x 1 \
 		-s \
-		-i $(APP).imx \
+		-i $(APP).tmp.imx \
 		-o $(APP).sdp && \
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
@@ -151,9 +157,10 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-b ${HAB_KEYS}/IMG_1_crt.pem \
 		-t ${HAB_KEYS}/SRK_1_2_3_4_table.bin \
 		-x 1 \
-		-i $(APP).imx \
+		-i $(APP).tmp.imx \
 		-o $(APP).csf && \
-	cat $(APP).imx $(APP).csf > $(APP)-signed.imx
+	cat $(APP).tmp.imx $(APP).csf > $(APP)-signed.imx
+	rm $(APP).tmp.imx
 
 #### firmware release ####
 
