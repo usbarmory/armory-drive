@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/f-secure-foundry/armory-drive-log/api"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
@@ -118,8 +119,10 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 	}
 
 	if len(proof) > 0 {
+		var pb *api.ProofBundle
+
 		// firmware authentication
-		pb, err := verifyProof(imx, csf, proof, keyring.Conf.ProofBundle)
+		pb, err = verifyProof(imx, csf, proof, keyring.Conf.ProofBundle)
 
 		if err != nil {
 			err = fmt.Errorf("could not verify proof, %v", err)
