@@ -104,7 +104,7 @@ initialization_.
   4. An "F-Secure" disk volume should appear.
   6. Copy `update.zip` to the "F-Secure" disk.
   7. Eject the "F-Secure" disk.
-  8. The white LED should turn on and then off after the update is complete.
+  8. The white LED blinks during the update and turns off on success, a solid blue LED indicates an error.
   9. Put the SD card back in.
 
 Installation of self-compiled releases

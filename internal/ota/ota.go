@@ -7,6 +7,8 @@
 package ota
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -64,6 +66,7 @@ func Check(buf []byte, path string, off int, keyring *crypto.Keyring) {
 }
 
 func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
+	var err error
 	var exit = make(chan bool)
 
 	defer func() {
@@ -83,6 +86,12 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 			select {
 			case <-exit:
 				usbarmory.LED("white", false)
+
+				if err != nil {
+					log.Printf("firmware update error, %v", err)
+					usbarmory.LED("blue", true)
+				}
+
 				return
 			default:
 			}
@@ -91,20 +100,21 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 			usbarmory.LED("white", on)
 
 			runtime.Gosched()
-			time.Sleep(1 * time.Second)
+			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 
 	buf, err := ioutil.ReadAll(file)
 
 	if err != nil {
-		panic(err)
+		err = errors.New("could not read update")
+		return
 	}
 
 	imx, csf, proof, err := extract(buf)
 
 	if err != nil {
-		log.Printf("firmware update extraction error, %v", err)
+		err = fmt.Errorf("could not extract archive, %v", err)
 		return
 	}
 
@@ -113,7 +123,7 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 		pb, err := verifyProof(imx, csf, proof, keyring.Conf.ProofBundle)
 
 		if err != nil {
-			log.Printf("firmware update proof error, %v", err)
+			err = fmt.Errorf("could not verify proof, %v", err)
 			return
 		}
 
@@ -125,7 +135,7 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 	imx = append(imx, csf...)
 
 	if err = usbarmory.MMC.WriteBlocks(2, imx); err != nil {
-		log.Printf("firmware update error, %v", err)
+		err = fmt.Errorf("could not write to MMC, %v", err)
 		return
 	}
 
