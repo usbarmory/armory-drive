@@ -15,7 +15,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
@@ -118,7 +117,7 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 		return
 	}
 
-	if len(assets.FRPublicKey) != 0 && len(assets.LogPublicKey) != 0 {
+	if len(proof) > 0 {
 		// firmware authentication
 		pb, err := verifyProof(imx, csf, proof, keyring.Conf.ProofBundle)
 
