@@ -126,8 +126,6 @@ $(APP): check_tamago proto
 	mkimage -n $*.dcd -T imximage -e $(TEXT_START) -d $*.bin $@
 	# Copy entry point from ELF file
 	dd if=$< of=$@ bs=1 count=4 skip=24 seek=4 conv=notrunc
-	# Cleanup
-	rm $*.bin
 
 #### secure boot ####
 
