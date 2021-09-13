@@ -89,7 +89,7 @@ clean:
 	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
 	@rm -fr $(CURDIR)/api/*.pb.go $(CURDIR)/assets/tmp*.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
-	@rm -fr update.zip $(APP).release $(APP).proofbundle
+	@rm -fr $(APP).release $(APP).proofbundle
 
 #### dependencies ####
 
@@ -214,4 +214,3 @@ $(APP).release: check_git_clean srk_fixup
 		--log_url $(LOG_URL) \
 		--log_pubkey_file ${LOG_PUBKEY}
 	@echo "$(APP).proofbundle created."
-	zip update.zip $(APP).imx $(APP).csf $(APP).proofbundle
