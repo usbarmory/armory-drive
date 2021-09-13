@@ -46,12 +46,14 @@ imx_signed: $(APP)-signed.imx
 		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$*-install/*.go; \
 	fi
 
-%-install.dmg: TMPDIR = $(shell mktemp -d)
-%-install.dmg:
+%-install_darwin-amd64:
 	cd $(CURDIR)/assets && go generate && \
-	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(TMPDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go && \
+	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
+
+%-install.dmg: TMPDIR := $(shell mktemp -d)
+%-install.dmg: %-install_darwin-amd64
 	mkdir $(TMPDIR)/dmg && \
-	lipo -create -output $(TMPDIR)/dmg/$*-install $(TMPDIR)/$*-install_darwin-amd64 && \
+	lipo -create -output $(TMPDIR)/dmg/$*-install $(CURDIR)/$*-install_darwin-amd64 && \
 	hdiutil create $(TMPDIR)/tmp.dmg -ov -volname "Armory Drive Install" -fs HFS+ -srcfolder $(TMPDIR)/dmg && \
 	hdiutil convert $(TMPDIR)/tmp.dmg -format UDZO -o $(TMPDIR)/$*-install.dmg && \
 	cp $(TMPDIR)/$*-install.dmg $(CURDIR)
