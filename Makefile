@@ -202,7 +202,7 @@ $(APP).release: check_git_clean srk_fixup
 		--commit_hash=${REV} \
 		--tool_chain="tama$(shell ${TAMAGO} version)" \
 		--revision_tag=${TAG} \
-		--artifacts='$(CURDIR)/$(APP).*' \
+		--artifacts='$(CURDIR)/$(APP).imx $(CURDIR)/$(APP).csf $(CURDIR)/$(APP).sdp' \
 		--private_key=${FR_PRIVKEY}
 	@echo "$(APP).release created."
 	@read -p "Please, add release to the log, then press enter to continue."
