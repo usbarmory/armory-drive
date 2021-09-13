@@ -17,6 +17,7 @@ GOENV := GO_EXTLINK_ENABLED=0 CGO_ENABLED=0 GOOS=tamago GOARM=7 GOARCH=arm
 TEXT_START := 0x80010000 # ramStart (defined in imx6/imx6ul/memory.go) + 0x10000
 
 .PHONY: proto clean
+.PRECIOUS: %.srk
 
 #### primary targets ####
 
@@ -85,7 +86,7 @@ proto:
 	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') cd $(CURDIR)/api && ${PROTOC} --go_out=. armory.proto
 
 clean:
-	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd
+	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd $(APP).srk
 	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
 	@rm -fr $(CURDIR)/api/*.pb.go $(CURDIR)/assets/tmp*.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
@@ -157,21 +158,21 @@ $(APP): check_tamago proto
 # Replace SRK hash before signing.
 # For F-Secure releases the F-Secure SRK will be used.
 
+%.srk: check_hab_keys
+%.srk: ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin
+	cp ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin $*.srk
+
 %-fixup.imx: DUMMY_SRK_HASH=630DCD2966C4336691125448BBB25B4FF412A49C732DB2C8ABC1B8581BD710DD
 %-fixup.imx: check_hab_keys
-%-fixup.imx: %.imx
+%-fixup.imx: %.imx %.srk
 	OFFSET=$(shell bgrep -b "${DUMMY_SRK_HASH}" $<) && \
 		if [[ -z $$OFFSET ]]; then \
 			echo "Dummy srk hash not found."; \
 			exit 1; \
 		fi && \
-		if [[ ! -f ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin ]]; then \
-			echo "SRK file ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin not found."; \
-			exit 1; \
-		fi && \
 		echo "Found dummy srk hash at offset: 0x$$OFFSET" && \
 		cp $< $@ && \
-		dd if=${HAB_KEYS}/SRK_1_2_3_4_fuse.bin of=$@ seek=$$((0x$$OFFSET)) bs=1 conv=notrunc
+		dd if=$*.srk of=$@ seek=$$((0x$$OFFSET)) bs=1 conv=notrunc
 
 srk_fixup: $(APP)-fixup-signed.imx
 	mv $(APP)-fixup-signed.imx $(APP)-signed.imx
