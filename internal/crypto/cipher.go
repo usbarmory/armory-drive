@@ -4,7 +4,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package main
+package crypto
 
 import (
 	"bytes"
@@ -17,14 +17,17 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"log"
 	"math/big"
 	"sync"
 
-	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/crypto/xts"
+	"github.com/f-secure-foundry/armory-drive/api"
 
 	"github.com/f-secure-foundry/tamago/dma"
 	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
+
+	"golang.org/x/crypto/pbkdf2"
+	"golang.org/x/crypto/xts"
 )
 
 const (
@@ -47,7 +50,7 @@ const (
 )
 
 // flag to select ESSIV on AES-128 CBC ciphers
-var ESSIV bool
+var ESSIV = false
 
 // IV buffer
 var iv = make([]byte, aes.BlockSize)
@@ -55,20 +58,18 @@ var iv = make([]byte, aes.BlockSize)
 // IV encryption IV for ESSIV computation and IV reset
 var zero = make([]byte, aes.BlockSize)
 
-var cipherFn func(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup)
-
 func init() {
 	dcp.Init()
 }
 
-func deriveKey(diversifier []byte, index int, export bool) (key []byte, err error) {
+func (k *Keyring) deriveKey(diversifier []byte, index int, export bool) (key []byte, err error) {
 	if index == BLOCK_KEY {
 		var armoryLongterm []byte
 
 		// We want to diversify block cipher key derivation across different
 		// pairings, to do so we combine the diversifier with the UA long term
 		// public key, which is recreated at each pairing.
-		armoryLongterm, err = keyring.Export(UA_LONGTERM_KEY, false)
+		armoryLongterm, err = k.Export(UA_LONGTERM_KEY, false)
 
 		if err != nil {
 			return
@@ -79,7 +80,7 @@ func deriveKey(diversifier []byte, index int, export bool) (key []byte, err erro
 		// We re-use the ESSIV "salt" (unfortunate name collision here, it's
 		// not actually the PBKDF2 salt, or a salt at all) as it is random and
 		// unknown, the PBKDF2 salt is random but known (as it should be).
-		diversifier = pbkdf2.Key(keyring.salt, diversifier, PBKDF2_ITER, aes.BlockSize, sha256.New)
+		diversifier = pbkdf2.Key(k.salt, diversifier, PBKDF2_ITER, aes.BlockSize, sha256.New)
 	}
 
 	// It is advised to use only deterministic input data for key
@@ -90,6 +91,9 @@ func deriveKey(diversifier []byte, index int, export bool) (key []byte, err erro
 	if export {
 		key, err = dcp.DeriveKey(diversifier, iv, -1)
 	} else {
+		// Move the derived key directly to the internal DCP key RAM
+		// slot, without ever exposing it to external RAM or the Go
+		// runtime.
 		_, err = dcp.DeriveKey(diversifier, iv, index)
 	}
 
@@ -104,7 +108,7 @@ func deriveKey(diversifier []byte, index int, export bool) (key []byte, err erro
 	return
 }
 
-func setCipher(kind Cipher, diversifier []byte) (err error) {
+func (k *Keyring) SetCipher(kind api.Cipher, diversifier []byte) (err error) {
 	var dek []byte
 
 	// We need to zero out the IV buffer when switching away from ESSIV, as
@@ -113,66 +117,67 @@ func setCipher(kind Cipher, diversifier []byte) (err error) {
 	copy(iv, zero)
 
 	switch kind {
-	case Cipher_AES128_CBC_PLAIN, Cipher_AES128_CBC_ESSIV:
-		if kind == Cipher_AES128_CBC_ESSIV {
+	case api.Cipher_AES128_CBC_PLAIN, api.Cipher_AES128_CBC_ESSIV:
+		if kind == api.Cipher_AES128_CBC_ESSIV {
 			ESSIV = true
 		}
 
 		if DCP {
-			_, err = deriveKey(diversifier, BLOCK_KEY, false)
-
-			cipherFn = cipherDCP
-		} else {
-			dek, err = deriveKey(diversifier, BLOCK_KEY, true)
-
-			if err != nil {
+			if _, err = k.deriveKey(diversifier, BLOCK_KEY, false); err != nil {
 				return
 			}
 
-			keyring.cb, err = aes.NewCipher(dek)
+			k.Cipher = k.cipherDCP
+		} else {
+			if dek, err = k.deriveKey(diversifier, BLOCK_KEY, true); err != nil {
+				return
+			}
 
-			cipherFn = cipherAES
-		}
+			if k.cb, err = aes.NewCipher(dek); err != nil {
+				return
+			}
 
-		if err != nil {
-			return
+			k.Cipher = k.cipherAES
 		}
 
 		if ESSIV && !DCPIV {
-			keyring.cbiv, err = aes.NewCipher(keyring.salt)
+			k.cbiv, err = aes.NewCipher(k.salt)
+			return
 		}
-	case Cipher_AES128_XTS_PLAIN, Cipher_AES256_XTS_PLAIN:
+	case api.Cipher_AES128_XTS_PLAIN, api.Cipher_AES256_XTS_PLAIN:
 		var size int
 		cbxts := aes.NewCipher
 
-		if kind == Cipher_AES256_XTS_PLAIN {
+		if kind == api.Cipher_AES256_XTS_PLAIN {
 			size = 32 * 2
 		} else {
 			size = 16 * 2
 
 			if DCPXTS && DCP {
-				cbxts = NewDCPCipher
+				cbxts = newDCPCipher
 			}
 		}
 
-		dek, err = deriveKey(diversifier, BLOCK_KEY, true)
+		dek, err = k.deriveKey(diversifier, BLOCK_KEY, true)
 
 		if err != nil {
 			return
 		}
 
-		dk := pbkdf2.Key(dek, keyring.salt, PBKDF2_ITER, size, sha256.New)
-		keyring.cbxts, err = xts.NewCipher(cbxts, dk)
+		dk := pbkdf2.Key(dek, k.salt, PBKDF2_ITER, size, sha256.New)
+		k.cbxts, err = xts.NewCipher(cbxts, dk)
 
 		if err != nil {
 			return
 		}
 
-		cipherFn = cipherXTS
-	case Cipher_NONE:
-		deriveKey(zero, BLOCK_KEY, false)
-		keyring.cb = nil
-		keyring.cbxts = nil
+		k.Cipher = k.cipherXTS
+	case api.Cipher_NONE:
+		k.deriveKey(zero, BLOCK_KEY, false)
+		k.cbiv = nil
+		k.cb = nil
+		k.cbxts = nil
+		k.Cipher = nil
 	default:
 		err = errors.New("unsupported cipher")
 	}
@@ -181,11 +186,11 @@ func setCipher(kind Cipher, diversifier []byte) (err error) {
 }
 
 // equivalent to aes-cbc-essiv:md5
-func essiv(buf []byte, iv []byte) (err error) {
+func (k *Keyring) essiv(buf []byte, iv []byte) (err error) {
 	if DCPIV {
 		err = dcp.Encrypt(buf, ESSIV_KEY, iv)
 	} else {
-		encrypter := cipher.NewCBCEncrypter(keyring.cbiv, iv)
+		encrypter := cipher.NewCBCEncrypter(k.cbiv, iv)
 		encrypter.CryptBlocks(buf, buf)
 	}
 
@@ -193,7 +198,7 @@ func essiv(buf []byte, iv []byte) (err error) {
 }
 
 // equivalent to aes-cbc-plain (hw)
-func cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup) {
+func (k *Keyring) cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup) {
 	addr, ivs := dma.Reserve(blocks*aes.BlockSize, 4)
 	defer dma.Release(addr)
 
@@ -205,8 +210,8 @@ func cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *syn
 		binary.BigEndian.PutUint64(ivs[off:], uint64(lba+i))
 
 		if ESSIV {
-			if err := essiv(ivs[off:], zero); err != nil {
-				panic(err)
+			if err := k.essiv(ivs[off:], zero); err != nil {
+				log.Fatal(err)
 			}
 		}
 	}
@@ -214,7 +219,7 @@ func cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *syn
 	err := dcp.CipherChain(buf, ivs, blocks, blockSize, BLOCK_KEY, enc)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	if wg != nil {
@@ -223,7 +228,9 @@ func cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *syn
 }
 
 // equivalent to aes-cbc-plain (sw)
-func cipherAES(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup) {
+func (k *Keyring) cipherAES(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup) {
+	var mode cipher.BlockMode
+
 	for i := 0; i < blocks; i++ {
 		start := i * blockSize
 		end := start + blockSize
@@ -232,17 +239,15 @@ func cipherAES(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *syn
 		binary.BigEndian.PutUint64(iv, uint64(lba+i))
 
 		if ESSIV {
-			if err := essiv(iv, zero); err != nil {
-				panic(err)
+			if err := k.essiv(iv, zero); err != nil {
+				log.Fatal(err)
 			}
 		}
 
-		var mode cipher.BlockMode
-
 		if enc {
-			mode = cipher.NewCBCEncrypter(keyring.cb, iv)
+			mode = cipher.NewCBCEncrypter(k.cb, iv)
 		} else {
-			mode = cipher.NewCBCDecrypter(keyring.cb, iv)
+			mode = cipher.NewCBCDecrypter(k.cb, iv)
 		}
 
 		mode.CryptBlocks(slice, slice)
@@ -254,16 +259,16 @@ func cipherAES(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *syn
 }
 
 // equivalent to aes-xts-plain64 (sw)
-func cipherXTS(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup) {
+func (k *Keyring) cipherXTS(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *sync.WaitGroup) {
 	for i := 0; i < blocks; i++ {
 		start := i * blockSize
 		end := start + blockSize
 		slice := buf[start:end]
 
 		if enc {
-			keyring.cbxts.Encrypt(slice, slice, uint64(lba+i))
+			k.cbxts.Encrypt(slice, slice, uint64(lba+i))
 		} else {
-			keyring.cbxts.Decrypt(slice, slice, uint64(lba+i))
+			k.cbxts.Decrypt(slice, slice, uint64(lba+i))
 		}
 	}
 
@@ -272,14 +277,14 @@ func cipherXTS(buf []byte, lba int, blocks int, blockSize int, enc bool, wg *syn
 	}
 }
 
-func encryptSNVS(input []byte, length int) (output []byte, err error) {
-	block, err := aes.NewCipher(keyring.snvs)
+func (k *Keyring) encryptSNVS(input []byte, length int) (output []byte, err error) {
+	block, err := aes.NewCipher(k.snvs)
 
 	if err != nil {
 		return
 	}
 
-	iv := rng(aes.BlockSize)
+	iv := Rand(aes.BlockSize)
 	// pad to block size, accounting for IV and HMAC length
 	length -= len(iv) + sha256.Size
 
@@ -290,7 +295,7 @@ func encryptSNVS(input []byte, length int) (output []byte, err error) {
 
 	output = iv
 
-	mac := hmac.New(sha256.New, keyring.snvs)
+	mac := hmac.New(sha256.New, k.snvs)
 	mac.Write(iv)
 
 	stream := cipher.NewOFB(block, iv)
@@ -304,7 +309,7 @@ func encryptSNVS(input []byte, length int) (output []byte, err error) {
 	return
 }
 
-func decryptSNVS(input []byte) (output []byte, err error) {
+func (k *Keyring) decryptSNVS(input []byte) (output []byte, err error) {
 	if len(input) < aes.BlockSize {
 		return nil, errors.New("invalid length for decrypt")
 	}
@@ -312,13 +317,13 @@ func decryptSNVS(input []byte) (output []byte, err error) {
 	iv := input[0:aes.BlockSize]
 	input = input[aes.BlockSize:]
 
-	block, err := aes.NewCipher(keyring.snvs)
+	block, err := aes.NewCipher(k.snvs)
 
 	if err != nil {
 		return
 	}
 
-	mac := hmac.New(sha256.New, keyring.snvs)
+	mac := hmac.New(sha256.New, k.snvs)
 	mac.Write(iv)
 
 	if len(input) < mac.Size() {
@@ -340,12 +345,8 @@ func decryptSNVS(input []byte) (output []byte, err error) {
 	return
 }
 
-func encryptOFB(plaintext []byte) (ciphertext []byte, err error) {
-	if !remote.session {
-		return nil, errors.New("invalid session")
-	}
-
-	block, err := aes.NewCipher(keyring.sessionKey)
+func (k *Keyring) EncryptOFB(plaintext []byte) (ciphertext []byte, err error) {
+	block, err := aes.NewCipher(k.sessionKey)
 
 	if err != nil {
 		return
@@ -354,7 +355,7 @@ func encryptOFB(plaintext []byte) (ciphertext []byte, err error) {
 	in := bytes.NewReader(plaintext)
 	out := new(bytes.Buffer)
 
-	iv := rng(aes.BlockSize)
+	iv := Rand(aes.BlockSize)
 	stream := cipher.NewOFB(block, iv)
 	reader := &cipher.StreamReader{S: stream, R: in}
 
@@ -368,16 +369,12 @@ func encryptOFB(plaintext []byte) (ciphertext []byte, err error) {
 	return
 }
 
-func decryptOFB(ciphertext []byte) (plaintext []byte, err error) {
-	if !remote.session {
-		return nil, errors.New("invalid session")
-	}
-
+func (k *Keyring) DecryptOFB(ciphertext []byte) (plaintext []byte, err error) {
 	if len(ciphertext) < aes.BlockSize {
 		return nil, errors.New("invalid message")
 	}
 
-	block, err := aes.NewCipher(keyring.sessionKey)
+	block, err := aes.NewCipher(k.sessionKey)
 
 	if err != nil {
 		return
@@ -399,13 +396,13 @@ func decryptOFB(ciphertext []byte) (plaintext []byte, err error) {
 	return
 }
 
-func signECDSA(data []byte) (sig *Signature, err error) {
+func (k *Keyring) SignECDSA(data []byte, ephemeral bool) (sig *api.Signature, err error) {
 	var sigKey *ecdsa.PrivateKey
 
-	if remote.session {
-		sigKey = keyring.armoryEphemeral
+	if ephemeral {
+		sigKey = k.armoryEphemeral
 	} else {
-		sigKey = keyring.ArmoryLongterm
+		sigKey = k.ArmoryLongterm
 	}
 
 	h := sha256.New()
@@ -418,7 +415,7 @@ func signECDSA(data []byte) (sig *Signature, err error) {
 		return
 	}
 
-	sig = &Signature{
+	sig = &api.Signature{
 		Data: sum,
 		R:    r.Bytes(),
 		S:    s.Bytes(),
@@ -427,13 +424,13 @@ func signECDSA(data []byte) (sig *Signature, err error) {
 	return
 }
 
-func verifyECDSA(data []byte, sig *Signature) (err error) {
+func (k *Keyring) VerifyECDSA(data []byte, sig *api.Signature, ephemeral bool) (err error) {
 	var verKey *ecdsa.PublicKey
 
-	if remote.session {
-		verKey = keyring.mobileEphemeral
+	if ephemeral {
+		verKey = k.mobileEphemeral
 	} else {
-		verKey = keyring.MobileLongterm
+		verKey = k.MobileLongterm
 	}
 
 	h := sha256.New()
@@ -458,12 +455,11 @@ func verifyECDSA(data []byte, sig *Signature) (err error) {
 	return
 }
 
-func rng(n int) []byte {
+func Rand(n int) []byte {
 	buf := make([]byte, n)
-	_, err := rand.Read(buf)
 
-	if err != nil {
-		panic(err)
+	if _, err := rand.Read(buf); err != nil {
+		log.Fatal(err)
 	}
 
 	return buf

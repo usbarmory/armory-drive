@@ -8,10 +8,15 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"runtime"
 	"time"
 
-	"github.com/f-secure-foundry/tamago/dma"
+	"github.com/f-secure-foundry/armory-drive/internal/ble"
+	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+	"github.com/f-secure-foundry/armory-drive/internal/hab"
+	"github.com/f-secure-foundry/armory-drive/internal/ums"
+
 	"github.com/f-secure-foundry/tamago/soc/imx6"
 	"github.com/f-secure-foundry/tamago/soc/imx6/usb"
 
@@ -22,60 +27,66 @@ func init() {
 	if err := imx6.SetARMFreq(900); err != nil {
 		panic(fmt.Sprintf("WARNING: error setting ARM frequency: %v\n", err))
 	}
+
+	log.SetFlags(0)
 }
 
 func main() {
-	var pairing bool
-
 	usbarmory.LED("blue", false)
 	usbarmory.LED("white", false)
 
-	err := usbarmory.MMC.Detect()
-
-	if err != nil {
-		panic(err)
+	if err := usbarmory.MMC.Detect(); err != nil {
+		log.Fatal(err)
 	}
 
-	err = keyring.Init(false)
+	keyring := &crypto.Keyring{}
 
-	if err != nil {
-		panic(err)
+	if err := keyring.Init(false); err != nil {
+		log.Fatal(err)
 	}
 
-	err = detect(usbarmory.SD)
-
-	if err != nil {
-		pairing = true
+	drive := &ums.Drive{
+		Cipher:  true,
+		Keyring: keyring,
+		Mult:    ums.BLOCK_SIZE_MULTIPLIER,
 	}
 
-	startBLE(true)
+	ble := &ble.BLE{
+		Drive:   drive,
+		Keyring: keyring,
+	}
+	ble.Init()
 
-	if pairing {
-		// Secure Boot provisioning as required
-		initializeHAB()
+	if drive.Init(usbarmory.SD) != nil {
+		// provision Secure Boot as required
+		hab.Init()
 
-		pairingMode()
+		code, err := ble.PairingMode()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		drive.Cipher = false
+		drive.Mult = 1
+		drive.Ready = true
+
+		drive.Init(ums.Pairing(code, keyring))
+
+		go pairingFeedback(drive.PairingComplete)
 	}
 
-	device := &usb.Device{
-		Setup: setup,
-	}
-	configureDevice(device)
-
-	iface := buildMassStorageInterface()
-	device.Configurations[0].AddInterface(iface)
-
-	dma.Init(dmaStart, dmaSize)
+	device := drive.ConfigureUSB()
 
 	usb.USB1.Init()
 	usb.USB1.DeviceMode()
 
 	// To further reduce the attack surface, start the USB stack only when
 	// the card is unlocked (or in pairing mode).
-	if !ready {
+	if !drive.Ready {
 		usb.USB1.Stop()
 
-		for !ready {
+		for !drive.Ready {
 			runtime.Gosched()
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -84,7 +95,24 @@ func main() {
 	}
 
 	usb.USB1.Reset()
-
-	// never returns
 	usb.USB1.Start(device)
+}
+
+func pairingFeedback(done chan bool) {
+	var on bool
+
+	for {
+		select {
+		case <-done:
+			usbarmory.LED("blue", false)
+			return
+		default:
+		}
+
+		on = !on
+		usbarmory.LED("blue", on)
+
+		runtime.Gosched()
+		time.Sleep(1 * time.Second)
+	}
 }

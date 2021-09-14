@@ -4,7 +4,7 @@
 // Use of this source code uuis governed by the license
 // that can be found in the LICENSE file.
 
-package main
+package hab
 
 import (
 	"bytes"
@@ -20,7 +20,15 @@ import (
 	"github.com/f-secure-foundry/crucible/util"
 )
 
-func initializeHAB() {
+// Init activates secure boot by following the procedure described at:
+//   https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II)#activating-hab
+//
+// IMPORTANT: enabling secure boot functionality on the USB armory SoC, unlike
+// similar features on modern PCs, is an irreversible action that permanently
+// fuses verification keys hashes on the device. This means that any errors in
+// the process or loss of the signing PKI will result in a bricked device
+// incapable of executing unsigned code. This is a security feature, not a bug.
+func Init() {
 	switch {
 	case imx6.SNVS():
 		return
@@ -31,6 +39,7 @@ func initializeHAB() {
 	case bytes.Equal(assets.SRKHash, assets.DummySRKHash()):
 		return
 	default:
+		// Enable High Assurance Boot (i.e. secure boot)
 		hab(assets.SRKHash)
 	}
 }
@@ -47,17 +56,7 @@ func fuse(name string, bank int, word int, off int, size int, val []byte) {
 	}
 }
 
-// The function activates secure boot by following the procedure described at:
-//   https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II)#activating-hab
-//
-// IMPORTANT: enabling secure boot functionality on the USB armory SoC, unlike
-// similar features on modern PCs, is an irreversible action that permanently
-// fuses verification keys hashes on the device. This means that any errors in
-// the process or loss of the signing PKI will result in a bricked device
-// incapable of executing unsigned code. This is a security feature, not a bug.
 func hab(srk []byte) {
-	// Enable High Assurance Boot (i.e. secure boot)
-
 	if len(assets.SRKHash) != assets.SRKSize {
 		panic("fatal error, invalid SRK hash")
 	}

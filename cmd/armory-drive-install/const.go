@@ -12,7 +12,12 @@ const (
 	signedByUser
 )
 
-const OTAName = "UA-DRIVE.OTA"
+const (
+	otaPath = "UPDATE.ZIP"
+	imxPath = "armory-drive.imx"
+	csfPath = "armory-drive.csf"
+	logPath = "armory-drive.log"
+)
 
 const welcome = `
 Welcome to the Armory Drive installer!

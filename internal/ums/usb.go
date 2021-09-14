@@ -1,16 +1,15 @@
-// Copyright (c) F-Secure Corporation
+// copyright (c) f-secure corporation
 // https://foundry.f-secure.com
 //
-// Use of this source code is governed by the license
-// that can be found in the LICENSE file.
+// use of this source code is governed by the license
+// that can be found in the license file.
 
-package main
+package ums
 
 import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -21,13 +20,11 @@ import (
 
 const maxPacketSize = 512
 
-// queue for IN device responses
-var send = make(chan []byte, 2)
+func (d *Drive) ConfigureUSB() (device *usb.Device) {
+	device = &usb.Device{
+		Setup: d.setup,
+	}
 
-// queue for IN device DMA buffers for later release
-var free = make(chan uint32, 1)
-
-func configureDevice(device *usb.Device) {
 	// Supported Language Code Zero: English
 	device.SetLanguageCodes([]uint16{0x0409})
 
@@ -41,10 +38,10 @@ func configureDevice(device *usb.Device) {
 
 	device.Descriptor.Device = 0x0001
 
-	iManufacturer, _ := device.AddString(`F-Secure`)
+	iManufacturer, _ := device.AddString(VendorID)
 	device.Descriptor.Manufacturer = iManufacturer
 
-	iProduct, _ := device.AddString(`Armory`)
+	iProduct, _ := device.AddString(ProductID)
 	device.Descriptor.Product = iProduct
 
 	// p9, 4.1.1 Serial Number, USB Mass Storage Class 1.0
@@ -66,11 +63,9 @@ func configureDevice(device *usb.Device) {
 	device.Qualifier = &usb.DeviceQualifierDescriptor{}
 	device.Qualifier.SetDefaults()
 	device.Qualifier.NumConfigurations = uint8(len(device.Configurations))
-}
 
-func buildMassStorageInterface() (iface *usb.InterfaceDescriptor) {
 	// interface
-	iface = &usb.InterfaceDescriptor{}
+	iface := &usb.InterfaceDescriptor{}
 	iface.SetDefaults()
 	iface.NumEndpoints = 2
 	// Mass Storage
@@ -88,7 +83,7 @@ func buildMassStorageInterface() (iface *usb.InterfaceDescriptor) {
 	ep1IN.Attributes = 2
 	ep1IN.MaxPacketSize = maxPacketSize
 	ep1IN.Zero = false
-	ep1IN.Function = tx
+	ep1IN.Function = d.tx
 
 	iface.Endpoints = append(iface.Endpoints, ep1IN)
 
@@ -99,25 +94,23 @@ func buildMassStorageInterface() (iface *usb.InterfaceDescriptor) {
 	ep1OUT.Attributes = 2
 	ep1OUT.MaxPacketSize = maxPacketSize
 	ep1OUT.Zero = false
-	ep1OUT.Function = rx
+	ep1OUT.Function = d.rx
 
 	iface.Endpoints = append(iface.Endpoints, ep1OUT)
+
+	device.Configurations[0].AddInterface(iface)
 
 	return
 }
 
 // setup handles the class specific control requests specified at
 // p7, 3.1 - 3.2, USB Mass Storage Class 1.0
-func setup(setup *usb.SetupData) (in []byte, ack bool, done bool, err error) {
+func (d *Drive) setup(setup *usb.SetupData) (in []byte, ack bool, done bool, err error) {
 	switch setup.Request {
 	case usb.BULK_ONLY_MASS_STORAGE_RESET:
 		// For we ack this request without resetting.
 	case usb.GET_MAX_LUN:
-		if len(cards) == 0 {
-			err = errors.New("unsupported")
-		} else {
-			in = []byte{byte(len(cards) - 1)}
-		}
+		in = []byte{0x00}
 	}
 
 	return
@@ -150,23 +143,23 @@ func parseCBW(buf []byte) (cbw *usb.CBW, err error) {
 	return
 }
 
-func rx(buf []byte, lastErr error) (res []byte, err error) {
+func (d *Drive) rx(buf []byte, lastErr error) (res []byte, err error) {
 	var cbw *usb.CBW
 
-	if dataPending != nil {
-		defer dma.Release(dataPending.addr)
-		err = handleWrite(dataPending.buf)
+	if d.dataPending != nil {
+		defer dma.Release(d.dataPending.addr)
+		err = d.handleWrite()
 
 		if err != nil {
 			return
 		}
 
-		csw := dataPending.csw
+		csw := d.dataPending.csw
 		csw.DataResidue = 0
 
-		send <- dataPending.csw.Bytes()
+		d.send <- d.dataPending.csw.Bytes()
 
-		dataPending = nil
+		d.dataPending = nil
 
 		return
 	}
@@ -177,11 +170,11 @@ func rx(buf []byte, lastErr error) (res []byte, err error) {
 		return
 	}
 
-	csw, data, err := handleCDB(cbw.CommandBlock, cbw)
+	csw, data, err := d.handleCDB(cbw.CommandBlock, cbw)
 
 	defer func() {
 		if csw != nil {
-			send <- csw.Bytes()
+			d.send <- csw.Bytes()
 		}
 	}()
 
@@ -192,28 +185,28 @@ func rx(buf []byte, lastErr error) (res []byte, err error) {
 	}
 
 	if len(data) > 0 {
-		send <- data
+		d.send <- data
 	}
 
-	if dataPending != nil {
-		dataPending.addr, dataPending.buf = dma.Reserve(dataPending.size, usb.DTD_PAGE_SIZE)
-		res = dataPending.buf
+	if d.dataPending != nil {
+		d.dataPending.addr, d.dataPending.buf = dma.Reserve(d.dataPending.size, usb.DTD_PAGE_SIZE)
+		res = d.dataPending.buf
 	}
 
 	return
 }
 
-func tx(_ []byte, lastErr error) (in []byte, err error) {
+func (d *Drive) tx(_ []byte, lastErr error) (in []byte, err error) {
 	select {
-	case buf := <-free:
+	case buf := <-d.free:
 		dma.Release(buf)
 	default:
 	}
 
-	in = <-send
+	in = <-d.send
 
 	if reserved, addr := dma.Reserved(in); reserved {
-		free <- addr
+		d.free <- addr
 	}
 
 	return

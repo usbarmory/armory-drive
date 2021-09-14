@@ -4,7 +4,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package main
+package ums
 
 import (
 	"bytes"
@@ -12,9 +12,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/f-secure-foundry/armory-drive/internal/ota"
+
 	"github.com/f-secure-foundry/tamago/dma"
 	"github.com/f-secure-foundry/tamago/soc/imx6/usb"
-	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -57,18 +58,8 @@ const (
 	WRITE_PIPELINE_SIZE = 20
 )
 
-const (
-	// exactly 8 bytes required
-	VendorID = "F-Secure"
-	// exactly 16 bytes required
-	ProductID = "USB armory Mk II"
-	// exactly 4 bytes required
-	ProductRevision = "1.00"
-)
-
 type writeOp struct {
 	csw    *usb.CSW
-	lun    int
 	lba    int
 	blocks int
 	size   int
@@ -76,42 +67,14 @@ type writeOp struct {
 	buf    []byte
 }
 
-type Card interface {
-	Detect() error
-	Info() usdhc.CardInfo
-	ReadBlocks(int, []byte) error
-	WriteBlocks(int, []byte) error
-}
-
-// detected cards
-var cards []Card
-
-// buffer for write commands (which spawn across multiple USB transfers)
-var dataPending *writeOp
-
-// logical device status
-var ready bool
-
-func detect(card *usdhc.USDHC) (err error) {
-	err = card.Detect()
-
-	if err != nil {
-		return
-	}
-
-	cards = append(cards, card)
-
-	return
-}
-
 // p94, 3.6.2 Standard INQUIRY data, SCSI Commands Reference Manual, Rev. J
-func inquiry(length int) (data []byte) {
+func (d *Drive) inquiry(length int) (data []byte) {
 	data = make([]byte, 5)
 
 	// device connected, direct access block device
 	data[0] = 0x00
 
-	if !ready {
+	if !d.Ready {
 		// device not connected
 		data[0] |= (0b001 << 5)
 	}
@@ -143,10 +106,10 @@ func inquiry(length int) (data []byte) {
 }
 
 // p56, 2.4.1.2 Fixed format sense data, SCSI Commands Reference Manual, Rev. J
-func sense(length int) (data []byte, err error) {
+func (d *Drive) sense(length int) (data []byte, err error) {
 	data = make([]byte, 18)
 
-	if !ready {
+	if !d.Ready {
 		// sense key: NOT READY
 		data[2] = 0x02
 		// additional sense code: MEDIUM NOT PRESENT
@@ -179,12 +142,12 @@ func modeSense(length int) (data []byte, err error) {
 // p179, 3.33 REPORT LUNS command, SCSI Commands Reference Manual, Rev. J
 func reportLUNs(length int) (data []byte, err error) {
 	buf := new(bytes.Buffer)
-	luns := len(cards)
+	luns := 1
 
 	binary.Write(buf, binary.BigEndian, uint32(luns*8))
 	buf.Write(make([]byte, 4))
 
-	for lun := 0; lun < len(cards); lun++ {
+	for lun := 0; lun < luns; lun++ {
 		// The information conforms to the Logical Unit Address Method defined
 		// in SCC-2, and supports only First Level addressing (for each LUN,
 		// only the second byte is used and contains the assigned LUN)."
@@ -203,20 +166,15 @@ func reportLUNs(length int) (data []byte, err error) {
 }
 
 // p155, 3.22 READ CAPACITY (10) command, SCSI Commands Reference Manual, Rev. J
-func readCapacity10(card Card) (data []byte, err error) {
-	mult := BLOCK_SIZE_MULTIPLIER
-	info := card.Info()
+func (d *Drive) readCapacity10() (data []byte, err error) {
+	info := d.card.Info()
 
 	if info.Blocks <= 0 {
 		return nil, fmt.Errorf("invalid block count %d", info.Blocks)
 	}
 
-	if remote.pairingMode {
-		mult = 1
-	}
-
-	blocks := uint32(info.Blocks / mult)
-	blockSize := uint32(info.BlockSize * mult)
+	blocks := uint32(info.Blocks / d.Mult)
+	blockSize := uint32(info.BlockSize * d.Mult)
 
 	buf := new(bytes.Buffer)
 
@@ -227,8 +185,8 @@ func readCapacity10(card Card) (data []byte, err error) {
 }
 
 // p157, 3.23 READ CAPACITY (16) command, SCSI Commands Reference Manual, Rev. J
-func readCapacity16(card Card, length int) (data []byte, err error) {
-	info := card.Info()
+func (d *Drive) readCapacity16(length int) (data []byte, err error) {
+	info := d.card.Info()
 	buf := new(bytes.Buffer)
 
 	if info.Blocks <= 0 {
@@ -249,16 +207,11 @@ func readCapacity16(card Card, length int) (data []byte, err error) {
 }
 
 // p33, 4.10, USB Mass Storage Class – UFI Command Specification Rev. 1.0
-func readFormatCapacities(card Card) (data []byte, err error) {
-	mult := BLOCK_SIZE_MULTIPLIER
-	info := card.Info()
+func (d *Drive) readFormatCapacities() (data []byte, err error) {
+	info := d.card.Info()
 
-	if remote.pairingMode {
-		mult = 1
-	}
-
-	blocks := uint32(info.Blocks / mult)
-	blockSize := uint32(info.BlockSize * mult)
+	blocks := uint32(info.Blocks / d.Mult)
+	blockSize := uint32(info.BlockSize * d.Mult)
 
 	buf := new(bytes.Buffer)
 
@@ -272,22 +225,14 @@ func readFormatCapacities(card Card) (data []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-func read(card Card, lba int, blocks int) (err error) {
+func (d *Drive) read(lba int, blocks int) (err error) {
 	batch := READ_PIPELINE_SIZE
-	mult := BLOCK_SIZE_MULTIPLIER
+	info := d.card.Info()
 
-	info := card.Info()
-	dec := true
+	blockSize := info.BlockSize * d.Mult
 
-	if remote.pairingMode {
-		mult = 1
-		dec = false
-	}
-
-	blockSize := info.BlockSize * mult
-
-	if !ready {
-		send <- make([]byte, blocks*blockSize)
+	if !d.Ready {
+		d.send <- make([]byte, blocks*blockSize)
 		return
 	}
 
@@ -304,41 +249,33 @@ func read(card Card, lba int, blocks int) (err error) {
 		end := start + blockSize*batch
 		slice := buf[start:end]
 
-		err = card.ReadBlocks((lba+i)*mult, slice)
+		err = d.card.ReadBlocks((lba+i)*d.Mult, slice)
 
 		if err != nil {
 			dma.Release(addr)
 			return
 		}
 
-		if dec {
+		if d.Cipher {
 			wg.Add(1)
-			go cipherFn(slice, lba+i, batch, blockSize, false, wg)
+			go d.Keyring.Cipher(slice, lba+i, batch, blockSize, false, wg)
 		}
 	}
 
 	wg.Wait()
-	send <- buf
+	d.send <- buf
 
 	return
 }
 
-func write(card Card, lba int, buf []byte) (err error) {
+func (d *Drive) write(lba int, buf []byte) (err error) {
 	batch := WRITE_PIPELINE_SIZE
-	mult := BLOCK_SIZE_MULTIPLIER
+	info := d.card.Info()
 
-	info := card.Info()
-	enc := true
-
-	if remote.pairingMode {
-		mult = 1
-		enc = false
-	}
-
-	blockSize := info.BlockSize * mult
+	blockSize := info.BlockSize * d.Mult
 	blocks := len(buf) / blockSize
 
-	if !ready {
+	if !d.Ready {
 		return
 	}
 
@@ -353,21 +290,21 @@ func write(card Card, lba int, buf []byte) (err error) {
 		end := start + blockSize*batch
 		slice := buf[start:end]
 
-		if enc {
-			cipherFn(slice, lba+i, batch, blockSize, true, nil)
+		if d.Cipher {
+			d.Keyring.Cipher(slice, lba+i, batch, blockSize, true, nil)
 		}
 
-		sliceBlock := (lba + i) * mult
+		sliceBlock := (lba + i) * d.Mult
 
 		eg.Go(func() error {
-			return card.WriteBlocks(sliceBlock, slice)
+			return d.card.WriteBlocks(sliceBlock, slice)
 		})
 	}
 
 	return eg.Wait()
 }
 
-func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error) {
+func (d *Drive) handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error) {
 	op := cmd[0]
 	length := int(cbw.DataTransferLength)
 
@@ -377,40 +314,39 @@ func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error
 
 	lun := int(cbw.LUN)
 
-	if int(lun+1) > len(cards) {
+	if int(lun+1) > 1 {
 		err = fmt.Errorf("invalid LUN")
 		return
 	}
 
-	card := cards[lun]
-
 	switch op {
 	case TEST_UNIT_READY:
-		if !ready {
+		if !d.Ready {
 			csw.Status = usb.CSW_STATUS_COMMAND_FAILED
 		}
 	case INQUIRY:
-		data = inquiry(length)
+		data = d.inquiry(length)
 	case REQUEST_SENSE:
-		data, err = sense(length)
+		data, err = d.sense(length)
 	case START_STOP_UNIT:
 		start := (cmd[4]&1 == 1)
 
-		if !ready && start {
+		if !d.Ready && start {
 			// locked drive cannot be started
 			csw.Status = usb.CSW_STATUS_COMMAND_FAILED
 			// lock drive at eject
-		} else if ready && !start && !remote.pairingMode {
-			lock(nil, nil)
+		} else if d.Ready && !start && d.Cipher {
+			d.Lock()
 		} else {
-			ready = start
+			d.Ready = start
 		}
 
-		if !ready && remote.pairingMode {
-			pairingComplete <- true
+		if !d.Ready && !d.Cipher {
+			d.PairingComplete <- true
 
 			go func() {
-				ota()
+				card := d.card.(*PairingDisk)
+				ota.Check(card.Data, pairingDiskPath, pairingDiskOffset, d.Keyring)
 			}()
 		}
 	case MODE_SENSE_6, MODE_SENSE_10:
@@ -418,35 +354,29 @@ func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error
 	case REPORT_LUNS:
 		data, err = reportLUNs(length)
 	case READ_FORMAT_CAPACITIES:
-		data, err = readFormatCapacities(card)
+		data, err = d.readFormatCapacities()
 	case READ_CAPACITY_10:
-		data, err = readCapacity10(card)
+		data, err = d.readCapacity10()
 	case READ_10, WRITE_10:
-		if !ready {
+		if !d.Ready {
 			csw.Status = usb.CSW_STATUS_COMMAND_FAILED
 		}
 
-		mult := BLOCK_SIZE_MULTIPLIER
 		lba := int(binary.BigEndian.Uint32(cmd[2:]))
 		blocks := int(binary.BigEndian.Uint16(cmd[7:]))
 
-		if remote.pairingMode {
-			mult = 1
-		}
-
 		if op == READ_10 {
-			err = read(card, lba, blocks)
+			err = d.read(lba, blocks)
 		} else {
-			blockSize := card.Info().BlockSize * mult
+			blockSize := d.card.Info().BlockSize * d.Mult
 			size := int(cbw.DataTransferLength)
 
 			if blockSize*blocks != size {
 				err = fmt.Errorf("unexpected %d blocks write transfer length (%d)", blocks, size)
 			}
 
-			dataPending = &writeOp{
+			d.dataPending = &writeOp{
 				csw:    csw,
-				lun:    lun,
 				lba:    lba,
 				blocks: blocks,
 				size:   size,
@@ -457,7 +387,7 @@ func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error
 	case SERVICE_ACTION:
 		switch cmd[1] {
 		case READ_CAPACITY_16:
-			data, err = readCapacity16(card, length)
+			data, err = d.readCapacity16(length)
 		default:
 			err = fmt.Errorf("unsupported service action %#x %+v", op, cbw)
 		}
@@ -470,10 +400,10 @@ func handleCDB(cmd [16]byte, cbw *usb.CBW) (csw *usb.CSW, data []byte, err error
 	return
 }
 
-func handleWrite(buf []byte) (err error) {
-	if len(buf) != dataPending.size {
-		return fmt.Errorf("len(buf) != size (%d != %d)", len(buf), dataPending.size)
+func (d *Drive) handleWrite() (err error) {
+	if len(d.dataPending.buf) != d.dataPending.size {
+		return fmt.Errorf("len(buf) != size (%d != %d)", len(d.dataPending.buf), d.dataPending.size)
 	}
 
-	return write(cards[dataPending.lun], dataPending.lba, buf)
+	return d.write(d.dataPending.lba, d.dataPending.buf)
 }

@@ -7,7 +7,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -15,7 +14,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/crucible/hab"
 )
 
@@ -25,22 +23,6 @@ func checkHABArguments() {
 	}
 
 	log.Fatal(secureBootHelp)
-}
-
-func setSRKHash(imx []byte, srk []byte) []byte {
-	dummySRKHash := assets.DummySRKHash()
-
-	if !bytes.Contains(imx, dummySRKHash) {
-		log.Fatal("could not locate dummy SRK hash")
-	}
-
-	imx = bytes.ReplaceAll(imx, dummySRKHash, srk)
-
-	if bytes.Contains(imx, dummySRKHash) || !bytes.Contains(imx, srk) {
-		log.Fatal("could not set SRK hash")
-	}
-
-	return imx
 }
 
 func genCerts() (CSFKeyPEMBlock, CSFCertPEMBlock, IMGKeyPEMBlock, IMGCertPEMBlock []byte, err error) {
@@ -126,8 +108,8 @@ func sign(assets *releaseAssets) (err error) {
 	// On user signed releases we disable OTA authentication to
 	// simplify key management. This has no security impact as the
 	// executable is authenticated at boot using secure boot.
-	assets.sig = nil
-	assets.imx = clearOTAPublicKey(assets.imx)
+	assets.log = nil
+	assets.imx = clearFRPublicKey(assets.imx)
 
 	log.Printf("generating HAB signatures")
 	if assets.csf, err = hab.Sign(assets.imx, opts); err != nil {

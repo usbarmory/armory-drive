@@ -37,8 +37,7 @@ import (
 // is disabled at the first opportunity (init()).
 
 // by default any serial output is supressed before UART2 disabling
-var serialTx = func(c byte) {
-}
+var serialTx = func(c byte) {}
 
 func init() {
 	if imx6.SNVS() {

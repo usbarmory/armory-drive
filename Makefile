@@ -6,6 +6,8 @@
 
 BUILD_TAGS = "linkramsize,linkprintk"
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
+LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
+PKG = github.com/f-secure-foundry/armory-drive
 
 SHELL = /bin/bash
 PROTOC ?= /usr/bin/protoc
@@ -15,6 +17,7 @@ GOENV := GO_EXTLINK_ENABLED=0 CGO_ENABLED=0 GOOS=tamago GOARM=7 GOARCH=arm
 TEXT_START := 0x80010000 # ramStart (defined in imx6/imx6ul/memory.go) + 0x10000
 
 .PHONY: proto clean
+.PRECIOUS: %.srk
 
 #### primary targets ####
 
@@ -24,35 +27,37 @@ imx: $(APP).imx
 
 imx_signed: $(APP)-signed.imx
 
-$(APP)-install: GOFLAGS= -tags netgo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
-$(APP)-install:
+%-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
+%-install: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
-		cd $(CURDIR) && ${TAMAGO} build $(GOFLAGS) cmd/$(APP)-install/*.go; \
+		cd $(CURDIR) && ${TAMAGO} build $(GOFLAGS) cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR)/assets && go generate && \
-		cd $(CURDIR) && go build $(GOFLAGS) cmd/$(APP)-install/*.go; \
+		cd $(CURDIR) && go build $(GOFLAGS) cmd/$*-install/*.go; \
 	fi
 
-$(APP)-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
-$(APP)-install.exe:
+%-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
+%-install.exe: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build cmd/$(APP)-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR)/assets && go generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$(APP)-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$*-install/*.go; \
 	fi
 
-$(APP)-install.dmg: TMPDIR := $(shell mktemp -d)
-$(APP)-install.dmg:
+%-install_darwin-amd64: clean_assets
 	cd $(CURDIR)/assets && go generate && \
-	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(TMPDIR)/armory-drive-install_darwin-amd64 cmd/$(APP)-install/*.go && \
+	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
+
+%-install.dmg: TMPDIR := $(shell mktemp -d)
+%-install.dmg: %-install_darwin-amd64
 	mkdir $(TMPDIR)/dmg && \
-	lipo -create -output $(TMPDIR)/dmg/armory-drive-install $(TMPDIR)/armory-drive-install_darwin-amd64 && \
+	lipo -create -output $(TMPDIR)/dmg/$*-install $(CURDIR)/$*-install_darwin-amd64 && \
 	hdiutil create $(TMPDIR)/tmp.dmg -ov -volname "Armory Drive Install" -fs HFS+ -srcfolder $(TMPDIR)/dmg && \
-	hdiutil convert $(TMPDIR)/tmp.dmg -format UDZO -o $(TMPDIR)/armory-drive-install.dmg && \
-	cp $(TMPDIR)/armory-drive-install.dmg $(CURDIR)
+	hdiutil convert $(TMPDIR)/tmp.dmg -format UDZO -o $(TMPDIR)/$*-install.dmg && \
+	cp $(TMPDIR)/$*-install.dmg $(CURDIR)
 
 #### utilities ####
 
@@ -69,53 +74,66 @@ check_hab_keys:
 		exit 1; \
 	fi
 
+check_git_clean:
+	@if [ "$(shell git status -s)" != "" ]; then \
+		echo 'Dirty git checkout directory detected. Aborting.'; \
+		exit 1; \
+	fi
+
 proto:
 	@echo "generating protobuf classes"
 	-rm -f *.pb.go
-	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') ${PROTOC} --go_out=. armory.proto
+	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') cd $(CURDIR)/api && ${PROTOC} --go_out=. armory.proto
 
-dcd:
-	echo $(GOMODCACHE)
-	echo $(TAMAGO_PKG)
-	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
+clean_assets:
+	@rm -fr $(CURDIR)/assets/tmp*.go
 
-clean:
-	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).ota $(APP).csf $(APP).sdp $(APP).dcd *.pb.go $(CURDIR)/assets/tmp*.go
+clean: clean_assets
+	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd $(APP).srk
+	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
+	@rm -fr $(CURDIR)/api/*.pb.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
+	@rm -fr $(APP).release $(APP).proofbundle
 
 #### dependencies ####
 
-$(APP): GOFLAGS= -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X 'main.Revision=${REV}'"
-$(APP): check_tamago proto
-	@if [ "${OTA_KEYS}" != "" ]; then \
-		echo '** WARNING ** Enabling OTA verification with public key ${OTA_KEYS}/armory-drive-minisign.pub'; \
+$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}'"
+$(APP): check_tamago proto clean_assets
+	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
+		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \
+	elif [ "${DISABLE_FR_AUTH}" != "" ]; then \
+		echo '** WARNING ** firmware updates authentication is disabled'; \
 	else \
-		echo '** WARNING ** OTA verification is disabled'; \
+		echo '** WARNING ** when variables FR_PUBKEY and LOG_PUBKEY are missing DISABLE_FR_AUTH must be set to confirm'; \
+		exit 1; \
 	fi
 	cd $(CURDIR)/assets && ${TAMAGO} generate && \
 	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP} || (rm -f $(CURDIR)/assets/tmp*.go && exit 1)
 	rm -f $(CURDIR)/assets/tmp*.go
 
-$(APP).dcd: check_tamago
-$(APP).dcd: GOMODCACHE=$(shell ${TAMAGO} env GOMODCACHE)
-$(APP).dcd: TAMAGO_PKG=$(shell grep "github.com/f-secure-foundry/tamago v" go.mod | awk '{print $$1"@"$$2}')
-$(APP).dcd: dcd
+%.dcd: check_tamago
+%.dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)
+%.dcd: TAMAGO_PKG = $(shell grep "github.com/f-secure-foundry/tamago v" go.mod | awk '{print $$1"@"$$2}')
+%.dcd:
+	echo $(GOMODCACHE)
+	echo $(TAMAGO_PKG)
+	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
 
-$(APP).bin: $(APP)
+%.bin: %
 	$(CROSS_COMPILE)objcopy -j .text -j .rodata -j .shstrtab -j .typelink \
 	    -j .itablink -j .gopclntab -j .go.buildinfo -j .noptrdata -j .data \
 	    -j .bss --set-section-flags .bss=alloc,load,contents \
 	    -j .noptrbss --set-section-flags .noptrbss=alloc,load,contents \
-	    $(APP) -O binary $(APP).bin
+	    $< -O binary $@
 
-$(APP).imx: $(APP).bin $(APP).dcd
-	mkimage -n $(APP).dcd -T imximage -e $(TEXT_START) -d $(APP).bin $(APP).imx
+%.imx: % %.bin %.dcd
+	mkimage -n $*.dcd -T imximage -e $(TEXT_START) -d $*.bin $@
 	# Copy entry point from ELF file
-	dd if=$(APP) of=$(APP).imx bs=1 count=4 skip=24 seek=4 conv=notrunc
+	dd if=$< of=$@ bs=1 count=4 skip=24 seek=4 conv=notrunc
 
 #### secure boot ####
 
-$(APP)-signed.imx: check_hab_keys $(APP).imx
+%-signed.imx: check_hab_keys %.imx
 	${TAMAGO} install github.com/f-secure-foundry/crucible/cmd/habtool
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
@@ -125,8 +143,8 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-t ${HAB_KEYS}/SRK_1_2_3_4_table.bin \
 		-x 1 \
 		-s \
-		-i $(APP).imx \
-		-o $(APP).sdp && \
+		-i $*.imx \
+		-o $*.sdp && \
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
 		-a ${HAB_KEYS}/CSF_1_crt.pem \
@@ -134,11 +152,65 @@ $(APP)-signed.imx: check_hab_keys $(APP).imx
 		-b ${HAB_KEYS}/IMG_1_crt.pem \
 		-t ${HAB_KEYS}/SRK_1_2_3_4_table.bin \
 		-x 1 \
-		-i $(APP).imx \
-		-o $(APP).csf && \
-	cat $(APP).imx $(APP).csf > $(APP)-signed.imx
-	@if [ "${OTA_KEYS}" != "" ]; then \
-		echo -e "\n" | minisign -S -s ${OTA_KEYS}/armory-drive-minisign.sec -m $(APP)-signed.imx -x $(APP).sig -c `stat -L -c %s ${APP}-signed.imx` && \
-		minisign -V -p ${OTA_KEYS}/armory-drive-minisign.pub -m $(APP)-signed.imx -x $(APP).sig && \
-		cat $(APP).sig $(APP)-signed.imx > $(APP).ota; \
+		-i $*.imx \
+		-o $*.csf && \
+	cat $*.imx $*.csf > $@
+
+#### SRK fixup ####
+
+# Replace SRK hash before signing.
+# For F-Secure releases the F-Secure SRK will be used.
+
+%.srk: check_hab_keys
+%.srk: ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin
+	cp ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin $*.srk
+
+%-fixup.imx: DUMMY_SRK_HASH=630DCD2966C4336691125448BBB25B4FF412A49C732DB2C8ABC1B8581BD710DD
+%-fixup.imx: check_hab_keys
+%-fixup.imx: %.imx %.srk
+	OFFSET=$(shell bgrep -b "${DUMMY_SRK_HASH}" $<) && \
+		if [[ -z $$OFFSET ]]; then \
+			echo "Dummy srk hash not found."; \
+			exit 1; \
+		fi && \
+		echo "Found dummy srk hash at offset: 0x$$OFFSET" && \
+		cp $< $@ && \
+		dd if=$*.srk of=$@ seek=$$((0x$$OFFSET)) bs=1 conv=notrunc
+
+srk_fixup: $(APP)-signed.imx $(APP)-fixup-signed.imx
+	mv $(APP)-fixup.sdp $(APP).sdp
+
+#### firmware release ####
+
+$(APP).release: PLATFORM = UA-MKII-ULZ
+$(APP).release: TAG = $(shell git tag --points-at HEAD)
+$(APP).release: check_git_clean srk_fixup
+	@if [ "${FR_PRIVKEY}" == "" ]; then \
+		echo 'FR_PRIVKEY must be set'; \
+		exit 1; \
 	fi
+	@if [ "${TAG}" == "" ]; then \
+		echo 'No release tag defined on checked-out commit. Aborting.'; \
+		exit 1; \
+	fi
+	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
+	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_proofbundle
+	$(shell ${TAMAGO} env GOPATH)/bin/create_release \
+		--logtostderr \
+		--output $(APP).release \
+		--description="$(APP) ${TAG}" \
+		--platform_id=${PLATFORM} \
+		--commit_hash=${REV} \
+		--tool_chain="tama$(shell ${TAMAGO} version)" \
+		--revision_tag=${TAG} \
+		--artifacts='$(CURDIR)/$(APP).imx $(CURDIR)/$(APP).csf $(CURDIR)/$(APP).sdp' \
+		--private_key=${FR_PRIVKEY}
+	@echo "$(APP).release created."
+	@read -p "Please, add release to the log, then press enter to continue."
+	$(shell ${TAMAGO} env GOPATH)/bin/create_proofbundle \
+		--logtostderr \
+		--output $(APP).proofbundle \
+		--release $(APP).release \
+		--log_url $(LOG_URL) \
+		--log_pubkey_file ${LOG_PUBKEY}
+	@echo "$(APP).proofbundle created."

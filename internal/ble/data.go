@@ -4,15 +4,11 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package main
+package ble
 
 import (
 	"bytes"
 	"encoding/binary"
-	"runtime"
-	"time"
-
-	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
 )
 
 const (
@@ -102,7 +98,7 @@ func (frg *Fragment) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func handleFragment(data []byte) (envelope []byte) {
+func handleFragment(data []byte) (event []byte) {
 	fragment := &Fragment{}
 	fragment.Parse(data)
 
@@ -110,26 +106,26 @@ func handleFragment(data []byte) (envelope []byte) {
 		return fragment.Data
 	}
 
-	if fragment.Seq > 1 && len(remote.buf) == 0 || fragment.Seq > fragment.Total {
-		remote.buf = nil
+	if fragment.Seq > 1 && len(data) == 0 || fragment.Seq > fragment.Total {
+		data = nil
 		return
 	}
 
 	if fragment.Seq == 1 {
-		remote.buf = make([]byte, fragment.Total*PROTOBUF_MAX_LENGTH)
+		data = make([]byte, fragment.Total*PROTOBUF_MAX_LENGTH)
 	}
 
-	remote.buf = append(remote.buf, fragment.Data...)
+	data = append(data, fragment.Data...)
 
 	if fragment.Seq == fragment.Total {
-		envelope = remote.buf
-		remote.buf = nil
+		event = data
+		data = nil
 	}
 
 	return
 }
 
-func handleEvent(ble *usbarmory.ANNA, buf []byte) {
+func (b *BLE) handleEvent(buf []byte) {
 	var fragments [][]byte
 
 	if len(buf) < 3+2 {
@@ -145,13 +141,13 @@ func handleEvent(ble *usbarmory.ANNA, buf []byte) {
 		return
 	}
 
-	envelope := handleFragment(data)
+	event := handleFragment(data)
 
-	if len(envelope) == 0 {
+	if len(event) == 0 {
 		return
 	}
 
-	res := handleEnvelope(envelope)
+	res := b.handleEnvelope(event)
 
 	for i := 0; i < len(res); i += PROTOBUF_MAX_LENGTH {
 		if i+PROTOBUF_MAX_LENGTH > len(res) {
@@ -179,36 +175,6 @@ func handleEvent(ble *usbarmory.ANNA, buf []byte) {
 		pkt.SetDefaults()
 		pkt.SetPayload(payload.Bytes())
 
-		txPacket(ble, pkt.Bytes())
+		b.txPacket(pkt.Bytes())
 	}
-}
-
-var pairingComplete = make(chan bool)
-
-func pairingMode() {
-	nonce := rng(8)
-	remote.pairingMode = true
-	remote.pairingNonce = binary.BigEndian.Uint64(nonce)
-
-	cards = append(cards, QRFS())
-	ready = true
-
-	go func() {
-		var on bool
-
-		for {
-			select {
-			case <-pairingComplete:
-				usbarmory.LED("blue", false)
-				return
-			default:
-			}
-
-			on = !on
-			usbarmory.LED("blue", on)
-
-			runtime.Gosched()
-			time.Sleep(1 * time.Second)
-		}
-	}()
 }

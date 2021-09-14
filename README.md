@@ -8,7 +8,7 @@ allows encrypted USB Mass Storage interfacing for a microSD card connected to a
 [USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
 
 The encrypted storage setup and authentication is meant to be performed with
-the F-Secure Armory mobile application (to be released - private invites only
+the F-Secure Armory Drive mobile application (to be released - private invites only
 ATM) over Bluetooth (BLE).
 
 To understand the firmware capabilities and use see this
@@ -31,7 +31,7 @@ Windows and macOS) to guide through initial installation of such releases and
 Secure Boot activation.
 
 > :warning: loading signed releases triggers secure boot activation which is an
-> a *irreversible operation* to be performed **at your own risk**, carefully
+> *irreversible operation* to be performed **at your own risk**, carefully
 > read and understand the following instructions.
 
 The installer supports the following installation modes:
@@ -40,6 +40,10 @@ The installer supports the following installation modes:
   causes F-Secure own secure boot public keys to be *permanently fused* on the
   target USB armory, fully converting the device to exclusive use with Armory
   Drive releases signed by F-Secure.
+
+  These releases also enable authenticated updates through
+  [tamper-evident logs](https://github.com/f-secure-foundry/armory-drive-log) powered
+  by Google [transparency](https://transparency.dev/) framework.
 
 * User signed releases: the installation of such firmware images
   causes user own secure boot keys to be created and *permanently fused* on the
@@ -94,14 +98,13 @@ use the following procedure on USB armory devices which have been already
 initialized with the Armory Drive firmware as shown in _Pairing and
 initialization_.
 
-  1. Download file `armory-drive.ota` from the [latest binary release](https://github.com/f-secure-foundry/armory-drive/releases/latest)
+  1. Download file `update.zip` from the [latest binary release](https://github.com/f-secure-foundry/armory-drive/releases/latest)
   2. If the USB armory contains an SD card, remove it.
   3. Plug the USB armory.
   4. An "F-Secure" disk volume should appear.
-  5. Rename `armory-drive.ota` to "UA-DRIVE.OTA".
-  6. Copy "UA-DRIVE.OTA" to the "F-Secure" disk.
+  6. Copy `update.zip` to the "F-Secure" disk.
   7. Eject the "F-Secure" disk.
-  8. The white LED should turn on and then off after the update is complete.
+  8. The white LED blinks during the update and turns off on success, a solid blue LED indicates an error.
   9. Put the SD card back in.
 
 Installation of self-compiled releases
@@ -136,20 +139,10 @@ The firmware is meant to be executed on secure booted systems, therefore
 [secure boot keys](https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II))
 should be created and passed with the `HAB_KEYS` environment variable.
 
-To build and install firmware updates to be passed over USB Mass Storage (see
-_Firmware update_) the `OTA_KEYS` variable must be set to a path containing the
-output of [minisign](https://jedisct1.github.io/minisign/) keys generated as
-follows:
-
-```
-minisign -G -p $OTA_KEYS/armory-drive-minisign.pub -s armory-drive-minisign.sec
-
-```
-
 Build the `armory-drive-signed.imx` application executable:
 
 ```
-make CROSS_COMPILE=arm-none-eabi- HAB_KEYS=<path> OTA_KEYS=<path> imx_signed
+make CROSS_COMPILE=arm-none-eabi- DISABLE_FR_AUTH=1 HAB_KEYS=<path> imx_signed
 ```
 
 An unsigned test/development binary can be compiled with the `imx` target.
@@ -160,9 +153,6 @@ Installing
 To permanently install `armory-drive-signed.imx` on internal non-volatile memory,
 follow [these instructions](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#flashing-bootable-images-on-externalinternal-media)
 for internal eMMC flashing.
-
-Alternatively [armory-ums](https://github.com/f-secure-foundry/armory-ums) can
-be used.
 
 Support
 =======
