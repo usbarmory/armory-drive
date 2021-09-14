@@ -28,7 +28,7 @@ imx: $(APP).imx
 imx_signed: $(APP)-signed.imx
 
 %-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
-%-install:
+%-install: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
 		cd $(CURDIR) && ${TAMAGO} build $(GOFLAGS) cmd/$*-install/*.go; \
@@ -38,7 +38,7 @@ imx_signed: $(APP)-signed.imx
 	fi
 
 %-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
-%-install.exe:
+%-install.exe: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
 		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build cmd/$*-install/*.go; \
@@ -47,7 +47,7 @@ imx_signed: $(APP)-signed.imx
 		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$*-install/*.go; \
 	fi
 
-%-install_darwin-amd64:
+%-install_darwin-amd64: clean_assets
 	cd $(CURDIR)/assets && go generate && \
 	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
 
@@ -85,17 +85,20 @@ proto:
 	-rm -f *.pb.go
 	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') cd $(CURDIR)/api && ${PROTOC} --go_out=. armory.proto
 
-clean:
+clean_assets:
+	@rm -fr $(CURDIR)/assets/tmp*.go
+
+clean: clean_assets
 	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd $(APP).srk
 	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
-	@rm -fr $(CURDIR)/api/*.pb.go $(CURDIR)/assets/tmp*.go
+	@rm -fr $(CURDIR)/api/*.pb.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
 	@rm -fr $(APP).release $(APP).proofbundle
 
 #### dependencies ####
 
 $(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}'"
-$(APP): check_tamago proto
+$(APP): check_tamago proto clean_assets
 	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
 		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \
 	elif [ "${DISABLE_FR_AUTH}" != "" ]; then \
