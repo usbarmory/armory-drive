@@ -209,6 +209,8 @@ func installFirmware(mode Mode) {
 		if !confirm("Proceed?") {
 			log.Fatal("Goodbye")
 		}
+
+		imx = assets.imx
 	case signedByFSecure:
 		log.Println(fscSignedFirmwareWarning)
 
@@ -216,7 +218,7 @@ func installFirmware(mode Mode) {
 			log.Fatal("Goodbye")
 		}
 
-		assets.imx = fixupSRKHash(assets.imx, assets.srk)
+		imx = fixupSRKHash(assets.imx, assets.srk)
 	case signedByUser:
 		log.Println(userSignedFirmwareWarning)
 
@@ -228,7 +230,7 @@ func installFirmware(mode Mode) {
 			log.Fatal(err)
 		}
 
-		assets.imx = fixupSRKHash(assets.imx, assets.srk)
+		imx = fixupSRKHash(assets.imx, assets.srk)
 
 		if err = sign(assets); err != nil {
 			log.Fatal(err)
@@ -238,9 +240,7 @@ func installFirmware(mode Mode) {
 	}
 
 	if conf.recovery {
-		imx = append(assets.imx, assets.sdp...)
-	} else {
-		imx = assets.imx
+		imx = append(imx, assets.sdp...)
 	}
 
 	log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)")
