@@ -75,17 +75,17 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 		err = client.CheckConsistency(ctx, rfc6962.DefaultHasher, logFetcher, checkpoints)
 	}
 
-	return verifyProof(a.imx, a.csf, a.log)
+	return verifyProof(a)
 }
 
-func verifyProof(imx []byte, csf []byte, proof []byte) (err error) {
-	if len(proof) == 0 {
+func verifyProof(a *releaseAssets) (err error) {
+	if len(a.log) == 0 {
 		return errors.New("missing proof")
 	}
 
 	pb := &api.ProofBundle{}
 
-	if err = json.Unmarshal(proof, pb); err != nil {
+	if err = json.Unmarshal(a.log, pb); err != nil {
 		return
 	}
 
@@ -101,8 +101,8 @@ func verifyProof(imx []byte, csf []byte, proof []byte) (err error) {
 		return
 	}
 
-	imxHash := sha256.Sum256(imx)
-	csfHash := sha256.Sum256(csf)
+	imxHash := sha256.Sum256(a.imx)
+	csfHash := sha256.Sum256(a.csf)
 
 	hashes := map[string][]byte{
 		imxPath: imxHash[:],
