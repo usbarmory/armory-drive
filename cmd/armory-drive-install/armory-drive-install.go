@@ -230,16 +230,23 @@ func installFirmware(mode Mode) {
 			log.Fatal(err)
 		}
 
-		imx = fixupSRKHash(assets.imx, assets.srk)
-
 		if err = sign(assets); err != nil {
 			log.Fatal(err)
 		}
+
+		imx = fixupSRKHash(assets.imx, assets.srk)
 	default:
 		log.Fatal("invalid installation mode")
 	}
 
 	if conf.recovery {
+		if mode == signedByUser {
+			// In case of recovery and user signature the SDP
+			// signature is performed without fixup (which we don't
+			// need anyway on recovery).
+			imx = assets.imx
+		}
+
 		imx = append(imx, assets.sdp...)
 	}
 
