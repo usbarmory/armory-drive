@@ -175,7 +175,6 @@ $(APP): check_tamago proto
 		dd if=$*.srk of=$@ seek=$$((0x$$OFFSET)) bs=1 conv=notrunc
 
 srk_fixup: $(APP)-fixup-signed.imx
-	mv $(APP)-fixup-signed.imx $(APP)-signed.imx
 	mv $(APP)-fixup.sdp $(APP).sdp
 	mv $(APP)-fixup.csf $(APP).csf
 
@@ -194,6 +193,9 @@ $(APP).release: check_git_clean srk_fixup
 	fi
 	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
 	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_proofbundle
+	# The release should be prepared against the imx with F-Secure SRK.
+	mv $(APP).imx $(APP).imx.orig
+	mv $(APP)-fixup.imx $(APP).imx
 	$(shell ${TAMAGO} env GOPATH)/bin/create_release \
 		--logtostderr \
 		--output $(APP).release \
@@ -205,6 +207,8 @@ $(APP).release: check_git_clean srk_fixup
 		--artifacts='$(CURDIR)/$(APP).imx $(CURDIR)/$(APP).csf $(CURDIR)/$(APP).sdp' \
 		--private_key=${FR_PRIVKEY}
 	@echo "$(APP).release created."
+	# Restore original .imx
+	mv $(APP).imx.orig $(APP).imx
 	@read -p "Please, add release to the log, then press enter to continue."
 	$(shell ${TAMAGO} env GOPATH)/bin/create_proofbundle \
 		--logtostderr \
