@@ -7,6 +7,7 @@
 package ota
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 
@@ -18,6 +19,18 @@ import (
 
 	"golang.org/x/mod/sumdb/note"
 )
+
+// proofEnabled returns whether OTA updates should be verified or not. The
+// verification happens only on firmware images compiled with the necessary key
+// material and when no fixup is present.
+//
+// Key material is cleared on unsigned/test images only while a zero fixup is
+// performed only on user signed images as they cannot be authenticated with
+// F-Secure own keys.
+func proofEnabled() bool {
+	return len(assets.LogPublicKey) != 0 && len(assets.FRPublicKey) != 0 &&
+		!bytes.Equal(assets.FRPublicKey, make([]byte, len(assets.FRPublicKey)))
+}
 
 func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle) (pb *api.ProofBundle, err error) {
 	if len(proof) == 0 {

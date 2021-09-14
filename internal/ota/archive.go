@@ -11,8 +11,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-
-	"github.com/f-secure-foundry/armory-drive/assets"
 )
 
 const (
@@ -61,7 +59,7 @@ func extract(buf []byte) (imx []byte, csf []byte, proof []byte, err error) {
 		return
 	}
 
-	if len(assets.FRPublicKey) != 0 && !bytes.Equal(assets.FRPublicKey, make([]byte, len(assets.FRPublicKey))) && len(assets.LogPublicKey) != 0 {
+	if proofEnabled() {
 		if proof, err = open(reader, logPath); err != nil {
 			err = fmt.Errorf("could not open %s, %v", logPath, err)
 			return
