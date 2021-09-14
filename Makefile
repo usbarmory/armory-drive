@@ -177,9 +177,8 @@ $(APP): check_tamago proto clean_assets
 		cp $< $@ && \
 		dd if=$*.srk of=$@ seek=$$((0x$$OFFSET)) bs=1 conv=notrunc
 
-srk_fixup: $(APP)-fixup-signed.imx
+srk_fixup: $(APP)-signed.imx $(APP)-fixup-signed.imx
 	mv $(APP)-fixup.sdp $(APP).sdp
-	mv $(APP)-fixup.csf $(APP).csf
 
 #### firmware release ####
 
