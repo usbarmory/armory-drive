@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/hid"
 )
 
@@ -25,6 +26,8 @@ type Config struct {
 	install        bool
 	upgrade        int
 	recovery       bool
+
+	logOrigin string
 
 	table     string
 	tableHash string
@@ -47,6 +50,8 @@ func init() {
 	flag.BoolVar(&conf.install, "I", false, "first time install")
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
 	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
+
+	flag.StringVar(&conf.logOrigin, "l", assets.LogOrigin, "Firmware Transparency log origin")
 
 	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")
 	flag.StringVar(&conf.srkCrt, "c", "", "SRK public key in PEM format")
