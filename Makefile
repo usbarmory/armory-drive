@@ -212,7 +212,7 @@ $(APP).release: check_git_clean srk_fixup
 		--logtostderr \
 		--output $(APP).proofbundle \
 		--release $(APP).release \
-		--log_origin "${LOG_ORIGIN}" \
+		--log_origin ${LOG_ORIGIN} \
 		--log_url $(LOG_URL) \
 		--log_pubkey_file ${LOG_PUBKEY}
 	@echo "$(APP).proofbundle created."
