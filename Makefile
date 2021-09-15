@@ -166,6 +166,7 @@ $(APP): check_tamago proto clean_assets
 %.srk: ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin
 	cp ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin $*.srk
 
+# See assets/keys.go for the meaning of the dummy hash.
 %-fixup.imx: DUMMY_SRK_HASH=630DCD2966C4336691125448BBB25B4FF412A49C732DB2C8ABC1B8581BD710DD
 %-fixup.imx: check_hab_keys
 %-fixup.imx: %.imx %.srk
