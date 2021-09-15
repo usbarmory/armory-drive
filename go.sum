@@ -202,8 +202,8 @@ github.com/envoyproxy/protoc-gen-validate v0.3.0-java/go.mod h1:iSmxcyjqTsJpI2R4
 github.com/etcd-io/gofail v0.0.0-20190801230047-ad7f989257ca/go.mod h1:49H/RkXP8pKaZy4h0d+NW16rSLhyVBt4o6VLJbmOqDE=
 github.com/f-secure-foundry/armory-boot v0.0.0-20210730121611-2a2b2a438986 h1:D0UgNYpc0LeZUMSagAuuMRfucqZFVFFJvPEeTdfw78w=
 github.com/f-secure-foundry/armory-boot v0.0.0-20210730121611-2a2b2a438986/go.mod h1:nhgmW1eQqMY4qrFtIW5Nmb3xjDQ/QSw7Qs9oYgOvty0=
-github.com/f-secure-foundry/armory-drive-log v0.0.0-20210910092538-691e1af91c47 h1:TADvC5rRN4/pNn8vn/VFZhSpTlBbFifdoaSwPCLROgw=
-github.com/f-secure-foundry/armory-drive-log v0.0.0-20210910092538-691e1af91c47/go.mod h1:QApBllSa0SaFTyUqJBWMtt3jSrj3L2VbftG1DZo/zEs=
+github.com/f-secure-foundry/armory-drive-log v0.0.0-20210915124632-4ab17cf17f02 h1:ah6AcyuHkakG2IwJlvqXu9yCel2+LeuGoY5y/DHFJmI=
+github.com/f-secure-foundry/armory-drive-log v0.0.0-20210915124632-4ab17cf17f02/go.mod h1:QApBllSa0SaFTyUqJBWMtt3jSrj3L2VbftG1DZo/zEs=
 github.com/f-secure-foundry/crucible v0.0.0-20210519190101-b84eb54532b9/go.mod h1:lKwj0vB9le2qIIiq3mKqiIcTlgrp8f3l1mD9ScgAzTc=
 github.com/f-secure-foundry/crucible v0.0.0-20210730121542-ac44e572b63a h1:O1vSVUaEE87KdYzucWcAvHQRk2mmbeV2w1o+mozqrMI=
 github.com/f-secure-foundry/crucible v0.0.0-20210730121542-ac44e572b63a/go.mod h1:lKwj0vB9le2qIIiq3mKqiIcTlgrp8f3l1mD9ScgAzTc=
