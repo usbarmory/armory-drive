@@ -7,6 +7,7 @@
 BUILD_TAGS = "linkramsize,linkprintk"
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
+LOG_ORIGIN = "ArmoryDrive Log v0"
 PKG = github.com/f-secure-foundry/armory-drive
 
 SHELL = /bin/bash
@@ -27,7 +28,7 @@ imx: $(APP).imx
 
 imx_signed: $(APP)-signed.imx
 
-%-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
+%-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w -X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
 %-install: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
@@ -211,6 +212,7 @@ $(APP).release: check_git_clean srk_fixup
 		--logtostderr \
 		--output $(APP).proofbundle \
 		--release $(APP).release \
+		--log_origin "${LOG_ORIGIN}" \
 		--log_url $(LOG_URL) \
 		--log_pubkey_file ${LOG_PUBKEY}
 	@echo "$(APP).proofbundle created."

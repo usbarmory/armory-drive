@@ -41,9 +41,7 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 		return
 	}
 
-	// TODO(al,andrea): this should be an asset provisioned at the same time the log URL and PubKey are.
-	origin := api.OriginV0
-	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, origin)
+	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, assets.LogOrigin)
 
 	if err != nil {
 		return

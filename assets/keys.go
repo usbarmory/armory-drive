@@ -28,6 +28,9 @@ var LogPublicKey []byte
 // Revision represents the firmware version
 var Revision string
 
+// LogOrigin contains the Firmware Transparancy log origin name
+var LogOrigin string
+
 // DummySRKHash generates a known placeholder for the SRK hash to allow its
 // identification and replacement within the binary, by `armory-drive-install`,
 // with F-Secure or user secure boot key information.
