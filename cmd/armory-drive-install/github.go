@@ -133,7 +133,10 @@ func downloadRelease(version string) (a *releaseAssets, err error) {
 func logFetcher(ctx context.Context, path string) (buf []byte, err error) {
 	client, _ := githubClient()
 
-	res, _, err := client.Repositories.DownloadContents(ctx, org, logRepo, checkpointPath+path, nil)
+	var opts = new(github.RepositoryContentGetOptions)
+	opts.Ref = "test"
+
+	res, _, err := client.Repositories.DownloadContents(ctx, org, logRepo, checkpointPath+path, opts)
 
 	if err != nil {
 		return
