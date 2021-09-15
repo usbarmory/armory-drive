@@ -107,7 +107,7 @@ func verifyProof(a *releaseAssets) (err error) {
 		csfPath: csfHash[:],
 	}
 
-	if err = verify.Bundle(*pb, api.Checkpoint{}, logSigV, frSigV, hashes); err != nil {
+	if err = verify.Bundle(*pb, api.Checkpoint{}, logSigV, frSigV, hashes, assets.LogOrigin); err != nil {
 		return
 	}
 
