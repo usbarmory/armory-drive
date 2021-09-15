@@ -32,10 +32,10 @@ imx_signed: $(APP)-signed.imx
 %-install: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
-		cd $(CURDIR) && ${TAMAGO} build $(GOFLAGS) cmd/$*-install/*.go; \
+		cd $(CURDIR) && ${TAMAGO} build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR)/assets && go generate && \
-		cd $(CURDIR) && go build $(GOFLAGS) cmd/$*-install/*.go; \
+		cd $(CURDIR) && go build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	fi
 
 %-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
