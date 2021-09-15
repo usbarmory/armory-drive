@@ -46,6 +46,10 @@ func init() {
 
 	conf = &Config{}
 
+	flag.Usage = func() {
+		fmt.Println(usage)
+	}
+
 	flag.StringVar(&conf.releaseVersion, "r", "latest", "release version")
 	flag.BoolVar(&conf.install, "I", false, "first time install")
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
