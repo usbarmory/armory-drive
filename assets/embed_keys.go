@@ -14,8 +14,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-
-	"github.com/f-secure-foundry/armory-drive/assets"
 )
 
 func init() {
@@ -53,8 +51,6 @@ package assets
 
 func init() {
 `)
-
-	out.WriteString(fmt.Sprintf("\tSRKHash = []byte(%s)\n", strconv.Quote(string(assets.DummySRKHash()))))
 
 	if p := os.Getenv("DISABLE_FR_AUTH"); len(p) != 0 {
 		out.WriteString(`}`)
