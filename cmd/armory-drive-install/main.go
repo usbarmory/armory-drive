@@ -15,8 +15,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/hid"
+
+	"github.com/f-secure-foundry/armory-drive/assets"
 )
 
 type Mode int
@@ -55,7 +56,7 @@ func init() {
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
 	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
 
-	flag.StringVar(&conf.logOrigin, "l", assets.LogOrigin, "Firmware Transparency log origin")
+	flag.StringVar(&conf.logOrigin, "l", assets.DefaultLogOrigin, "Firmware Transparency log origin")
 
 	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")
 	flag.StringVar(&conf.srkCrt, "c", "", "SRK public key in PEM format")

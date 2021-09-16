@@ -84,7 +84,7 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 		csfPath: csfHash[:],
 	}
 
-	if err = verify.Bundle(*pb, oldCP, logSigV, frSigV, hashes, assets.LogOrigin); err != nil {
+	if err = verify.Bundle(*pb, oldCP, logSigV, frSigV, hashes, assets.DefaultLogOrigin); err != nil {
 		return
 	}
 

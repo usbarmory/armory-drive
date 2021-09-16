@@ -41,7 +41,7 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 		return
 	}
 
-	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, assets.LogOrigin)
+	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, conf.logOrigin)
 
 	if err != nil {
 		return
@@ -107,7 +107,7 @@ func verifyProof(a *releaseAssets) (err error) {
 		csfPath: csfHash[:],
 	}
 
-	if err = verify.Bundle(*pb, api.Checkpoint{}, logSigV, frSigV, hashes, assets.LogOrigin); err != nil {
+	if err = verify.Bundle(*pb, api.Checkpoint{}, logSigV, frSigV, hashes, conf.logOrigin); err != nil {
 		return
 	}
 

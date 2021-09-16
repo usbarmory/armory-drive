@@ -7,7 +7,6 @@
 BUILD_TAGS = "linkramsize,linkprintk"
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
-LOG_ORIGIN = "Armory Drive Prod 1"
 PKG = github.com/f-secure-foundry/armory-drive
 
 SHELL = /bin/bash
@@ -28,7 +27,7 @@ imx: $(APP).imx
 
 imx_signed: $(APP)-signed.imx
 
-%-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w -X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
+%-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
 %-install: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
@@ -39,20 +38,18 @@ imx_signed: $(APP)-signed.imx
 	fi
 
 %-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
-%-install.exe: GOFLAGS = -ldflags "-X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
 %-install.exe: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build -o $@ cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR)/assets && go generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) go build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) go build -o $@ cmd/$*-install/*.go; \
 	fi
 
-%-install_darwin-amd64: GOFLAGS = -ldflags "-X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
 %-install_darwin-amd64: clean_assets
 	cd $(CURDIR)/assets && go generate && \
-	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 $(GOFLAGS) cmd/$*-install/*.go
+	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
 
 %-install.dmg: TMPDIR := $(shell mktemp -d)
 %-install.dmg: %-install_darwin-amd64
@@ -100,7 +97,7 @@ clean: clean_assets
 
 #### dependencies ####
 
-$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}' -X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
+$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}'"
 $(APP): check_tamago proto clean_assets
 	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
 		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \

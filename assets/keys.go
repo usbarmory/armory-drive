@@ -28,8 +28,8 @@ var LogPublicKey []byte
 // Revision represents the firmware version
 var Revision string
 
-// LogOrigin contains the Firmware Transparancy log origin name
-var LogOrigin string
+// DefaultLogOrigin contains the default Firmware Transparancy log origin name
+const DefaultLogOrigin = "Armory Drive Prod 1"
 
 // DummySRKHash generates a known placeholder for the SRK hash to allow its
 // identification and replacement within the binary, by `armory-drive-install`,
