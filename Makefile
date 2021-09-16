@@ -39,18 +39,20 @@ imx_signed: $(APP)-signed.imx
 	fi
 
 %-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
+%-install.exe: GOFLAGS = -ldflags "-X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
 %-install.exe: clean_assets
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR)/assets && ${TAMAGO} generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build cmd/$*-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR)/assets && go generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$*-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) go build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	fi
 
+%-install_darwin-amd64: GOFLAGS = -ldflags "-X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
 %-install_darwin-amd64: clean_assets
 	cd $(CURDIR)/assets && go generate && \
-	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
+	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 $(GOFLAGS) cmd/$*-install/*.go
 
 %-install.dmg: TMPDIR := $(shell mktemp -d)
 %-install.dmg: %-install_darwin-amd64
