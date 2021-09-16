@@ -28,28 +28,29 @@ imx: $(APP).imx
 imx_signed: $(APP)-signed.imx
 
 %-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
-%-install: clean_assets
+%-install:
+	cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub
 	@if [ "${TAMAGO}" != "" ]; then \
-		cd $(CURDIR)/assets && ${TAMAGO} generate && \
 		cd $(CURDIR) && ${TAMAGO} build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	else \
-		cd $(CURDIR)/assets && go generate && \
 		cd $(CURDIR) && go build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	fi
+	cd $(CURDIR) && rm -rf assets/files
 
 %-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
-%-install.exe: clean_assets
+%-install.exe:
+	cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub
 	@if [ "${TAMAGO}" != "" ]; then \
-		cd $(CURDIR)/assets && ${TAMAGO} generate && \
 		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build -o $@ cmd/$*-install/*.go; \
 	else \
-		cd $(CURDIR)/assets && go generate && \
 		cd $(CURDIR) && $(BUILD_OPTS) go build -o $@ cmd/$*-install/*.go; \
 	fi
+	cd $(CURDIR) && rm -rf assets/files
 
-%-install_darwin-amd64: clean_assets
-	cd $(CURDIR)/assets && go generate && \
+%-install_darwin-amd64:
+	cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub
 	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
+	cd $(CURDIR) && rm -rf assets/files
 
 %-install.dmg: TMPDIR := $(shell mktemp -d)
 %-install.dmg: %-install_darwin-amd64
@@ -85,10 +86,7 @@ proto:
 	-rm -f *.pb.go
 	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') cd $(CURDIR)/api && ${PROTOC} --go_out=. armory.proto
 
-clean_assets:
-	@rm -fr $(CURDIR)/assets/tmp*.go
-
-clean: clean_assets
+clean:
 	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd $(APP).srk
 	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
 	@rm -fr $(CURDIR)/api/*.pb.go
@@ -98,7 +96,7 @@ clean: clean_assets
 #### dependencies ####
 
 $(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}' -X '${PKG}/assets.DisableAuth=${DISABLE_FR_AUTH}'"
-$(APP): check_tamago proto clean_assets
+$(APP): check_tamago proto
 	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
 		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \
 	elif [ "${DISABLE_FR_AUTH}" != "" ]; then \
@@ -107,9 +105,9 @@ $(APP): check_tamago proto clean_assets
 		echo '** WARNING ** when variables FR_PUBKEY and LOG_PUBKEY are missing DISABLE_FR_AUTH must be set to confirm'; \
 		exit 1; \
 	fi
-	cd $(CURDIR)/assets && ${TAMAGO} generate && \
-	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP} || (rm -f $(CURDIR)/assets/tmp*.go && exit 1)
-	rm -f $(CURDIR)/assets/tmp*.go
+	cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub
+	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP}
+	cd $(CURDIR) && rm -rf assets/files
 
 %.dcd: check_tamago
 %.dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)

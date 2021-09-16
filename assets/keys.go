@@ -8,6 +8,7 @@ package assets
 
 import (
 	"crypto/sha256"
+	_ "embed"
 )
 
 //go:generate go run embed_keys.go
@@ -21,10 +22,12 @@ var SRKHash = []byte{0x63, 0x0d, 0xcd, 0x29, 0x66, 0xc4, 0x33, 0x66, 0x91, 0x12,
                      0xf4, 0x12, 0xa4, 0x9c, 0x73, 0x2d, 0xb2, 0xc8, 0xab, 0xc1, 0xb8, 0x58, 0x1b, 0xd7, 0x10, 0xdd}
 
 // FRPublicKey represents the firmware releases manifest authentication key
+//go:embed files/fr.pub
 var FRPublicKey []byte
 
 // LogPublicKey represents the firmware releases transparency log
 // authentication key
+//go:embed files/log.pub
 var LogPublicKey []byte
 
 // Revision represents the firmware version
