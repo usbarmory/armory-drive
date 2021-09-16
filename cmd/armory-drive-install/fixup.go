@@ -30,13 +30,13 @@ func fixupSRKHash(buf []byte, srk []byte) []byte {
 }
 
 func clearFRPublicKey(buf []byte) []byte {
-	if !bytes.Contains(buf, assets.FRPublicKey) {
+	if !bytes.Contains(buf, FRPublicKey) {
 		log.Fatal("could not locate OTA public key")
 	}
 
-	buf = bytes.ReplaceAll(buf, assets.FRPublicKey, make([]byte, len(assets.FRPublicKey)))
+	buf = bytes.ReplaceAll(buf, FRPublicKey, make([]byte, len(FRPublicKey)))
 
-	if bytes.Contains(buf, assets.FRPublicKey) {
+	if bytes.Contains(buf, FRPublicKey) {
 		log.Fatal("could not clear OTA public key")
 	}
 

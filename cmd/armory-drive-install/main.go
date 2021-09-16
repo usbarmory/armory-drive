@@ -28,6 +28,8 @@ type Config struct {
 	upgrade        int
 	recovery       bool
 
+	logPublicKey string
+	frPublicKey string
 	logOrigin string
 
 	table     string
@@ -56,6 +58,8 @@ func init() {
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
 	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
 
+	flag.StringVar(&conf.logPublicKey, "p", "", "Firmware Transparency log public key")
+	flag.StringVar(&conf.frPublicKey, "f", "", "Firmware public key")
 	flag.StringVar(&conf.logOrigin, "l", assets.DefaultLogOrigin, "Firmware Transparency log origin")
 
 	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")
@@ -84,6 +88,8 @@ func main() {
 	flag.Parse()
 
 	log.Println(welcome)
+
+	setKeys()
 
 	switch {
 	case conf.recovery:

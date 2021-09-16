@@ -24,6 +24,7 @@ const (
 	logRepo     = "armory-drive-log"
 
 	checkpointPath      = "log/"
+	keysPath = "keys/"
 	checkpointCachePath = "armory-drive-install.lastCheckpoint"
 )
 

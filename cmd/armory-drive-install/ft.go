@@ -11,12 +11,12 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path"
 
 	"github.com/f-secure-foundry/armory-drive-log/api"
 	"github.com/f-secure-foundry/armory-drive-log/api/verify"
-	"github.com/f-secure-foundry/armory-drive/assets"
 
 	"github.com/google/go-github/v34/github"
 	"github.com/google/trillian-examples/formats/log"
@@ -25,17 +25,51 @@ import (
 	"golang.org/x/mod/sumdb/note"
 )
 
+var FRPublicKey []byte
+var LogPublicKey []byte
+
+func setKeys() (err error) {
+	var res io.ReadCloser
+
+	ctx := context.Background()
+	client, _ := githubClient()
+
+	if len(conf.logPublicKey) > 0 {
+		LogPublicKey, err = os.ReadFile(conf.logPublicKey)
+	} else {
+		res, _, err = client.Repositories.DownloadContents(ctx, org, logRepo, keysPath+"armory-drive-log.pub", nil)
+		LogPublicKey, _ = io.ReadAll(res)
+	}
+
+	if (err != nil) {
+		return
+	}
+
+	if len(conf.frPublicKey) > 0 {
+		FRPublicKey, err = os.ReadFile(conf.frPublicKey)
+	} else {
+		res, _, err = client.Repositories.DownloadContents(ctx, org, logRepo, keysPath+"armory-drive.pub", nil)
+		FRPublicKey, _ = io.ReadAll(res)
+	}
+
+	if (err != nil) {
+		return
+	}
+
+	return
+}
+
 func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err error) {
 	var oldCP *log.Checkpoint
 	var checkpoints []log.Checkpoint
 
 	ctx := context.Background()
 
-	if len(assets.LogPublicKey) == 0 {
-		return errors.New("installer compiled without LOG_PUBKEY, could not verify release")
+	if len(LogPublicKey) == 0 {
+		return errors.New("FT log public key not found, could not verify release")
 	}
 
-	logSigV, err := note.NewVerifier(string(assets.LogPublicKey))
+	logSigV, err := note.NewVerifier(string(LogPublicKey))
 
 	if err != nil {
 		return
@@ -87,13 +121,13 @@ func verifyProof(a *releaseAssets) (err error) {
 		return
 	}
 
-	logSigV, err := note.NewVerifier(string(assets.LogPublicKey))
+	logSigV, err := note.NewVerifier(string(LogPublicKey))
 
 	if err != nil {
 		return
 	}
 
-	frSigV, err := note.NewVerifier(string(assets.FRPublicKey))
+	frSigV, err := note.NewVerifier(string(FRPublicKey))
 
 	if err != nil {
 		return
