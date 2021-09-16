@@ -39,9 +39,9 @@ const usage = `Usage: habtool [OPTIONS]
         Index for SRK key (default -1)
 
   -p string
-        Firmware Transparency log public key (default: downloads F-Secure key)
+        firmware transparency log public key (default: downloads F-Secure key)
   -f string
-        Firmware public key (default: downloads F-Secure key)
+        firmware public key (default: downloads F-Secure key)
   -l string
         firmware transparency log origin (default "Armory Drive Prod 1")
   -r string

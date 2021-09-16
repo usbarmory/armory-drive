@@ -29,8 +29,8 @@ type Config struct {
 	recovery       bool
 
 	logPublicKey string
-	frPublicKey string
-	logOrigin string
+	frPublicKey  string
+	logOrigin    string
 
 	table     string
 	tableHash string

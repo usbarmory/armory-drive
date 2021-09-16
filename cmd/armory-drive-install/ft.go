@@ -38,10 +38,14 @@ func setKeys() (err error) {
 		LogPublicKey, err = os.ReadFile(conf.logPublicKey)
 	} else {
 		res, _, err = client.Repositories.DownloadContents(ctx, org, logRepo, keysPath+"armory-drive-log.pub", nil)
-		LogPublicKey, _ = io.ReadAll(res)
+		if err != nil {
+			return
+		}
+
+		LogPublicKey, err = io.ReadAll(res)
 	}
 
-	if (err != nil) {
+	if err != nil {
 		return
 	}
 
@@ -49,10 +53,14 @@ func setKeys() (err error) {
 		FRPublicKey, err = os.ReadFile(conf.frPublicKey)
 	} else {
 		res, _, err = client.Repositories.DownloadContents(ctx, org, logRepo, keysPath+"armory-drive.pub", nil)
-		FRPublicKey, _ = io.ReadAll(res)
+		if err != nil {
+			return
+		}
+
+		FRPublicKey, err = io.ReadAll(res)
 	}
 
-	if (err != nil) {
+	if err != nil {
 		return
 	}
 
