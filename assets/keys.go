@@ -37,7 +37,7 @@ var Revision string
 // used only when user deploy self-signed releases
 var DisableAuth string
 
-// DefaultLogOrigin contains the default Firmware Transparancy log origin name
+// DefaultLogOrigin contains the default Firmware Transparency log origin name
 const DefaultLogOrigin = "Armory Drive Prod 1"
 
 // DummySRKHash generates a known placeholder for the SRK hash to allow its
