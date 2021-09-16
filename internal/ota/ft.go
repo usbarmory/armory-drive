@@ -28,7 +28,7 @@ import (
 // performed only on user signed images as they cannot be authenticated with
 // F-Secure own keys.
 func proofEnabled() bool {
-	return len(assets.LogPublicKey) != 0 && len(assets.FRPublicKey) != 0 &&
+	return len(assets.DisableAuth) == 0 &&
 		!bytes.Equal(assets.FRPublicKey, make([]byte, len(assets.FRPublicKey)))
 }
 

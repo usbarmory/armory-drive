@@ -52,11 +52,6 @@ package assets
 func init() {
 `)
 
-	if p := os.Getenv("DISABLE_FR_AUTH"); len(p) != 0 {
-		out.WriteString(`}`)
-		return
-	}
-
 	FRPublicKey, err := read("FR_PUBKEY")
 
 	if err != nil {
