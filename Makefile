@@ -105,7 +105,11 @@ $(APP): check_tamago proto
 		echo '** WARNING ** when variables FR_PUBKEY and LOG_PUBKEY are missing DISABLE_FR_AUTH must be set to confirm'; \
 		exit 1; \
 	fi
-	cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub
+	@if [ "${DISABLE_FR_AUTH}" == "" ]; then \
+		cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub; \
+	else \
+		cd $(CURDIR) && mkdir -p assets/files && truncate -s 0 assets/files/fr.pub assets/files/log.pub; \
+	fi
 	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP}
 	cd $(CURDIR) && rm -rf assets/files
 
