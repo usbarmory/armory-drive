@@ -8,6 +8,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -25,6 +26,8 @@ const (
 
 	checkpointPath      = "log/"
 	keysPath            = "keys/"
+	logKeyName          = "armory-drive-log.pub"
+	frKeyName           = "armory-drive.pub"
 	checkpointCachePath = "armory-drive-install.lastCheckpoint"
 )
 
@@ -39,6 +42,11 @@ type releaseAssets struct {
 	sdp []byte
 	// firmware transparency proof
 	log []byte
+
+	// manifest authentication key
+	frPub []byte
+	// transparency log authentication key
+	logPub []byte
 }
 
 func (a *releaseAssets) complete() bool {
@@ -119,14 +127,36 @@ func downloadRelease(version string) (a *releaseAssets, err error) {
 	}
 
 	if !a.complete() {
-		return nil, fmt.Errorf("incomplete release")
+		return nil, errors.New("incomplete release")
 	}
+
+	log.Printf("\nDownloaded verified release assets")
+
+	if len(conf.frPublicKey) > 0 {
+		a.frPub, err = os.ReadFile(conf.frPublicKey)
+	} else {
+		a.frPub, err = downloadKey("manifest authentication key", keysPath+frKeyName, client)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("could not load key, %v", err)
+	}
+
+	if len(conf.logPublicKey) > 0 {
+		a.logPub, err = os.ReadFile(conf.logPublicKey)
+	} else {
+		a.logPub, err = downloadKey("transparency log authentication key", keysPath+logKeyName, client)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("could not load key, %v", err)
+	}
+
+	log.Printf("Downloaded authentication keys")
 
 	if err := verifyRelease(release, a); err != nil {
 		return nil, fmt.Errorf("invalid release: %v", err)
 	}
-
-	log.Printf("\nDownloaded verified release assets")
 
 	return
 }
@@ -164,6 +194,30 @@ func downloadAsset(tag string, release *github.RepositoryRelease, asset *github.
 	}
 
 	res, err := http.Get(asset.GetBrowserDownloadURL())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return io.ReadAll(res.Body)
+}
+
+func downloadKey(tag string, path string, client *github.Client) ([]byte, error) {
+	log.Printf("Downloading %s from %s", tag, fmt.Sprintf("%s/%s/%s", org, logRepo, path))
+
+	if client != nil {
+		res, _, err := client.Repositories.DownloadContents(context.Background(), org, logRepo, path, nil)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return io.ReadAll(res)
+	}
+
+	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/master/%s", org, logRepo, path)
+
+	res, err := http.Get(url)
 
 	if err != nil {
 		return nil, err

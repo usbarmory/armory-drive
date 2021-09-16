@@ -36,12 +36,12 @@ const usage = `Usage: habtool [OPTIONS]
   -T string
         SRK table hash
   -x int
-        Index for SRK key (default -1)
+        index for SRK key (default -1)
 
   -p string
-        firmware transparency log public key (default: downloads F-Secure key)
+        firmware transparency log public key
   -f string
-        firmware public key (default: downloads F-Secure key)
+        firmware public key
   -l string
         firmware transparency log origin (default "Armory Drive Prod 1")
   -r string

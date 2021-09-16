@@ -58,15 +58,15 @@ func init() {
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
 	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
 
-	flag.StringVar(&conf.logPublicKey, "p", "", "Firmware Transparency log public key")
-	flag.StringVar(&conf.frPublicKey, "f", "", "Firmware public key")
-	flag.StringVar(&conf.logOrigin, "l", assets.DefaultLogOrigin, "Firmware Transparency log origin")
+	flag.StringVar(&conf.logPublicKey, "p", "", "firmware transparency log public key")
+	flag.StringVar(&conf.frPublicKey, "f", "", "firmware public key")
+	flag.StringVar(&conf.logOrigin, "l", assets.DefaultLogOrigin, "firmware transparency log origin")
 
 	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")
 	flag.StringVar(&conf.srkCrt, "c", "", "SRK public key in PEM format")
 	flag.StringVar(&conf.table, "t", "", "SRK table")
 	flag.StringVar(&conf.tableHash, "T", "", "SRK table hash")
-	flag.IntVar(&conf.index, "x", -1, "Index for SRK key")
+	flag.IntVar(&conf.index, "x", -1, "index for SRK key")
 }
 
 func confirm(msg string) bool {
@@ -88,8 +88,6 @@ func main() {
 	flag.Parse()
 
 	log.Println(welcome)
-
-	setKeys()
 
 	switch {
 	case conf.recovery:
