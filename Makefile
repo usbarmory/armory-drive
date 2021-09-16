@@ -29,28 +29,22 @@ imx_signed: $(APP)-signed.imx
 
 %-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
 %-install:
-	cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR) && ${TAMAGO} build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR) && go build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	fi
-	cd $(CURDIR) && rm -rf assets/files
 
 %-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
 %-install.exe:
-	cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub
 	@if [ "${TAMAGO}" != "" ]; then \
 		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build -o $@ cmd/$*-install/*.go; \
 	else \
 		cd $(CURDIR) && $(BUILD_OPTS) go build -o $@ cmd/$*-install/*.go; \
 	fi
-	cd $(CURDIR) && rm -rf assets/files
 
 %-install_darwin-amd64:
-	cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub
 	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
-	cd $(CURDIR) && rm -rf assets/files
 
 %-install.dmg: TMPDIR := $(shell mktemp -d)
 %-install.dmg: %-install_darwin-amd64
@@ -97,21 +91,13 @@ clean:
 
 $(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}' -X '${PKG}/assets.DisableAuth=${DISABLE_FR_AUTH}'"
 $(APP): check_tamago proto
-	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
-		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \
-	elif [ "${DISABLE_FR_AUTH}" != "" ]; then \
-		echo '** WARNING ** firmware updates authentication is disabled'; \
+	@if [ "${DISABLE_FR_AUTH}" == "" ]; then \
+		echo '** WARNING ** Enabling firmware updates authentication (fr:assets/armory-drive.pub, log:assets/armory-drive-log.pub)'; \
 	else \
-		echo '** WARNING ** when variables FR_PUBKEY and LOG_PUBKEY are missing DISABLE_FR_AUTH must be set to confirm'; \
+		echo '** WARNING ** firmware updates authentication is disabled'; \
 		exit 1; \
 	fi
-	@if [ "${DISABLE_FR_AUTH}" == "" ]; then \
-		cd $(CURDIR) && mkdir -p assets/files && cp ${FR_PUBKEY} assets/files/fr.pub && cp ${LOG_PUBKEY} assets/files/log.pub; \
-	else \
-		cd $(CURDIR) && mkdir -p assets/files && truncate -s 0 assets/files/fr.pub assets/files/log.pub; \
-	fi
 	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP}
-	cd $(CURDIR) && rm -rf assets/files
 
 %.dcd: check_tamago
 %.dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)
@@ -216,5 +202,5 @@ $(APP).release: check_git_clean srk_fixup
 		--release $(APP).release \
 		--log_origin ${LOG_ORIGIN} \
 		--log_url $(LOG_URL) \
-		--log_pubkey_file ${LOG_PUBKEY}
+		--log_pubkey_file assets/armory-drive-log.pub
 	@echo "$(APP).proofbundle created."
