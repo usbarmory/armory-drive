@@ -20,7 +20,7 @@ const (
 )
 
 const usage = `Usage: habtool [OPTIONS]
-  -h                  Show this help
+  -h    show this help
 
   -I    first time install
   -R    recovery install
@@ -39,7 +39,7 @@ const usage = `Usage: habtool [OPTIONS]
         Index for SRK key (default -1)
 
   -l string
-        Firmware Transparency log origin (default "Armory Drive Prod 1")
+        firmware transparency log origin (default "Armory Drive Prod 1")
   -r string
         release version (default "latest")
 `
