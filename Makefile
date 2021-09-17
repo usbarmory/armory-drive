@@ -70,7 +70,7 @@ check_hab_keys:
 	fi
 
 check_git_clean:
-	@if [ "$(shell git status -s)" != "" ]; then \
+	@if [ "$(shell git status -s | grep -v 'armory-drive-log.pub\|armory-drive.pub')" != "" ]; then \
 		echo 'Dirty git checkout directory detected. Aborting.'; \
 		exit 1; \
 	fi
