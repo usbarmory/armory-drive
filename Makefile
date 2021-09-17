@@ -47,7 +47,7 @@ imx_signed: $(APP)-signed.imx
 %-install_darwin-amd64:
 	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
 
-%-install.dmg: TMPDIR := $(shell mktemp -d)
+%-install.dmg: TMPDIR = $(shell mktemp -d)
 %-install.dmg: %-install_darwin-amd64
 	mkdir $(TMPDIR)/dmg && \
 	lipo -create -output $(TMPDIR)/dmg/$*-install $(CURDIR)/$*-install_darwin-amd64 && \
