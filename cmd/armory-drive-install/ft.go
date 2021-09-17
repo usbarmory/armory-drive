@@ -16,7 +16,6 @@ import (
 
 	"github.com/f-secure-foundry/armory-drive-log/api"
 	"github.com/f-secure-foundry/armory-drive-log/api/verify"
-	"github.com/f-secure-foundry/armory-drive/assets"
 
 	"github.com/google/go-github/v34/github"
 	"github.com/google/trillian-examples/formats/log"
@@ -31,17 +30,17 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 
 	ctx := context.Background()
 
-	if len(assets.LogPublicKey) == 0 {
-		return errors.New("installer compiled without LOG_PUBKEY, could not verify release")
+	if len(a.logPub) == 0 {
+		return errors.New("FT log public key not found, could not verify release")
 	}
 
-	logSigV, err := note.NewVerifier(string(assets.LogPublicKey))
+	logSigV, err := note.NewVerifier(string(a.logPub))
 
 	if err != nil {
 		return
 	}
 
-	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, assets.LogOrigin)
+	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, conf.logOrigin)
 
 	if err != nil {
 		return
@@ -87,13 +86,13 @@ func verifyProof(a *releaseAssets) (err error) {
 		return
 	}
 
-	logSigV, err := note.NewVerifier(string(assets.LogPublicKey))
+	logSigV, err := note.NewVerifier(string(a.logPub))
 
 	if err != nil {
 		return
 	}
 
-	frSigV, err := note.NewVerifier(string(assets.FRPublicKey))
+	frSigV, err := note.NewVerifier(string(a.frPub))
 
 	if err != nil {
 		return
@@ -107,7 +106,7 @@ func verifyProof(a *releaseAssets) (err error) {
 		csfPath: csfHash[:],
 	}
 
-	if err = verify.Bundle(*pb, api.Checkpoint{}, logSigV, frSigV, hashes, assets.LogOrigin); err != nil {
+	if err = verify.Bundle(*pb, api.Checkpoint{}, logSigV, frSigV, hashes, conf.logOrigin); err != nil {
 		return
 	}
 

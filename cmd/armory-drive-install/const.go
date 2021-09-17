@@ -19,6 +19,35 @@ const (
 	logPath = "armory-drive.log"
 )
 
+const usage = `Usage: habtool [OPTIONS]
+  -h    show this help
+
+  -I    first time install
+  -R    recovery install
+  -U int
+        upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2) (default -1)
+
+  -C string
+        SRK private key in PEM format
+  -c string
+        SRK public key in PEM format
+  -t string
+        SRK table
+  -T string
+        SRK table hash
+  -x int
+        index for SRK key (default -1)
+
+  -p string
+        firmware transparency log public key
+  -f string
+        firmware public key
+  -l string
+        firmware transparency log origin (default "Armory Drive Prod 1")
+  -r string
+        release version (default "latest")
+`
+
 const welcome = `
 Welcome to the Armory Drive installer!
 

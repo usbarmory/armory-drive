@@ -7,7 +7,6 @@
 BUILD_TAGS = "linkramsize,linkprintk"
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/test/log/
-LOG_ORIGIN = "Armory Drive Test 1"
 PKG = github.com/f-secure-foundry/armory-drive
 
 SHELL = /bin/bash
@@ -28,28 +27,23 @@ imx: $(APP).imx
 
 imx_signed: $(APP)-signed.imx
 
-%-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w -X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
-%-install: clean_assets
+%-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
+%-install:
 	@if [ "${TAMAGO}" != "" ]; then \
-		cd $(CURDIR)/assets && ${TAMAGO} generate && \
 		cd $(CURDIR) && ${TAMAGO} build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	else \
-		cd $(CURDIR)/assets && go generate && \
 		cd $(CURDIR) && go build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
 	fi
 
 %-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
-%-install.exe: clean_assets
+%-install.exe:
 	@if [ "${TAMAGO}" != "" ]; then \
-		cd $(CURDIR)/assets && ${TAMAGO} generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build cmd/$*-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build -o $@ cmd/$*-install/*.go; \
 	else \
-		cd $(CURDIR)/assets && go generate && \
-		cd $(CURDIR) && $(BUILD_OPTS) go build cmd/$*-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) go build -o $@ cmd/$*-install/*.go; \
 	fi
 
-%-install_darwin-amd64: clean_assets
-	cd $(CURDIR)/assets && go generate && \
+%-install_darwin-amd64:
 	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 cmd/$*-install/*.go
 
 %-install.dmg: TMPDIR := $(shell mktemp -d)
@@ -86,10 +80,7 @@ proto:
 	-rm -f *.pb.go
 	PATH=$(shell echo ${GOPATH} | awk -F":" '{print $$1"/bin"}') cd $(CURDIR)/api && ${PROTOC} --go_out=. armory.proto
 
-clean_assets:
-	@rm -fr $(CURDIR)/assets/tmp*.go
-
-clean: clean_assets
+clean:
 	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd $(APP).srk
 	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
 	@rm -fr $(CURDIR)/api/*.pb.go
@@ -98,19 +89,15 @@ clean: clean_assets
 
 #### dependencies ####
 
-$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}' -X '${PKG}/assets.LogOrigin="${LOG_ORIGIN}"'"
-$(APP): check_tamago proto clean_assets
-	@if [ "${FR_PUBKEY}" != "" ] && [ "${LOG_PUBKEY}" != "" ]; then \
-		echo '** WARNING ** Enabling firmware updates authentication (fr:${FR_PUBKEY}, log:${LOG_PUBKEY})'; \
-	elif [ "${DISABLE_FR_AUTH}" != "" ]; then \
-		echo '** WARNING ** firmware updates authentication is disabled'; \
+$(APP): BUILD_TAGS := $(or $(shell ( [ ! -z "${DISABLE_FR_AUTH}" ] ) && echo "$(BUILD_TAGS),disable_fr_auth"),$(BUILD_TAGS))
+$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}'"
+$(APP): check_tamago proto
+	@if [ "${DISABLE_FR_AUTH}" == "" ]; then \
+		echo '** WARNING ** Enabling firmware updates authentication (fr:internal/ota/armory-drive.pub, log:internal/ota/armory-drive-log.pub)'; \
 	else \
-		echo '** WARNING ** when variables FR_PUBKEY and LOG_PUBKEY are missing DISABLE_FR_AUTH must be set to confirm'; \
-		exit 1; \
+		echo '** WARNING ** firmware updates authentication is disabled'; \
 	fi
-	cd $(CURDIR)/assets && ${TAMAGO} generate && \
-	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP} || (rm -f $(CURDIR)/assets/tmp*.go && exit 1)
-	rm -f $(CURDIR)/assets/tmp*.go
+	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP}
 
 %.dcd: check_tamago
 %.dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)
@@ -166,6 +153,7 @@ $(APP): check_tamago proto clean_assets
 %.srk: ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin
 	cp ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin $*.srk
 
+# See assets/keys.go for the meaning of the dummy hash.
 %-fixup.imx: DUMMY_SRK_HASH=630DCD2966C4336691125448BBB25B4FF412A49C732DB2C8ABC1B8581BD710DD
 %-fixup.imx: check_hab_keys
 %-fixup.imx: %.imx %.srk
@@ -214,5 +202,5 @@ $(APP).release: check_git_clean srk_fixup
 		--release $(APP).release \
 		--log_origin ${LOG_ORIGIN} \
 		--log_url $(LOG_URL) \
-		--log_pubkey_file ${LOG_PUBKEY}
+		--log_pubkey_file assets/armory-drive-log.pub
 	@echo "$(APP).proofbundle created."

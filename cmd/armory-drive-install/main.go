@@ -15,8 +15,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/hid"
+
+	"github.com/f-secure-foundry/armory-drive/assets"
 )
 
 type Mode int
@@ -27,7 +28,9 @@ type Config struct {
 	upgrade        int
 	recovery       bool
 
-	logOrigin string
+	logPublicKey string
+	frPublicKey  string
+	logOrigin    string
 
 	table     string
 	tableHash string
@@ -46,18 +49,24 @@ func init() {
 
 	conf = &Config{}
 
+	flag.Usage = func() {
+		fmt.Println(usage)
+	}
+
 	flag.StringVar(&conf.releaseVersion, "r", "latest", "release version")
 	flag.BoolVar(&conf.install, "I", false, "first time install")
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
 	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
 
-	flag.StringVar(&conf.logOrigin, "l", assets.LogOrigin, "Firmware Transparency log origin")
+	flag.StringVar(&conf.logPublicKey, "p", "", "firmware transparency log public key")
+	flag.StringVar(&conf.frPublicKey, "f", "", "firmware public key")
+	flag.StringVar(&conf.logOrigin, "l", assets.DefaultLogOrigin, "firmware transparency log origin")
 
 	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")
 	flag.StringVar(&conf.srkCrt, "c", "", "SRK public key in PEM format")
 	flag.StringVar(&conf.table, "t", "", "SRK table")
 	flag.StringVar(&conf.tableHash, "T", "", "SRK table hash")
-	flag.IntVar(&conf.index, "x", -1, "Index for SRK key")
+	flag.IntVar(&conf.index, "x", -1, "index for SRK key")
 }
 
 func confirm(msg string) bool {

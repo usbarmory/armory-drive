@@ -11,9 +11,9 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/armory-drive-log/api"
 	"github.com/f-secure-foundry/armory-drive-log/api/verify"
-	"github.com/f-secure-foundry/armory-drive/assets"
 
 	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
 
@@ -28,8 +28,7 @@ import (
 // performed only on user signed images as they cannot be authenticated with
 // F-Secure own keys.
 func proofEnabled() bool {
-	return len(assets.LogPublicKey) != 0 && len(assets.FRPublicKey) != 0 &&
-		!bytes.Equal(assets.FRPublicKey, make([]byte, len(assets.FRPublicKey)))
+	return !DisableAuth && !bytes.Equal(FRPublicKey, make([]byte, len(FRPublicKey)))
 }
 
 func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle) (pb *api.ProofBundle, err error) {
@@ -43,13 +42,13 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 		return
 	}
 
-	logSigV, err := note.NewVerifier(string(assets.LogPublicKey))
+	logSigV, err := note.NewVerifier(string(LogPublicKey))
 
 	if err != nil {
 		return
 	}
 
-	frSigV, err := note.NewVerifier(string(assets.FRPublicKey))
+	frSigV, err := note.NewVerifier(string(FRPublicKey))
 
 	if err != nil {
 		return
@@ -84,7 +83,7 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 		csfPath: csfHash[:],
 	}
 
-	if err = verify.Bundle(*pb, oldCP, logSigV, frSigV, hashes, assets.LogOrigin); err != nil {
+	if err = verify.Bundle(*pb, oldCP, logSigV, frSigV, hashes, assets.DefaultLogOrigin); err != nil {
 		return
 	}
 
