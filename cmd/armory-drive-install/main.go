@@ -23,10 +23,11 @@ import (
 type Mode int
 
 type Config struct {
-	releaseVersion string
-	install        bool
-	upgrade        int
-	recovery       bool
+	branch   string
+	release  string
+	install  bool
+	upgrade  int
+	recovery bool
 
 	logPublicKey string
 	frPublicKey  string
@@ -53,7 +54,8 @@ func init() {
 		fmt.Println(usage)
 	}
 
-	flag.StringVar(&conf.releaseVersion, "r", "latest", "release version")
+	flag.StringVar(&conf.branch, "b", "master", "release branch")
+	flag.StringVar(&conf.release, "r", "latest", "release version")
 	flag.BoolVar(&conf.install, "I", false, "first time install")
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
 	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
@@ -210,7 +212,7 @@ func ota(assets *releaseAssets) {
 func installFirmware(mode Mode) {
 	var imx []byte
 
-	assets, err := downloadRelease(conf.releaseVersion)
+	assets, err := downloadRelease(conf.release)
 
 	if err != nil {
 		log.Fatalf("Download error, %v", err)
@@ -277,7 +279,7 @@ func installFirmware(mode Mode) {
 }
 
 func upgradeFirmware(mode Mode) {
-	assets, err := downloadRelease(conf.releaseVersion)
+	assets, err := downloadRelease(conf.release)
 
 	if err != nil {
 		log.Fatalf("Download error, %v", err)

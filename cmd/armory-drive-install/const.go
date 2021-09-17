@@ -44,6 +44,8 @@ const usage = `Usage: habtool [OPTIONS]
         firmware public key
   -l string
         firmware transparency log origin (default "Armory Drive Prod 1")
+  -b string
+        release branch (default "master")
   -r string
         release version (default "latest")
 `

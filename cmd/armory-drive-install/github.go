@@ -164,8 +164,9 @@ func downloadRelease(version string) (a *releaseAssets, err error) {
 func logFetcher(ctx context.Context, path string) (buf []byte, err error) {
 	client, _ := githubClient()
 
-	var opts = new(github.RepositoryContentGetOptions)
-	opts.Ref = "test"
+	opts := &github.RepositoryContentGetOptions{
+		Ref: conf.branch,
+	}
 
 	res, _, err := client.Repositories.DownloadContents(ctx, org, logRepo, checkpointPath+path, opts)
 
@@ -218,7 +219,7 @@ func downloadKey(tag string, path string, client *github.Client) ([]byte, error)
 		return io.ReadAll(res)
 	}
 
-	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/master/%s", org, logRepo, path)
+	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", org, logRepo, conf.branch, path)
 
 	res, err := http.Get(url)
 
