@@ -203,5 +203,5 @@ $(APP).release: check_git_clean srk_fixup
 		--release $(APP).release \
 		--log_origin ${LOG_ORIGIN} \
 		--log_url $(LOG_URL) \
-		--log_pubkey_file assets/armory-drive-log.pub
+		--log_pubkey_file internal/ota/armory-drive-log.pub
 	@echo "$(APP).proofbundle created."
