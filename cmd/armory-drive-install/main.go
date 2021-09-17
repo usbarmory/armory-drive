@@ -60,8 +60,8 @@ func init() {
 	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
 	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
 
-	flag.StringVar(&conf.logPublicKey, "p", "", "firmware transparency log public key")
-	flag.StringVar(&conf.frPublicKey, "f", "", "firmware public key")
+	flag.StringVar(&conf.logPublicKey, "p", "", "transparency log authentication key")
+	flag.StringVar(&conf.frPublicKey, "f", "", "manifest authentication key")
 	flag.StringVar(&conf.logOrigin, "l", assets.DefaultLogOrigin, "firmware transparency log origin")
 
 	flag.StringVar(&conf.srkKey, "C", "", "SRK private key in PEM format")

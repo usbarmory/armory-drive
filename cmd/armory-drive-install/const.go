@@ -39,9 +39,9 @@ const usage = `Usage: habtool [OPTIONS]
         index for SRK key (default -1)
 
   -p string
-        firmware transparency log public key
+        transparency log authentication key
   -f string
-        firmware public key
+        manifest authentication key
   -l string
         firmware transparency log origin (default "Armory Drive Prod 1")
   -b string

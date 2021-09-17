@@ -133,6 +133,7 @@ func downloadRelease(version string) (a *releaseAssets, err error) {
 	log.Printf("\nDownloaded verified release assets")
 
 	if len(conf.frPublicKey) > 0 {
+		log.Printf("Using %s as manifest authentication key", conf.frPublicKey) 
 		a.frPub, err = os.ReadFile(conf.frPublicKey)
 	} else {
 		a.frPub, err = downloadKey("manifest authentication key", keysPath+frKeyName, client)
@@ -143,6 +144,7 @@ func downloadRelease(version string) (a *releaseAssets, err error) {
 	}
 
 	if len(conf.logPublicKey) > 0 {
+		log.Printf("Using %s as log authentication key", conf.logPublicKey) 
 		a.logPub, err = os.ReadFile(conf.logPublicKey)
 	} else {
 		a.logPub, err = downloadKey("transparency log authentication key", keysPath+logKeyName, client)
@@ -151,8 +153,6 @@ func downloadRelease(version string) (a *releaseAssets, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not load key, %v", err)
 	}
-
-	log.Printf("Downloaded authentication keys")
 
 	if err := verifyRelease(release, a); err != nil {
 		return nil, fmt.Errorf("invalid release: %v", err)
