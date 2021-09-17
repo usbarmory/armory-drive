@@ -27,7 +27,7 @@ var SRKHash = []byte{
 var Revision string
 
 // DefaultLogOrigin contains the default Firmware Transparency log origin name.
-const DefaultLogOrigin = "Armory Drive Test 1"
+const DefaultLogOrigin = "Armory Drive Prod 1"
 
 // DummySRKHash generates a known placeholder for the SRK hash to allow its
 // identification and replacement within the binary, by `armory-drive-install`,
