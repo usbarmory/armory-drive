@@ -89,13 +89,13 @@ clean:
 
 #### dependencies ####
 
-$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}' -X '${PKG}/assets.DisableAuth=${DISABLE_FR_AUTH}'"
+$(APP): BUILD_TAGS := $(or $(shell ( [ ! -z "${DISABLE_FR_AUTH}" ] ) && echo "$(BUILD_TAGS),disable_fr_auth"),$(BUILD_TAGS))
+$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}'"
 $(APP): check_tamago proto
 	@if [ "${DISABLE_FR_AUTH}" == "" ]; then \
-		echo '** WARNING ** Enabling firmware updates authentication (fr:assets/armory-drive.pub, log:assets/armory-drive-log.pub)'; \
+		echo '** WARNING ** Enabling firmware updates authentication (fr:internal/ota/armory-drive.pub, log:internal/ota/armory-drive-log.pub)'; \
 	else \
 		echo '** WARNING ** firmware updates authentication is disabled'; \
-		exit 1; \
 	fi
 	cd $(CURDIR) && $(GOENV) $(TAMAGO) build $(GOFLAGS) -o $(CURDIR)/${APP}
 
