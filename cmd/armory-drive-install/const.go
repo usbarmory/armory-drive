@@ -43,7 +43,7 @@ const usage = `Usage: habtool [OPTIONS]
   -f string
         manifest authentication key
   -l string
-        firmware transparency log origin (default "Armory Drive Prod 1")
+        firmware transparency log origin (default "Armory Drive Prod 2")
   -b string
         release branch (default "master")
   -r string

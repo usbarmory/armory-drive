@@ -7,7 +7,7 @@
 BUILD_TAGS = "linkramsize,linkprintk"
 REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
-LOG_ORIGIN = "Armory Drive Prod 1"
+LOG_ORIGIN = "Armory Drive Prod 2"
 PKG = github.com/f-secure-foundry/armory-drive
 
 SHELL = /bin/bash
