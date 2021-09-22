@@ -8,10 +8,7 @@ package assets
 
 import (
 	"crypto/sha256"
-	_ "embed"
 )
-
-//go:generate go run embed_keys.go
 
 // SRKSize represents the Secure Boot SRK hash size in bytes.
 const SRKSize = 32
