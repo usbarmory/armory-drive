@@ -31,23 +31,23 @@ imx_signed: $(APP)-signed.imx
 %-install: GOFLAGS = -tags netgo,osusergo -trimpath -ldflags "-linkmode external -extldflags -static -s -w"
 %-install:
 	@if [ "${TAMAGO}" != "" ]; then \
-		cd $(CURDIR) && ${TAMAGO} build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
+		cd $(CURDIR) && ${TAMAGO} build -o $@ $(GOFLAGS) ./cmd/$*-install; \
 	else \
-		cd $(CURDIR) && go build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
+		cd $(CURDIR) && go build -o $@ $(GOFLAGS) ./cmd/$*-install; \
 	fi
 
 %-install.exe: GOFLAGS = -trimpath
 %-install.exe: BUILD_OPTS := GOOS=windows CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc
 %-install.exe:
 	@if [ "${TAMAGO}" != "" ]; then \
-		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) ${TAMAGO} build -o $@ $(GOFLAGS) ./cmd/$*-install; \
 	else \
-		cd $(CURDIR) && $(BUILD_OPTS) go build -o $@ $(GOFLAGS) cmd/$*-install/*.go; \
+		cd $(CURDIR) && $(BUILD_OPTS) go build -o $@ $(GOFLAGS) ./cmd/$*-install; \
 	fi
 
 %-install_darwin-amd64: GOFLAGS = -trimpath
 %-install_darwin-amd64:
-	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 $(GOFLAGS) cmd/$*-install/*.go
+	cd $(CURDIR) && GOOS=darwin GOARCH=amd64 go build -o $(CURDIR)/$*-install_darwin-amd64 $(GOFLAGS) ./cmd/$*-install
 
 %-install.dmg: %-install_darwin-amd64
 	$(eval TMPDIR := $(shell mktemp -d))
