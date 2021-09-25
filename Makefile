@@ -163,7 +163,7 @@ $(APP): check_tamago proto
 %-fixup.imx: %.imx %.srk
 	OFFSET=$(shell bgrep -b "${DUMMY_SRK_HASH}" $<) && \
 		if [[ -z $$OFFSET ]]; then \
-			echo "Dummy srk hash not found."; \
+			echo "Dummy srk hash not found. Aborting."; \
 			exit 1; \
 		fi && \
 		echo "Found dummy srk hash at offset: 0x$$OFFSET" && \
@@ -179,7 +179,7 @@ $(APP).release: PLATFORM = UA-MKII-ULZ
 $(APP).release: TAG = $(shell git tag --points-at HEAD)
 $(APP).release: check_git_clean srk_fixup
 	@if [ "${FR_PRIVKEY}" == "" ]; then \
-		echo 'FR_PRIVKEY must be set'; \
+		echo 'FR_PRIVKEY must be set. Aborting.'; \
 		exit 1; \
 	fi
 	@if [ "${TAG}" == "" ]; then \
