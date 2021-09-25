@@ -89,7 +89,7 @@ clean:
 	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
 	@rm -fr $(CURDIR)/api/*.pb.go
 	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
-	@rm -fr $(APP).release $(APP).proofbundle
+	@rm -fr $(APP).release $(APP).proofbundle update.zip
 
 #### dependencies ####
 
@@ -208,3 +208,5 @@ $(APP).release: check_git_clean srk_fixup
 		--log_url $(LOG_URL) \
 		--log_pubkey_file internal/ota/armory-drive-log.pub
 	@echo "$(APP).proofbundle created."
+	@cp $(APP).proofbundle $(APP).log && zip update.zip $(APP).{imx,csf,log} && rm $(APP).log
+	@echo "update.zip created."
