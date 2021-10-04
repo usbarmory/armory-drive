@@ -69,7 +69,10 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 
 	if len(checkpoints) > 0 {
 		checkpoints = append(checkpoints, *newCP)
-		err = client.CheckConsistency(ctx, rfc6962.DefaultHasher, logFetcher, checkpoints)
+
+		if err = client.CheckConsistency(ctx, rfc6962.DefaultHasher, logFetcher, checkpoints); err != nil {
+			return
+		}
 	}
 
 	return verifyProof(a)
