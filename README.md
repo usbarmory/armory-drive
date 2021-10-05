@@ -1,8 +1,6 @@
 Introduction
 ============
 
-> :warning: this software is in beta stage
-
 This [TamaGo](https://github.com/f-secure-foundry/tamago) based unikernel
 allows encrypted USB Mass Storage interfacing for a microSD card connected to a
 [USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
