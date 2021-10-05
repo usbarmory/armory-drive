@@ -46,7 +46,7 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 		return
 	}
 
-	if cacheDir, err := os.UserCacheDir(); err == nil {
+	if cacheDir, e := os.UserCacheDir(); e == nil {
 		p := path.Join(cacheDir, checkpointCachePath)
 
 		buf, err := os.ReadFile(p)
@@ -57,7 +57,7 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 		}
 
 		defer func() {
-			if len(newCPRaw) > 0 {
+			if err != nil && len(newCPRaw) > 0 {
 				_ = os.WriteFile(p, newCPRaw, 0600)
 			}
 		}()
