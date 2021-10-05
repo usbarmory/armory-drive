@@ -41,9 +41,9 @@ The installer supports the following installation modes:
   target USB armory, fully converting the device to exclusive use with Armory
   Drive releases signed by F-Secure.
 
-  These releases also enable authenticated updates through
-  [tamper-evident logs](https://github.com/f-secure-foundry/armory-drive-log) powered
-  by Google [transparency](https://transparency.dev/) framework.
+  These releases also enable [authenticated updates](https://github.com/f-secure-foundry/armory-drive/wiki/Firmware-Transparency)
+  through [tamper-evident logs](https://github.com/f-secure-foundry/armory-drive-log)
+  powered by Google [transparency](https://transparency.dev/) framework.
 
 * User signed releases: the installation of such firmware images
   causes user own secure boot keys to be created and *permanently fused* on the
@@ -67,6 +67,12 @@ and is the recommended way to use the Armory Drive firmware.
 
 Expert users can compile and sign their own releases with the information
 included in section _Installation of self-compiled releases_.
+
+Documentation
+=============
+
+The main documentation can be found on the
+[project wiki](https://github.com/f-secure-foundry/armory-drive/wiki).
 
 Operation
 =========
