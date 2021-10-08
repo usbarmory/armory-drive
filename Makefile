@@ -88,7 +88,7 @@ clean:
 	@rm -fr $(APP) $(APP).bin $(APP).imx $(APP)-signed.imx $(APP).sig $(APP).csf $(APP).sdp $(APP).dcd $(APP).srk
 	@rm -fr $(APP)-fixup-signed.imx $(APP)-fixup.csf $(APP)-fixup.sdp
 	@rm -fr $(CURDIR)/api/*.pb.go
-	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install.dmg
+	@rm -fr $(APP)-install $(APP)-install.exe $(APP)-install_darwin-amd64 $(APP)-install.dmg
 	@rm -fr $(APP).release $(APP).proofbundle update.zip
 
 #### dependencies ####
