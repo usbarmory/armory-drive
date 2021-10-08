@@ -23,7 +23,8 @@ import (
 )
 
 const readme = `
-Please download the F-Secure Armory application from the iOS App Store and scan file QR.png
+Please download the F-Secure Armory Drive application from the iOS App Store
+and scan file QR.png
 `
 
 // pairing disk paths (8.3 format)
