@@ -146,11 +146,14 @@ func Pairing(code []byte, keyring *crypto.Keyring) (card *PairingDisk) {
 		panic(err)
 	}
 
-	if err = addFile(root, codePath, code); err != nil {
-		panic(err)
+	if len(code) > 0 {
+		if err = addFile(root, codePath, code); err != nil {
+			panic(err)
+		}
+
+		_ = addFile(root, readmePath, []byte(readme))
 	}
 
-	_ = addFile(root, readmePath, []byte(readme))
 	_ = addFile(root, versionPath, []byte(assets.Revision))
 
 	if pb := keyring.Conf.ProofBundle; pb != nil {

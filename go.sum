@@ -214,6 +214,8 @@ github.com/f-secure-foundry/tamago v0.0.0-20210518071534-ddf03422d158/go.mod h1:
 github.com/f-secure-foundry/tamago v0.0.0-20210526195206-44288e125c67/go.mod h1:Zs5U/3bxiFFQzq23F7KkmS8Gz1jTGH141hbcdFHCk8E=
 github.com/f-secure-foundry/tamago v0.0.0-20210824203737-4a1f9882089b h1:o4TaDeqQ5l8tqziDHcoLtMa8C8nI8szHKaAbRpNbYlA=
 github.com/f-secure-foundry/tamago v0.0.0-20210824203737-4a1f9882089b/go.mod h1:Zs5U/3bxiFFQzq23F7KkmS8Gz1jTGH141hbcdFHCk8E=
+github.com/f-secure-foundry/tamago v0.0.0-20211129125941-a3566d922d59 h1:gyhCMpVXH2x3GNFugRhsGAz/15E5cxlfHjslngzRvK4=
+github.com/f-secure-foundry/tamago v0.0.0-20211129125941-a3566d922d59/go.mod h1:PeqYMgpP/R3MESqPnF2rvmD6Mu8G4JSSf9srGeQkz2M=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=

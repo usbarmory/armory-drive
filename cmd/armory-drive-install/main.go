@@ -160,7 +160,13 @@ func upgrade() {
 }
 
 func ota(assets *releaseAssets) {
-	log.Printf("\nWait for the USB armory blue LED to blink to indicate pairing mode.\nAn F-Secure drive should appear on your system.")
+	log.Printf("\nWait for the USB armory blue LED to blink to indicate pairing mode.")
+	log.Printf("\nAn F-Secure drive should appear on your system.")
+
+	if conf.install {
+		log.Printf("\nDo *not* pair with mobile application at this time.")
+	}
+
 	mountPoint := prompt("Please specify the path of the mounted F-Secure drive")
 
 	log.Printf("\nCreating firmware update archive.")

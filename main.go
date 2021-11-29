@@ -58,13 +58,22 @@ func main() {
 	ble.Init()
 
 	if drive.Init(usbarmory.SD) != nil {
+		var code []byte
+		var err error
+
 		// provision Secure Boot as required
 		hab.Init()
 
-		code, err := ble.PairingMode()
+		// Do not offer pairing code on first time installs (or
+		// recovery) as that pairing might become invalid at reboot if
+		// Secure Boot has been just activated, rather offer pairing
+		// only by firmware booted internally.
+		if !usb.SDP() {
+			code, err = ble.PairingMode()
 
-		if err != nil {
-			log.Fatal(err)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		drive.Cipher = false
