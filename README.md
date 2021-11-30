@@ -1,9 +1,14 @@
 Introduction
 ============
 
-This [TamaGo](https://github.com/f-secure-foundry/tamago) based unikernel
-allows encrypted USB Mass Storage interfacing for a microSD card connected to a
-[USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
+The [Armory Drive](https://www.f-secure.com/armory-drive) from [F-Secure Foundry](https://foundry.f-secure.com)
+provides a pocket encrypted drive solution based on the [USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
+
+It allows one-tap unlock of a microSD backed encrypted USB drive through a
+companion mobile application.
+
+The USB armory firmware is a [TamaGo](https://github.com/f-secure-foundry/tamago) based unikernel
+which allows encrypted USB Mass Storage interfacing for any plugged in microSD card.
 
 The encrypted storage setup and authentication is meant to be performed with
 the [F-Secure Armory Drive iOS app](https://apps.apple.com/us/app/f-secure-armory-drive/id1571708524)
