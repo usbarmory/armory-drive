@@ -46,7 +46,7 @@ The installer supports the following installation modes:
 
   These releases also enable [authenticated updates](https://github.com/f-secure-foundry/armory-drive/wiki/Firmware-Transparency)
   through [tamper-evident logs](https://github.com/f-secure-foundry/armory-drive-log)
-  powered by Google [transparency](https://transparency.dev/) framework.
+  powered by Google [transparency](https://binary.transparency.dev/) framework.
 
 * User signed releases: the installation of such firmware images
   causes user own secure boot keys to be created and *permanently fused* on the
