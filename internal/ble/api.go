@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/f-secure-foundry/armory-drive/api"
+	"github.com/f-secure-foundry/armory-drive/assets"
 	"github.com/f-secure-foundry/armory-drive/internal/crypto"
 
 	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
@@ -263,7 +264,7 @@ func (b *BLE) lock(reqMsg *api.Message, resMsg *api.Message) {
 
 func (b *BLE) status(reqMsg *api.Message, resMsg *api.Message) {
 	s := &api.Status{
-		Version:       "v1",
+		Version:       assets.Revision,
 		Capacity:      b.Drive.Capacity(),
 		Locked:        !b.Drive.Ready,
 		Configuration: b.Keyring.Conf.Settings,
