@@ -33,8 +33,8 @@ The binary release includes the `armory-drive-installer` tool (for Linux,
 Windows and macOS) to guide through initial installation of such releases and
 Secure Boot activation.
 
-> :warning: loading signed releases triggers secure boot activation which is an
-> *irreversible operation* to be performed **at your own risk**, carefully
+> :warning: :lock: loading signed releases triggers secure boot activation which
+> is an *irreversible operation* to be performed **at your own risk**, carefully
 > read and understand the following instructions.
 
 The installer supports the following installation modes:
