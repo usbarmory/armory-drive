@@ -5,7 +5,6 @@
 # that can be found in the LICENSE file.
 
 BUILD_TAGS = "linkramsize,linkprintk"
-REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
 LOG_ORIGIN = "Armory Drive Prod 2"
 PKG = github.com/f-secure-foundry/armory-drive
@@ -16,6 +15,12 @@ PROTOC ?= /usr/bin/protoc
 APP := armory-drive
 GOENV := GO_EXTLINK_ENABLED=0 CGO_ENABLED=0 GOOS=tamago GOARM=7 GOARCH=arm
 TEXT_START := 0x80010000 # ramStart (defined in imx6/imx6ul/memory.go) + 0x10000
+
+# Set revision to git tag, if unset use short commit hash.
+REV = $(shell git tag --points-at HEAD 2> /dev/null)
+ifeq ("$(REV)","")
+REV = $(shell git rev-parse --short HEAD 2> /dev/null)
+endif
 
 .PHONY: proto clean
 .PRECIOUS: %.srk
