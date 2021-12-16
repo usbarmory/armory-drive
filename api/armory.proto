@@ -209,22 +209,17 @@ Recovery QR code format
 The recovery QR code embeds a binary blob which can be decoded with this
 message format.
 
-The message includes the BLE name, encryption status, recovery information and
-their signature created with the MD long-term EC key.
+The message includes the BLE name, recovery information and their signature
+created with the MD long-term EC key.
 
 The recovery information includes the UA long-term MC, the MD long-term EC key
 pair and the KEK.
 
-The encryption flag indicates that the recovery payload is protected with a
-passphrase used for AES-256-OFB encryption (compliant with the INTERLOCK
-specifications for aes cipher). This is an optional request by the user when
-selecting the recovery function in the MD application menu.
-
 */
 message RecoveryQRCode {
-	string    BLEName   = 1;
-	bool      Encrypted = 2;
-	bytes     Recovery  = 3;
+	string    BLEName    = 1;
+	bool      Deprecated = 2;
+	bytes     Recovery   = 3;
 }
 
 message Recovery {
