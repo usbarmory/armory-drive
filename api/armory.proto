@@ -124,7 +124,7 @@ message Response {
    Request, OpCode: UNLOCK, signed with MD ephemeral EC private key, encrypted with session key
      MD > UA: KeyExchange{Key:<MD KEK>}
 
-   Response, OpCode: UNLOCK, signed with MD ephemeral EC private key, encrypted with session key
+   Response, OpCode: UNLOCK, signed with UA ephemeral EC private key, encrypted with session key
      MD < UA: standard response
 
 4. Encrypted storage lock
@@ -132,7 +132,7 @@ message Response {
    Request, OpCode: LOCK, signed with MD ephemeral EC private key, encrypted with session key
      MD > UA: empty payload
 
-   Response, OpCode: LOCK, signed with MD ephemeral EC private key, encrypted with session key
+   Response, OpCode: LOCK, signed with UA ephemeral EC private key, encrypted with session key
      MD < UA: standard response
 
 */
@@ -148,7 +148,7 @@ Status information request
 Request, OpCode: STATUS, signed with MD ephemeral EC private key, encrypted with session key
   MD > UA: empty payload
 
-Response, OpCode: STATUS, signed with MD ephemeral EC private key, encrypted with session key
+Response, OpCode: STATUS, signed with UA ephemeral EC private key, encrypted with session key
   MD < UA: Status{Version:<revision string>, Capacity:<microSD card capacity>, Locked:<locking state>}
 
 Any error condition, not tied to a specific request, can be return as an error
@@ -172,7 +172,7 @@ locked, otherwise an error is returned.
 Request, OpCode: CONFIGURATION, signed with MD ephemeral EC private key, encrypted with session key
   MD > UA: Configuration{ <configuration parameters> }
 
-Response, OpCode: CONFIGURATION, signed with MD ephemeral EC private key, encrypted with session key
+Response, OpCode: CONFIGURATION, signed with UA ephemeral EC private key, encrypted with session key
   MD < UA: Configuration{ <updated configuration> }
 
 Any error condition, not tied to a specific request, can be return as an error
