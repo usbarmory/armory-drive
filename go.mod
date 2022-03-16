@@ -1,13 +1,13 @@
-module github.com/f-secure-foundry/armory-drive
+module github.com/usbarmory/armory-drive
 
 go 1.17
 
 require (
-	github.com/f-secure-foundry/armory-boot v0.0.0-20210730121611-2a2b2a438986
-	github.com/f-secure-foundry/armory-drive-log v0.0.0-20210915124632-4ab17cf17f02
-	github.com/f-secure-foundry/crucible v0.0.0-20210730121542-ac44e572b63a
-	github.com/f-secure-foundry/hid v0.0.0-20210318233634-85ced88a1ffe
-	github.com/f-secure-foundry/tamago v0.0.0-20211129125941-a3566d922d59
+	github.com/usbarmory/armory-boot v0.0.0-20210730121611-2a2b2a438986
+	github.com/usbarmory/armory-drive-log v0.0.0-20210915124632-4ab17cf17f02
+	github.com/usbarmory/crucible v0.0.0-20210730121542-ac44e572b63a
+	github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe
+	github.com/usbarmory/tamago v0.0.0-20211129125941-a3566d922d59
 	github.com/google/go-github/v34 v34.0.0
 	github.com/google/trillian v1.3.14-0.20210902135231-6ff130e23e0c
 	github.com/google/trillian-examples v0.0.0-20210909165703-c62749b7931e
