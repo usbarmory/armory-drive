@@ -15,10 +15,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/f-secure-foundry/armory-drive-log/api"
-	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+	"github.com/usbarmory/armory-drive-log/api"
+	"github.com/usbarmory/armory-drive/internal/crypto"
 
-	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
+	"github.com/usbarmory/tamago/board/f-secure/usbarmory/mark-two"
 
 	"github.com/mitchellh/go-fs"
 	"github.com/mitchellh/go-fs/fat"

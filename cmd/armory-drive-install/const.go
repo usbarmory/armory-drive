@@ -54,7 +54,7 @@ const welcome = `
 Welcome to the Armory Drive installer!
 
 For more information or support on Armory Drive see:
-  https://github.com/f-secure-foundry/armory-drive/wiki
+  https://github.com/usbarmory/armory-drive/wiki
 
 This program will install or upgrade Armory Drive on your USB armory.`
 
@@ -166,7 +166,7 @@ flags according to your environment.
 If you have not yet generated secure boot keys, you can do so with the
 following tool:
 
-  https://github.com/f-secure-foundry/crucible/tree/master/cmd/habtool
+  https://github.com/usbarmory/crucible/tree/master/cmd/habtool
 
 Example:
 

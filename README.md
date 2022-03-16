@@ -2,12 +2,12 @@ Introduction
 ============
 
 The [Armory Drive](https://www.f-secure.com/armory-drive) from [F-Secure Foundry](https://foundry.f-secure.com)
-provides a pocket encrypted drive solution based on the [USB armory Mk II](https://github.com/f-secure-foundry/usbarmory/wiki).
+provides a pocket encrypted drive solution based on the [USB armory Mk II](https://github.com/usbarmory/usbarmory/wiki).
 
 It allows one-tap unlock of a microSD backed encrypted USB drive through a
 companion mobile application.
 
-The USB armory firmware is a [TamaGo](https://github.com/f-secure-foundry/tamago) based unikernel
+The USB armory firmware is a [TamaGo](https://github.com/usbarmory/tamago) based unikernel
 which allows encrypted USB Mass Storage interfacing for any plugged in microSD card.
 
 The encrypted storage setup and authentication is meant to be performed with
@@ -15,18 +15,18 @@ the [F-Secure Armory Drive iOS app](https://apps.apple.com/us/app/f-secure-armor
 over Bluetooth (BLE).
 
 To understand the firmware capabilities and use see this
-[Tutorial](https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial).
+[Tutorial](https://github.com/usbarmory/armory-drive/wiki/Tutorial).
 
 Security Model
 ==============
 
-See the [detailed specifications](https://github.com/f-secure-foundry/armory-drive/wiki/Specifications)
+See the [detailed specifications](https://github.com/usbarmory/armory-drive/wiki/Specifications)
 for full explanation of the security model.
 
 Installation of pre-compiled releases
 =====================================
 
-F-Secure provides [binary releases](https://github.com/f-secure-foundry/armory-drive/releases)
+F-Secure provides [binary releases](https://github.com/usbarmory/armory-drive/releases)
 for the Armory Drive firmware.
 
 The binary release includes the `armory-drive-installer` tool (for Linux,
@@ -44,8 +44,8 @@ The installer supports the following installation modes:
   target USB armory, fully converting the device to exclusive use with Armory
   Drive releases signed by F-Secure.
 
-  These releases also enable [authenticated updates](https://github.com/f-secure-foundry/armory-drive/wiki/Firmware-Transparency)
-  through [tamper-evident logs](https://github.com/f-secure-foundry/armory-drive-log)
+  These releases also enable [authenticated updates](https://github.com/usbarmory/armory-drive/wiki/Firmware-Transparency)
+  through [tamper-evident logs](https://github.com/usbarmory/armory-drive-log)
   powered by Google [transparency](https://binary.transparency.dev/) framework.
 
 * User signed releases: the installation of such firmware images
@@ -75,7 +75,7 @@ Documentation
 =============
 
 The main documentation can be found on the
-[project wiki](https://github.com/f-secure-foundry/armory-drive/wiki).
+[project wiki](https://github.com/usbarmory/armory-drive/wiki).
 
 Operation
 =========
@@ -83,7 +83,7 @@ Operation
 Pairing and initialization
 --------------------------
 
-See the [Tutorial](https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial).
+See the [Tutorial](https://github.com/usbarmory/armory-drive/wiki/Tutorial).
 
 Disk access
 -----------
@@ -107,7 +107,7 @@ use the following procedure on USB armory devices which have been already
 initialized with the Armory Drive firmware as shown in _Pairing and
 initialization_.
 
-  1. Download file `update.zip` from the [latest binary release](https://github.com/f-secure-foundry/armory-drive/releases/latest)
+  1. Download file `update.zip` from the [latest binary release](https://github.com/usbarmory/armory-drive/releases/latest)
   2. If the USB armory contains an SD card, remove it.
   3. Plug the USB armory.
   4. An "F-Secure" disk volume should appear.
@@ -134,18 +134,18 @@ is set accordingly):
 go get -u google.golang.org/protobuf/cmd/protoc-gen-go
 ```
 
-Build the [TamaGo compiler](https://github.com/f-secure-foundry/tamago-go)
-(or use the [latest binary release](https://github.com/f-secure-foundry/tamago-go/releases/latest)):
+Build the [TamaGo compiler](https://github.com/usbarmory/tamago-go)
+(or use the [latest binary release](https://github.com/usbarmory/tamago-go/releases/latest)):
 
 ```
-wget https://github.com/f-secure-foundry/tamago-go/archive/refs/tags/latest.zip
+wget https://github.com/usbarmory/tamago-go/archive/refs/tags/latest.zip
 unzip latest.zip
 cd tamago-go-latest/src && ./all.bash
 cd ../bin && export TAMAGO=`pwd`/go
 ```
 
 The firmware is meant to be executed on secure booted systems, therefore
-[secure boot keys](https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II))
+[secure boot keys](https://github.com/usbarmory/usbarmory/wiki/Secure-boot-(Mk-II))
 should be created and passed with the `HAB_KEYS` environment variable.
 
 Build the `armory-drive-signed.imx` application executable:
@@ -160,10 +160,10 @@ Installing
 ----------
 
 To permanently install `armory-drive-signed.imx` on internal non-volatile memory,
-follow [these instructions](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#flashing-bootable-images-on-externalinternal-media)
+follow [these instructions](https://github.com/usbarmory/usbarmory/wiki/Boot-Modes-(Mk-II)#flashing-bootable-images-on-externalinternal-media)
 for internal eMMC flashing.
 
-> :warning: once loaded, even through [Serial Download Protocol](https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp),
+> :warning: once loaded, even through [Serial Download Protocol](https://github.com/usbarmory/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp),
 > the firmware initializes its configuration by writing on the internal eMMC, therefore corrupting its previous contents.
 
 Support

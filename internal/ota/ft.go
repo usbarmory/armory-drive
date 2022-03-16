@@ -11,11 +11,11 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
-	"github.com/f-secure-foundry/armory-drive-log/api"
-	"github.com/f-secure-foundry/armory-drive-log/api/verify"
+	"github.com/usbarmory/armory-drive/assets"
+	"github.com/usbarmory/armory-drive-log/api"
+	"github.com/usbarmory/armory-drive-log/api/verify"
 
-	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
+	"github.com/usbarmory/tamago/soc/imx6/dcp"
 
 	"golang.org/x/mod/sumdb/note"
 )

@@ -9,8 +9,8 @@ package ble
 import (
 	"encoding/binary"
 
-	"github.com/f-secure-foundry/armory-drive/api"
-	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+	"github.com/usbarmory/armory-drive/api"
+	"github.com/usbarmory/armory-drive/internal/crypto"
 
 	"github.com/skip2/go-qrcode"
 )

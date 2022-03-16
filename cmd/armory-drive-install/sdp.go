@@ -13,9 +13,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/f-secure-foundry/armory-boot/sdp"
+	"github.com/usbarmory/armory-boot/sdp"
 
-	"github.com/f-secure-foundry/hid"
+	"github.com/usbarmory/hid"
 )
 
 const (

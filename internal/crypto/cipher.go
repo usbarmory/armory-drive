@@ -21,10 +21,10 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/f-secure-foundry/armory-drive/api"
+	"github.com/usbarmory/armory-drive/api"
 
-	"github.com/f-secure-foundry/tamago/dma"
-	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
+	"github.com/usbarmory/tamago/dma"
+	"github.com/usbarmory/tamago/soc/imx6/dcp"
 
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/xts"

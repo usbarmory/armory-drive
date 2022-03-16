@@ -13,11 +13,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/f-secure-foundry/armory-drive/api"
-	"github.com/f-secure-foundry/armory-drive/assets"
-	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+	"github.com/usbarmory/armory-drive/api"
+	"github.com/usbarmory/armory-drive/assets"
+	"github.com/usbarmory/armory-drive/internal/crypto"
 
-	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
+	"github.com/usbarmory/tamago/board/f-secure/usbarmory/mark-two"
 
 	"google.golang.org/protobuf/proto"
 )

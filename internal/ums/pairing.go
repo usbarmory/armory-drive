@@ -13,10 +13,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
-	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+	"github.com/usbarmory/armory-drive/assets"
+	"github.com/usbarmory/armory-drive/internal/crypto"
 
-	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
+	"github.com/usbarmory/tamago/soc/imx6/usdhc"
 
 	"github.com/mitchellh/go-fs"
 	"github.com/mitchellh/go-fs/fat"

@@ -7,7 +7,7 @@
 package ble
 
 import (
-	"github.com/f-secure-foundry/armory-drive/api"
+	"github.com/usbarmory/armory-drive/api"
 )
 
 func (b *BLE) verifyEnvelope(env *api.Envelope) (err error) {

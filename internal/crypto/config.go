@@ -10,10 +10,10 @@ import (
 	"bytes"
 	"encoding/gob"
 
-	logapi "github.com/f-secure-foundry/armory-drive-log/api"
-	"github.com/f-secure-foundry/armory-drive/api"
+	logapi "github.com/usbarmory/armory-drive-log/api"
+	"github.com/usbarmory/armory-drive/api"
 
-	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
+	"github.com/usbarmory/tamago/board/f-secure/usbarmory/mark-two"
 )
 
 const (

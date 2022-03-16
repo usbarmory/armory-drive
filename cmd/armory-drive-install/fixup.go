@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"log"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
+	"github.com/usbarmory/armory-drive/assets"
 )
 
 func fixupSRKHash(buf []byte, srk []byte) []byte {

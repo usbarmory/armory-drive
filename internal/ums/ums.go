@@ -7,11 +7,11 @@
 package ums
 
 import (
-	"github.com/f-secure-foundry/armory-drive/api"
-	"github.com/f-secure-foundry/armory-drive/internal/crypto"
+	"github.com/usbarmory/armory-drive/api"
+	"github.com/usbarmory/armory-drive/internal/crypto"
 
-	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
-	"github.com/f-secure-foundry/tamago/soc/imx6/usdhc"
+	"github.com/usbarmory/tamago/board/f-secure/usbarmory/mark-two"
+	"github.com/usbarmory/tamago/soc/imx6/usdhc"
 )
 
 const (

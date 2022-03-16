@@ -15,9 +15,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/f-secure-foundry/hid"
+	"github.com/usbarmory/hid"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
+	"github.com/usbarmory/armory-drive/assets"
 )
 
 type Mode int
@@ -209,10 +209,10 @@ func ota(assets *releaseAssets) {
 	log.Printf("\n1. Please eject the drive mounted at %s to flash the firmware.", mountPoint)
 	log.Printf("2. Wait for the white LED to turn on and then off for the update to complete.")
 	log.Printf("3. Once the update is complete unplug the USB armory and set eMMC boot mode as explained at:")
-	log.Printf("     https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)")
+	log.Printf("     https://github.com/usbarmory/usbarmory/wiki/Boot-Modes-(Mk-II)")
 
 	log.Printf("\nAfter doing so you can use your new Armory Drive installation, following this tutorial:")
-	log.Printf("  https://github.com/f-secure-foundry/armory-drive/wiki/Tutorial")
+	log.Printf("  https://github.com/usbarmory/armory-drive/wiki/Tutorial")
 }
 
 func installFirmware(mode Mode) {
@@ -272,7 +272,7 @@ func installFirmware(mode Mode) {
 		imx = append(imx, assets.sdp...)
 	}
 
-	log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/usbarmory/wiki/Boot-Modes-(Mk-II)")
+	log.Printf("\nFollow instructions at https://github.com/usbarmory/usbarmory/wiki/Boot-Modes-(Mk-II)")
 	log.Printf("to set the target USB armory in SDP mode.")
 
 	log.Printf("\nWaiting for target USB armory to be plugged to this computer in SDP mode.")
@@ -297,7 +297,7 @@ func upgradeFirmware(mode Mode) {
 		}
 	}
 
-	log.Printf("\nFollow instructions at https://github.com/f-secure-foundry/armory-drive/wiki/Firmware-Updates")
+	log.Printf("\nFollow instructions at https://github.com/usbarmory/armory-drive/wiki/Firmware-Updates")
 	log.Printf("to set the Armory Drive firmware in pairing mode.")
 
 	if !confirm("Confirm that target USB armory is plugged to this computer in pairing mode.") {

@@ -14,8 +14,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/f-secure-foundry/armory-drive-log/api"
-	"github.com/f-secure-foundry/armory-drive-log/api/verify"
+	"github.com/usbarmory/armory-drive-log/api"
+	"github.com/usbarmory/armory-drive-log/api/verify"
 
 	"github.com/google/go-github/v34/github"
 	"github.com/google/trillian-examples/formats/log"

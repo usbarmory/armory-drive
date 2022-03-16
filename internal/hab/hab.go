@@ -12,16 +12,16 @@ import (
 	"log"
 	_ "unsafe"
 
-	"github.com/f-secure-foundry/armory-drive/assets"
+	"github.com/usbarmory/armory-drive/assets"
 
-	"github.com/f-secure-foundry/tamago/soc/imx6"
+	"github.com/usbarmory/tamago/soc/imx6"
 
-	"github.com/f-secure-foundry/crucible/otp"
-	"github.com/f-secure-foundry/crucible/util"
+	"github.com/usbarmory/crucible/otp"
+	"github.com/usbarmory/crucible/util"
 )
 
 // Init activates secure boot by following the procedure described at:
-//   https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II)#activating-hab
+//   https://github.com/usbarmory/usbarmory/wiki/Secure-boot-(Mk-II)#activating-hab
 //
 // IMPORTANT: enabling secure boot functionality on the USB armory SoC, unlike
 // similar features on modern PCs, is an irreversible action that permanently

@@ -7,7 +7,7 @@
 BUILD_TAGS = "linkramsize,linkprintk"
 LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
 LOG_ORIGIN = "Armory Drive Prod 2"
-PKG = github.com/f-secure-foundry/armory-drive
+PKG = github.com/usbarmory/armory-drive
 
 SHELL = /bin/bash
 PROTOC ?= /usr/bin/protoc
@@ -67,14 +67,14 @@ imx_signed: $(APP)-signed.imx
 
 check_tamago:
 	@if [ "${TAMAGO}" == "" ] || [ ! -f "${TAMAGO}" ]; then \
-		echo 'You need to set the TAMAGO variable to a compiled version of https://github.com/f-secure-foundry/tamago-go'; \
+		echo 'You need to set the TAMAGO variable to a compiled version of https://github.com/usbarmory/tamago-go'; \
 		exit 1; \
 	fi
 
 check_hab_keys:
 	@if [ "${HAB_KEYS}" == "" ]; then \
 		echo 'You need to set the HAB_KEYS variable to the path of secure boot keys'; \
-		echo 'See https://github.com/f-secure-foundry/usbarmory/wiki/Secure-boot-(Mk-II)'; \
+		echo 'See https://github.com/usbarmory/usbarmory/wiki/Secure-boot-(Mk-II)'; \
 		exit 1; \
 	fi
 
@@ -110,7 +110,7 @@ $(APP): check_tamago proto
 
 %.dcd: check_tamago
 %.dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)
-%.dcd: TAMAGO_PKG = $(shell grep "github.com/f-secure-foundry/tamago v" go.mod | awk '{print $$1"@"$$2}')
+%.dcd: TAMAGO_PKG = $(shell grep "github.com/usbarmory/tamago v" go.mod | awk '{print $$1"@"$$2}')
 %.dcd:
 	echo $(GOMODCACHE)
 	echo $(TAMAGO_PKG)
@@ -131,7 +131,7 @@ $(APP): check_tamago proto
 #### secure boot ####
 
 %-signed.imx: check_hab_keys %.imx
-	${TAMAGO} install github.com/f-secure-foundry/crucible/cmd/habtool
+	${TAMAGO} install github.com/usbarmory/crucible/cmd/habtool
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
 		-a ${HAB_KEYS}/CSF_1_crt.pem \
@@ -191,8 +191,8 @@ $(APP).release: check_git_clean srk_fixup
 		echo 'No release tag defined on checked-out commit. Aborting.'; \
 		exit 1; \
 	fi
-	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_release
-	${TAMAGO} install github.com/f-secure-foundry/armory-drive-log/cmd/create_proofbundle
+	${TAMAGO} install github.com/usbarmory/armory-drive-log/cmd/create_release
+	${TAMAGO} install github.com/usbarmory/armory-drive-log/cmd/create_proofbundle
 	$(shell ${TAMAGO} env GOPATH)/bin/create_release \
 		--logtostderr \
 		--output $(APP).release \

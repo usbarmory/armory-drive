@@ -10,7 +10,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 
-	"github.com/f-secure-foundry/tamago/soc/imx6/dcp"
+	"github.com/usbarmory/tamago/soc/imx6/dcp"
 )
 
 type dcpCipher struct {

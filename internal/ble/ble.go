@@ -13,10 +13,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/f-secure-foundry/armory-drive/internal/crypto"
-	"github.com/f-secure-foundry/armory-drive/internal/ums"
+	"github.com/usbarmory/armory-drive/internal/crypto"
+	"github.com/usbarmory/armory-drive/internal/ums"
 
-	"github.com/f-secure-foundry/tamago/board/f-secure/usbarmory/mark-two"
+	"github.com/usbarmory/tamago/board/f-secure/usbarmory/mark-two"
 )
 
 var BLEStartupPattern = regexp.MustCompile(`(\+STARTUP)`)
