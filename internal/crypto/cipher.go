@@ -359,12 +359,12 @@ func (k *Keyring) EncryptOFB(plaintext []byte) (ciphertext []byte, err error) {
 	stream := cipher.NewOFB(block, iv)
 	reader := &cipher.StreamReader{S: stream, R: in}
 
-	_, err = io.Copy(out, reader)
-
-	if err == nil {
-		ciphertext = iv
-		ciphertext = append(ciphertext, out.Bytes()...)
+	if _, err = io.Copy(out, reader); err != nil {
+		return
 	}
+
+	ciphertext = iv
+	ciphertext = append(ciphertext, out.Bytes()...)
 
 	return
 }
@@ -387,11 +387,11 @@ func (k *Keyring) DecryptOFB(ciphertext []byte) (plaintext []byte, err error) {
 	stream := cipher.NewOFB(block, iv)
 	writer := &cipher.StreamWriter{S: stream, W: out}
 
-	_, err = io.Copy(writer, in)
-
-	if err == nil {
-		plaintext = out.Bytes()
+	if _, err = io.Copy(writer, in); err != nil {
+		return
 	}
+
+	plaintext = out.Bytes()
 
 	return
 }
