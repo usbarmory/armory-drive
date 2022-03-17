@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	org         = "f-secure-foundry"
+	org         = "usbarmory"
 	releaseRepo = "armory-drive"
 	logRepo     = "armory-drive-log"
 

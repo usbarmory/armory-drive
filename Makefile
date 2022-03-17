@@ -5,7 +5,7 @@
 # that can be found in the LICENSE file.
 
 BUILD_TAGS = "linkramsize,linkprintk"
-LOG_URL = https://raw.githubusercontent.com/f-secure-foundry/armory-drive-log/master/log/
+LOG_URL = https://raw.githubusercontent.com/usbarmory/armory-drive-log/master/log/
 LOG_ORIGIN = "Armory Drive Prod 2"
 PKG = github.com/usbarmory/armory-drive
 
