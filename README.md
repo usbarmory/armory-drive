@@ -1,7 +1,7 @@
 Introduction
 ============
 
-The [Armory Drive](https://www.f-secure.com/armory-drive) from [F-Secure Foundry](https://foundry.f-secure.com)
+The [Armory Drive](https://www.withsecure.com/en/solutions/innovative-security-hardware/armory-drive)
 provides a pocket encrypted drive solution based on the [USB armory Mk II](https://github.com/usbarmory/usbarmory/wiki).
 
 It allows one-tap unlock of a microSD backed encrypted USB drive through a
@@ -26,7 +26,7 @@ for full explanation of the security model.
 Installation of pre-compiled releases
 =====================================
 
-F-Secure provides [binary releases](https://github.com/usbarmory/armory-drive/releases)
+Binary releases are [available](https://github.com/usbarmory/armory-drive/releases)
 for the Armory Drive firmware.
 
 The binary release includes the `armory-drive-installer` tool (for Linux,
@@ -169,18 +169,18 @@ for internal eMMC flashing.
 Support
 =======
 
-If you require support, please email us at usbarmory@f-secure.com.
+If you require support, please email us at usbarmory@withsecure.com.
 
 Authors
 =======
 
 Andrea Barisani  
-andrea.barisani@f-secure.com | andrea@inversepath.com  
+andrea.barisani@withsecure.com | andrea@inversepath.com  
 
 License
 =======
 
-Copyright (c) F-Secure Corporation
+Copyright (c) WithSecure Corporation
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
