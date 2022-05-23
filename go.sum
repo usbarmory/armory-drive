@@ -742,6 +742,8 @@ github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe h1:WWop+y0QNxBEZAKu9
 github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe/go.mod h1:8ScVLh9aty8MLtypACxU7JdF5u2y2rEfhx3zJPS/tPc=
 github.com/usbarmory/tamago v0.0.0-20220317110157-7d646a70065f h1:1dFdd4AyIqpxhiQ7lANXhN+aF6Mbfz29i7ZCVsR4FVU=
 github.com/usbarmory/tamago v0.0.0-20220317110157-7d646a70065f/go.mod h1:Lok79mjbJnhoBGqhX5cCUsZtSemsQF5FNZW+2R1dRr8=
+github.com/usbarmory/tamago v0.0.0-20220523113853-2cf301ace971 h1:GTLMWe9qe9ttgplYBOIWT7k8cj3RofAQI5I7rGDk4y8=
+github.com/usbarmory/tamago v0.0.0-20220523113853-2cf301ace971/go.mod h1:Lok79mjbJnhoBGqhX5cCUsZtSemsQF5FNZW+2R1dRr8=
 github.com/vmihailenco/msgpack v4.0.4+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=

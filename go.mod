@@ -12,7 +12,7 @@ require (
 	github.com/usbarmory/armory-drive-log v0.0.0-20220317114300-a18871ed3491
 	github.com/usbarmory/crucible v0.0.0-20220316101547-a86e9a8ae6b5
 	github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe
-	github.com/usbarmory/tamago v0.0.0-20220317110157-7d646a70065f
+	github.com/usbarmory/tamago v0.0.0-20220523113853-2cf301ace971
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 	golang.org/x/mod v0.5.1
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a

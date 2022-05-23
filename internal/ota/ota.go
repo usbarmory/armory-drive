@@ -18,7 +18,7 @@ import (
 	"github.com/usbarmory/armory-drive-log/api"
 	"github.com/usbarmory/armory-drive/internal/crypto"
 
-	"github.com/usbarmory/tamago/board/f-secure/usbarmory/mark-two"
+	usbarmory "github.com/usbarmory/tamago/board/usbarmory/mk2"
 
 	"github.com/mitchellh/go-fs"
 	"github.com/mitchellh/go-fs/fat"

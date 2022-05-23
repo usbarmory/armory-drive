@@ -16,7 +16,7 @@ import (
 	"github.com/usbarmory/armory-drive/internal/crypto"
 	"github.com/usbarmory/armory-drive/internal/ums"
 
-	"github.com/usbarmory/tamago/board/f-secure/usbarmory/mark-two"
+	usbarmory "github.com/usbarmory/tamago/board/usbarmory/mk2"
 )
 
 var BLEStartupPattern = regexp.MustCompile(`(\+STARTUP)`)

@@ -114,7 +114,7 @@ $(APP): check_tamago proto
 %.dcd:
 	echo $(GOMODCACHE)
 	echo $(TAMAGO_PKG)
-	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/f-secure/usbarmory/mark-two/imximage.cfg $(APP).dcd
+	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/usbarmory/mk2/imximage.cfg $(APP).dcd
 
 %.bin: %
 	$(CROSS_COMPILE)objcopy -j .text -j .rodata -j .shstrtab -j .typelink \
