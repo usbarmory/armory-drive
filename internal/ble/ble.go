@@ -63,7 +63,7 @@ func (b *BLE) rxPackets() {
 		// detect USB armory Mk II β errata fix
 		if b.anna.UART.Flow {
 			buf := make([]byte, 1024)
-			n := b.anna.UART.Read(buf)
+			n, _ := b.anna.UART.Read(buf)
 
 			if n != 0 {
 				pkt = append(pkt, buf[:n]...)

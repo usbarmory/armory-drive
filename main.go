@@ -18,7 +18,7 @@ import (
 	"github.com/usbarmory/armory-drive/internal/ums"
 
 	"github.com/usbarmory/tamago/soc/imx6"
-	"github.com/usbarmory/tamago/soc/imx6/usb"
+	"github.com/usbarmory/tamago/soc/imx6/imx6ul"
 
 	usbarmory "github.com/usbarmory/tamago/board/usbarmory/mk2"
 )
@@ -68,7 +68,7 @@ func main() {
 		// recovery) as that pairing might become invalid at reboot if
 		// Secure Boot has been just activated, rather offer pairing
 		// only by firmware booted internally.
-		if !usb.SDP() {
+		if !imx6ul.SDP() {
 			code, err = ble.PairingMode()
 
 			if err != nil {
@@ -87,24 +87,24 @@ func main() {
 
 	device := drive.ConfigureUSB()
 
-	usb.USB1.Init()
-	usb.USB1.DeviceMode()
+	imx6ul.USB1.Init()
+	imx6ul.USB1.DeviceMode()
 
 	// To further reduce the attack surface, start the USB stack only when
 	// the card is unlocked (or in pairing mode).
 	if !drive.Ready {
-		usb.USB1.Stop()
+		imx6ul.USB1.Stop()
 
 		for !drive.Ready {
 			runtime.Gosched()
 			time.Sleep(10 * time.Millisecond)
 		}
 
-		usb.USB1.Run()
+		imx6ul.USB1.Run()
 	}
 
-	usb.USB1.Reset()
-	usb.USB1.Start(device)
+	imx6ul.USB1.Reset()
+	imx6ul.USB1.Start(device)
 }
 
 func pairingFeedback(done chan bool) {

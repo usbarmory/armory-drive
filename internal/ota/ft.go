@@ -15,7 +15,7 @@ import (
 	"github.com/usbarmory/armory-drive-log/api"
 	"github.com/usbarmory/armory-drive-log/api/verify"
 
-	"github.com/usbarmory/tamago/soc/imx6/dcp"
+	"github.com/usbarmory/tamago/soc/imx6/imx6ul"
 
 	"golang.org/x/mod/sumdb/note"
 )
@@ -66,13 +66,13 @@ func verifyProof(imx []byte, csf []byte, proof []byte, oldProof *api.ProofBundle
 		}
 	}
 
-	imxHash, err := dcp.Sum256(imx)
+	imxHash, err := imx6ul.DCP.Sum256(imx)
 
 	if err != nil {
 		return
 	}
 
-	csfHash, err := dcp.Sum256(csf)
+	csfHash, err := imx6ul.DCP.Sum256(csf)
 
 	if err != nil {
 		return

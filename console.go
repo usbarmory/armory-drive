@@ -42,7 +42,7 @@ var serialTx = func(c byte) {}
 func init() {
 	if imx6.SNVS() {
 		// disable console
-		imx6.UART2.Disable()
+		usbarmory.UART2.Disable()
 
 		// silence logging
 		log.SetOutput(ioutil.Discard)
@@ -52,7 +52,7 @@ func init() {
 	log.SetOutput(os.Stdout)
 
 	serialTx = func(c byte) {
-		imx6.UART2.Tx(c)
+		usbarmory.UART2.Tx(c)
 	}
 
 	debugConsole, _ := usbarmory.DetectDebugAccessory(250 * time.Millisecond)

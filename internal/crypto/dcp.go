@@ -10,7 +10,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 
-	"github.com/usbarmory/tamago/soc/imx6/dcp"
+	"github.com/usbarmory/tamago/soc/imx6/imx6ul"
 )
 
 type dcpCipher struct {
@@ -37,7 +37,7 @@ func newDCPCipher(key []byte) (c cipher.Block, err error) {
 		keyIndex: BLOCK_KEY,
 	}
 
-	return c, dcp.SetKey(BLOCK_KEY, key)
+	return c, imx6ul.DCP.SetKey(BLOCK_KEY, key)
 }
 
 // BlockSize returns the AES block size in bytes.
@@ -47,10 +47,10 @@ func (c *dcpCipher) BlockSize() int {
 
 // Encrypt performs in-place buffer encryption using AES-128-CBC.
 func (c *dcpCipher) Encrypt(_ []byte, buf []byte) {
-	dcp.Encrypt(buf, c.keyIndex, zero)
+	imx6ul.DCP.Encrypt(buf, c.keyIndex, zero)
 }
 
 // Decrypt performs in-place buffer decryption using AES-128-CBC.
 func (c *dcpCipher) Decrypt(_ []byte, buf []byte) {
-	dcp.Decrypt(buf, c.keyIndex, zero)
+	imx6ul.DCP.Decrypt(buf, c.keyIndex, zero)
 }

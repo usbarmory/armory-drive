@@ -116,6 +116,7 @@ $(APP): check_tamago proto
 	echo $(TAMAGO_PKG)
 	cp -f $(GOMODCACHE)/$(TAMAGO_PKG)/board/usbarmory/mk2/imximage.cfg $(APP).dcd
 
+%.bin: CROSS_COMPILE=arm-none-eabi-
 %.bin: %
 	$(CROSS_COMPILE)objcopy -j .text -j .rodata -j .shstrtab -j .typelink \
 	    -j .itablink -j .gopclntab -j .go.buildinfo -j .noptrdata -j .data \

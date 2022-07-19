@@ -24,7 +24,7 @@ import (
 	"github.com/usbarmory/armory-drive/api"
 
 	"github.com/usbarmory/tamago/dma"
-	"github.com/usbarmory/tamago/soc/imx6/dcp"
+	"github.com/usbarmory/tamago/soc/imx6/imx6ul"
 
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/xts"
@@ -59,7 +59,7 @@ var iv = make([]byte, aes.BlockSize)
 var zero = make([]byte, aes.BlockSize)
 
 func init() {
-	dcp.Init()
+	imx6ul.DCP.Init()
 }
 
 func (k *Keyring) deriveKey(diversifier []byte, index int, export bool) (key []byte, err error) {
@@ -89,12 +89,12 @@ func (k *Keyring) deriveKey(diversifier []byte, index int, export bool) (key []b
 	iv := make([]byte, aes.BlockSize)
 
 	if export {
-		key, err = dcp.DeriveKey(diversifier, iv, -1)
+		key, err = imx6ul.DCP.DeriveKey(diversifier, iv, -1)
 	} else {
 		// Move the derived key directly to the internal DCP key RAM
 		// slot, without ever exposing it to external RAM or the Go
 		// runtime.
-		_, err = dcp.DeriveKey(diversifier, iv, index)
+		_, err = imx6ul.DCP.DeriveKey(diversifier, iv, index)
 	}
 
 	if err != nil {
@@ -102,7 +102,7 @@ func (k *Keyring) deriveKey(diversifier []byte, index int, export bool) (key []b
 	}
 
 	if export {
-		err = dcp.SetKey(index, key)
+		err = imx6ul.DCP.SetKey(index, key)
 	}
 
 	return
@@ -188,7 +188,7 @@ func (k *Keyring) SetCipher(kind api.Cipher, diversifier []byte) (err error) {
 // equivalent to aes-cbc-essiv:md5
 func (k *Keyring) essiv(buf []byte, iv []byte) (err error) {
 	if DCPIV {
-		err = dcp.Encrypt(buf, ESSIV_KEY, iv)
+		err = imx6ul.DCP.Encrypt(buf, ESSIV_KEY, iv)
 	} else {
 		encrypter := cipher.NewCBCEncrypter(k.cbiv, iv)
 		encrypter.CryptBlocks(buf, buf)
@@ -216,7 +216,7 @@ func (k *Keyring) cipherDCP(buf []byte, lba int, blocks int, blockSize int, enc 
 		}
 	}
 
-	err := dcp.CipherChain(buf, ivs, blocks, blockSize, BLOCK_KEY, enc)
+	err := imx6ul.DCP.CipherChain(buf, ivs, blocks, blockSize, BLOCK_KEY, enc)
 
 	if err != nil {
 		log.Fatal(err)
