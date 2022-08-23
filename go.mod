@@ -1,23 +1,23 @@
 module github.com/usbarmory/armory-drive
 
-go 1.18
+go 1.19
 
 require (
 	github.com/google/go-github/v34 v34.0.0
-	github.com/google/trillian v1.4.1
-	github.com/google/trillian-examples v0.0.0-20220718143929-783eca4f2008
+	github.com/google/trillian v1.4.1-0.20211013081307-5af22d0b4a1d
+	github.com/google/trillian-examples v0.0.0-20220819161109-012672c0df5f
 	github.com/mitchellh/go-fs v0.0.0-20180402235330-b7b9ca407fff
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/usbarmory/armory-boot v0.0.0-20220714105009-e09dbf750637
-	github.com/usbarmory/armory-drive-log v0.0.0-20220328085544-6cc018d6ea1c
-	github.com/usbarmory/crucible v0.0.0-20220714120504-72486669d880
+	github.com/usbarmory/armory-boot v0.0.0-20220823090723-6e320c947cc5
+	github.com/usbarmory/armory-drive-log v0.0.0-20220818095633-caefad228e4b
+	github.com/usbarmory/crucible v0.0.0-20220823085715-c9e97b45a8b2
 	github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe
-	github.com/usbarmory/tamago v0.0.0-20220714104148-d5b7c14a0fbb
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
-	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
-	golang.org/x/oauth2 v0.0.0-20220718184931-c8730f7fcb92
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	google.golang.org/protobuf v1.28.0
+	github.com/usbarmory/tamago v0.0.0-20220823080407-04f05cf2a5a3
+	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
+	golang.org/x/mod v0.5.1
+	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
+	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
+	google.golang.org/protobuf v1.28.1
 )
 
 require (

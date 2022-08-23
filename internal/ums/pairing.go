@@ -16,7 +16,7 @@ import (
 	"github.com/usbarmory/armory-drive/assets"
 	"github.com/usbarmory/armory-drive/internal/crypto"
 
-	"github.com/usbarmory/tamago/soc/imx6/usdhc"
+	"github.com/usbarmory/tamago/soc/nxp/usdhc"
 
 	"github.com/mitchellh/go-fs"
 	"github.com/mitchellh/go-fs/fat"

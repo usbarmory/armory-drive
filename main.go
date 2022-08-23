@@ -17,14 +17,13 @@ import (
 	"github.com/usbarmory/armory-drive/internal/hab"
 	"github.com/usbarmory/armory-drive/internal/ums"
 
-	"github.com/usbarmory/tamago/soc/imx6"
-	"github.com/usbarmory/tamago/soc/imx6/imx6ul"
+	"github.com/usbarmory/tamago/soc/nxp/imx6ul"
 
 	usbarmory "github.com/usbarmory/tamago/board/usbarmory/mk2"
 )
 
 func init() {
-	if err := imx6.SetARMFreq(900); err != nil {
+	if err := imx6ul.SetARMFreq(900); err != nil {
 		panic(fmt.Sprintf("WARNING: error setting ARM frequency: %v\n", err))
 	}
 
@@ -68,7 +67,7 @@ func main() {
 		// recovery) as that pairing might become invalid at reboot if
 		// Secure Boot has been just activated, rather offer pairing
 		// only by firmware booted internally.
-		if !imx6ul.SDP() {
+		if !imx6ul.SDP {
 			code, err = ble.PairingMode()
 
 			if err != nil {

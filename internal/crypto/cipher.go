@@ -24,7 +24,7 @@ import (
 	"github.com/usbarmory/armory-drive/api"
 
 	"github.com/usbarmory/tamago/dma"
-	"github.com/usbarmory/tamago/soc/imx6/imx6ul"
+	"github.com/usbarmory/tamago/soc/nxp/imx6ul"
 
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/xts"

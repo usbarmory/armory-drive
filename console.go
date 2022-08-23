@@ -14,7 +14,7 @@ import (
 	_ "unsafe"
 
 	usbarmory "github.com/usbarmory/tamago/board/usbarmory/mk2"
-	"github.com/usbarmory/tamago/soc/imx6"
+	"github.com/usbarmory/tamago/soc/nxp/imx6ul"
 )
 
 // The USB armory Mk II serial console is exposed through a debug accessory
@@ -29,8 +29,8 @@ import (
 // are required to disable the serial console securely.
 //
 // The TamaGo board support for the USB armory Mk II enables the serial console
-// (UART2) at runtime initialization, which therefore invokes imx6.UART2.Init()
-// before init().
+// (UART2) at runtime initialization, which therefore invokes
+// imx6ul.UART2.Init() before init().
 //
 // To this end the runtime printk function, responsible for all console logging
 // operations (i.e. stdout/stderr), is overridden with a NOP. Secondarily UART2
@@ -40,7 +40,7 @@ import (
 var serialTx = func(c byte) {}
 
 func init() {
-	if imx6.SNVS() {
+	if imx6ul.SNVS.Available() {
 		// disable console
 		usbarmory.UART2.Disable()
 

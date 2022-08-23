@@ -14,7 +14,7 @@ import (
 
 	"github.com/usbarmory/armory-drive/assets"
 
-	"github.com/usbarmory/tamago/soc/imx6"
+	"github.com/usbarmory/tamago/soc/nxp/imx6ul"
 
 	"github.com/usbarmory/crucible/otp"
 	"github.com/usbarmory/crucible/util"
@@ -30,7 +30,7 @@ import (
 // incapable of executing unsigned code. This is a security feature, not a bug.
 func Init() {
 	switch {
-	case imx6.SNVS():
+	case imx6ul.SNVS.Available():
 		return
 	case len(assets.SRKHash) != assets.SRKSize:
 		return

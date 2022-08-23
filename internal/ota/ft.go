@@ -15,7 +15,7 @@ import (
 	"github.com/usbarmory/armory-drive-log/api"
 	"github.com/usbarmory/armory-drive-log/api/verify"
 
-	"github.com/usbarmory/tamago/soc/imx6/imx6ul"
+	"github.com/usbarmory/tamago/soc/nxp/imx6ul"
 
 	"golang.org/x/mod/sumdb/note"
 )

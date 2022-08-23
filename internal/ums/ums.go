@@ -11,7 +11,7 @@ import (
 	"github.com/usbarmory/armory-drive/internal/crypto"
 
 	usbarmory "github.com/usbarmory/tamago/board/usbarmory/mk2"
-	"github.com/usbarmory/tamago/soc/imx6/usdhc"
+	"github.com/usbarmory/tamago/soc/nxp/usdhc"
 )
 
 const (

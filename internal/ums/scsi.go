@@ -15,7 +15,7 @@ import (
 	"github.com/usbarmory/armory-drive/internal/ota"
 
 	"github.com/usbarmory/tamago/dma"
-	"github.com/usbarmory/tamago/soc/imx6/usb"
+	"github.com/usbarmory/tamago/soc/nxp/usb"
 
 	"golang.org/x/sync/errgroup"
 )
