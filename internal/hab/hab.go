@@ -8,9 +8,9 @@ package hab
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"log"
-	_ "unsafe"
 
 	"github.com/usbarmory/armory-drive/assets"
 
@@ -32,7 +32,7 @@ func Init() {
 	switch {
 	case imx6ul.SNVS.Available():
 		return
-	case len(assets.SRKHash) != assets.SRKSize:
+	case len(assets.SRKHash) != sha256.Size:
 		return
 	case bytes.Equal(assets.SRKHash, make([]byte, len(assets.SRKHash))):
 		return
@@ -57,7 +57,7 @@ func fuse(name string, bank int, word int, off int, size int, val []byte) {
 }
 
 func hab(srk []byte) {
-	if len(assets.SRKHash) != assets.SRKSize {
+	if len(srk) != sha256.Size {
 		panic("fatal error, invalid SRK hash")
 	}
 

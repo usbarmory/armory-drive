@@ -38,16 +38,12 @@ func (k *Keyring) reset() (err error) {
 	var armoryLongterm []byte
 
 	if k.ArmoryLongterm == nil {
-		err = k.NewLongtermKey()
-
-		if err != nil {
+		if err = k.NewLongtermKey(); err != nil {
 			return
 		}
 	}
 
-	armoryLongterm, err = k.Export(UA_LONGTERM_KEY, true)
-
-	if err != nil {
+	if armoryLongterm, err = k.Export(UA_LONGTERM_KEY, true); err != nil {
 		return
 	}
 
@@ -86,18 +82,15 @@ func (k *Keyring) Load() (err error) {
 		return
 	}
 
-	err = k.loadAt(MMC_CONF_BLOCK, CONF_BLOCKS_V1)
-
-	return
+	return k.loadAt(MMC_CONF_BLOCK, CONF_BLOCKS_V1)
 }
 
 func (k *Keyring) Save() (err error) {
 	blockSize := usbarmory.MMC.Info().BlockSize
 
 	buf := new(bytes.Buffer)
-	err = gob.NewEncoder(buf).Encode(k.Conf)
 
-	if err != nil {
+	if err = gob.NewEncoder(buf).Encode(k.Conf); err != nil {
 		return
 	}
 

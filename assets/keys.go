@@ -10,9 +10,6 @@ import (
 	"crypto/sha256"
 )
 
-// SRKSize represents the Secure Boot SRK hash size in bytes.
-const SRKSize = 32
-
 // SRKHash represents the Secure Boot SRK fuse table, this value is the output
 // of DummySRKHash().
 var SRKHash = []byte{
@@ -32,7 +29,7 @@ const DefaultLogOrigin = "Armory Drive Prod 2"
 func DummySRKHash() []byte {
 	var dummySRK []byte
 
-	for i := 0; i < SRKSize; i++ {
+	for i := 0; i < sha256.Size; i++ {
 		dummySRK = append(dummySRK, byte(i))
 	}
 

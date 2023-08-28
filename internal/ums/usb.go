@@ -68,12 +68,9 @@ func (d *Drive) ConfigureUSB() (device *usb.Device) {
 	iface := &usb.InterfaceDescriptor{}
 	iface.SetDefaults()
 	iface.NumEndpoints = 2
-	// Mass Storage
-	iface.InterfaceClass = 0x8
-	// SCSI
-	iface.InterfaceSubClass = 0x6
-	// Bulk-Only
-	iface.InterfaceProtocol = 0x50
+	iface.InterfaceClass = usb.MASS_STORAGE_CLASS
+	iface.InterfaceSubClass = usb.SCSI_CLASS
+	iface.InterfaceProtocol = usb.BULK_ONLY_TRANSPORT_PROTOCOL
 	iface.Interface = 0
 
 	// EP1 IN endpoint (bulk)
