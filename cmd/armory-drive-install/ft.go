@@ -18,9 +18,9 @@ import (
 	"github.com/usbarmory/armory-drive-log/api/verify"
 
 	"github.com/google/go-github/v34/github"
-	"github.com/google/trillian-examples/formats/log"
-	"github.com/google/trillian-examples/serverless/client"
-	"github.com/google/trillian/merkle/rfc6962"
+	"github.com/transparency-dev/formats/log"
+	"github.com/transparency-dev/merkle/rfc6962"
+	"github.com/transparency-dev/serverless-log/client"
 	"golang.org/x/mod/sumdb/note"
 )
 
@@ -40,7 +40,7 @@ func verifyRelease(release *github.RepositoryRelease, a *releaseAssets) (err err
 		return
 	}
 
-	newCP, newCPRaw, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, conf.logOrigin)
+	newCP, newCPRaw, _, err := client.FetchCheckpoint(ctx, logFetcher, logSigV, conf.logOrigin)
 
 	if err != nil {
 		return
