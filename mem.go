@@ -16,9 +16,9 @@ import (
 // requires large DMA descriptors.
 
 //go:linkname ramSize runtime.ramSize
-var ramSize uint32 = 0x10000000 // 256MB
+var ramSize uint = 0x10000000 // 256MB
 // 2nd half of external RAM (256MB)
-var dmaStart uint32 = 0x90000000
+var dmaStart uint = 0x90000000
 
 // 256MB
 var dmaSize = 0x10000000

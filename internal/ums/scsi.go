@@ -63,7 +63,7 @@ type writeOp struct {
 	lba    int
 	blocks int
 	size   int
-	addr   uint32
+	addr   uint
 	buf    []byte
 }
 

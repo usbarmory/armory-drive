@@ -54,7 +54,7 @@ type Drive struct {
 	send chan []byte
 
 	// free is the queue for IN device DMA buffers for later release
-	free chan uint32
+	free chan uint
 
 	// dataPending is the buffer for write commands which spawn across
 	// multiple USB transfers
@@ -69,7 +69,7 @@ func (d *Drive) Init(card Card) (err error) {
 	d.card = card
 	d.PairingComplete = make(chan bool)
 	d.send = make(chan []byte, 2)
-	d.free = make(chan uint32, 1)
+	d.free = make(chan uint, 1)
 
 	return
 }
