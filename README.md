@@ -29,9 +29,9 @@ Installation of pre-compiled releases
 Binary releases are [available](https://github.com/usbarmory/armory-drive/releases)
 for the Armory Drive firmware.
 
-The binary release includes the `armory-drive-installer` tool (for Linux,
-Windows and macOS) to guide through initial installation of such releases and
-Secure Boot activation.
+The binary release includes the `armory-drive-install` tool (for Linux, Windows
+and macOS) to guide through initial installation of such releases and Secure
+Boot activation.
 
 > :warning: :lock: loading signed releases triggers secure boot activation which
 > is an *irreversible operation* to be performed **at your own risk**, carefully
@@ -65,8 +65,8 @@ The installer supports the following installation modes:
   *not recommended for protection of sensitive data* where device tampering is a
   risk.
 
-The `armory-drive-installer` provides interactive installation for all modes
-and is the recommended way to use the Armory Drive firmware.
+The `armory-drive-install` provides interactive installation for all modes and
+is the recommended way to use the Armory Drive firmware.
 
 Expert users can compile and sign their own releases with the information
 included in section _Installation of self-compiled releases_.
@@ -99,7 +99,7 @@ like any standard USB drive when unlocked through its paired companion iOS app.
 Firmware update
 ---------------
 
-The `armory-drive-installer` provides interactive upgrade of all installation
+The `armory-drive-install` provides interactive upgrade of all installation
 modes and is the recommended way to upgrade the Armory Drive firmware.
 
 Alternatively *only users of F-Secure signed releases or unsigned releases* can
@@ -120,7 +120,7 @@ Installation of self-compiled releases
 ======================================
 
 > :warning: these instructions are for *expert users only*, it is recommended
-> to use `armory-drive-installer` if you don't know what you are doing.
+> to use `armory-drive-install` if you don't know what you are doing.
 
 Compiling
 ---------
@@ -151,7 +151,7 @@ should be created and passed with the `HAB_KEYS` environment variable.
 Build the `armory-drive-signed.imx` application executable:
 
 ```
-make CROSS_COMPILE=arm-none-eabi- DISABLE_FR_AUTH=1 HAB_KEYS=<path> imx_signed
+make DISABLE_FR_AUTH=1 HAB_KEYS=<path> imx_signed
 ```
 
 An unsigned test/development binary can be compiled with the `imx` target.
