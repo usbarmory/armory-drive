@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"io/ioutil"
 	"os"
 
 	"github.com/usbarmory/armory-drive/assets"
@@ -164,7 +163,7 @@ func Pairing(code []byte, keyring *crypto.Keyring) (card *PairingDisk) {
 
 	img.Close()
 
-	partitionData, err := ioutil.ReadFile(img.Name())
+	partitionData, err := os.ReadFile(img.Name())
 
 	if err != nil {
 		panic(err)

@@ -9,7 +9,7 @@ package ota
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"runtime"
@@ -104,7 +104,7 @@ func update(entry fs.DirectoryEntry, keyring *crypto.Keyring) {
 		}
 	}()
 
-	buf, err := ioutil.ReadAll(file)
+	buf, err := io.ReadAll(file)
 
 	if err != nil {
 		err = errors.New("could not read update")

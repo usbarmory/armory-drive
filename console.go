@@ -7,7 +7,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -45,7 +45,7 @@ func init() {
 		usbarmory.UART2.Disable()
 
 		// silence logging
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 		return
 	}
 
