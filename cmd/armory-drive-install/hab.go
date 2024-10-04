@@ -25,7 +25,7 @@ func checkHABArguments() {
 	log.Fatal(secureBootHelp)
 }
 
-func genCerts() (CSFKeyPEMBlock, CSFCertPEMBlock, IMGKeyPEMBlock, IMGCertPEMBlock []byte, err error) {
+func genCerts() (CSFSigner, IMGSigner *rsa.PrivateKey, CSFCert, IMGCert *x509.Certificate, err error) {
 	var signingKey *rsa.PrivateKey
 
 	SRKKeyPEMBlock, err := os.ReadFile(conf.srkKey)
@@ -75,14 +75,14 @@ func genCerts() (CSFKeyPEMBlock, CSFCertPEMBlock, IMGKeyPEMBlock, IMGCertPEMBloc
 	}
 
 	log.Printf("generating and signing CSF keypair")
-	CSFKeyPEMBlock, CSFCertPEMBlock, err = hab.NewCertificate("CSF", hab.DEFAULT_KEY_LENGTH, hab.DEFAULT_KEY_EXPIRY, ca, signingKey)
-
-	if err != nil {
+	if CSFSigner, CSFCert, _, _, err = hab.NewCertificate("CSF", hab.DEFAULT_KEY_LENGTH, hab.DEFAULT_KEY_EXPIRY, ca, signingKey); err != nil {
 		return
 	}
 
 	log.Printf("generating and signing IMG keypair")
-	IMGKeyPEMBlock, IMGCertPEMBlock, err = hab.NewCertificate("IMG", hab.DEFAULT_KEY_LENGTH, hab.DEFAULT_KEY_EXPIRY, ca, signingKey)
+	if IMGSigner, IMGCert, _, _, err = hab.NewCertificate("IMG", hab.DEFAULT_KEY_LENGTH, hab.DEFAULT_KEY_EXPIRY, ca, signingKey); err != nil {
+		return
+	}
 
 	return
 }
@@ -99,9 +99,7 @@ func sign(assets *releaseAssets) (err error) {
 	}
 
 	log.Printf("generating ephemeral CSF/IMG certificates")
-	opts.CSFKeyPEMBlock, opts.CSFCertPEMBlock, opts.IMGKeyPEMBlock, opts.IMGCertPEMBlock, err = genCerts()
-
-	if err != nil {
+	if opts.CSFSigner, opts.IMGSigner, opts.CSFCert, opts.IMGCert, err = genCerts(); err != nil {
 		return
 	}
 

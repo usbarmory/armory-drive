@@ -11,7 +11,7 @@ require (
 	github.com/transparency-dev/serverless-log v0.0.0-20240926134602-3b41e2bbf8f8
 	github.com/usbarmory/armory-boot v0.0.0-20240924115649-09d0327c3c99
 	github.com/usbarmory/armory-drive-log v0.0.0-20231011074148-e10fca283f67
-	github.com/usbarmory/crucible v0.0.0-20240222195051-dec27cd4e0e0
+	github.com/usbarmory/crucible v0.0.0-20241004082917-ad745b205b67
 	github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe
 	github.com/usbarmory/tamago v0.0.0-20240924114619-273d67cd811d
 	golang.org/x/crypto v0.27.0
@@ -24,6 +24,6 @@ require (
 require (
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/smallstep/pkcs7 v0.0.0-20231107075624-be1870d87d13 // indirect
+	github.com/smallstep/pkcs7 v0.0.0-20240911091500-b1cae6277023 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
