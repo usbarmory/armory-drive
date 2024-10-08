@@ -33,7 +33,8 @@ The binary release includes the `armory-drive-install` tool (for Linux, Windows
 and macOS) to guide through initial installation of such releases and Secure
 Boot activation.
 
-> :warning: :lock: loading signed releases triggers secure boot activation which
+> [!WARNING]
+> :lock: loading signed releases triggers secure boot activation which
 > is an *irreversible operation* to be performed **at your own risk**, carefully
 > read and understand the following instructions.
 
@@ -119,7 +120,8 @@ initialization_.
 Installation of self-compiled releases
 ======================================
 
-> :warning: these instructions are for *expert users only*, it is recommended
+> [!WARNING]
+> These instructions are for *expert users only*, it is recommended
 > to use `armory-drive-install` if you don't know what you are doing.
 
 Compiling
@@ -163,7 +165,8 @@ To permanently install `armory-drive-signed.imx` on internal non-volatile memory
 follow [these instructions](https://github.com/usbarmory/usbarmory/wiki/Boot-Modes-(Mk-II)#flashing-bootable-images-on-externalinternal-media)
 for internal eMMC flashing.
 
-> :warning: once loaded, even through [Serial Download Protocol](https://github.com/usbarmory/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp),
+> [!WARNING]
+> Once loaded, even through [Serial Download Protocol](https://github.com/usbarmory/usbarmory/wiki/Boot-Modes-(Mk-II)#serial-download-protocol-sdp),
 > the firmware initializes its configuration by writing on the internal eMMC, therefore corrupting its previous contents.
 
 Support
