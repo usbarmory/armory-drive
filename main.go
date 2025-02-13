@@ -1,5 +1,4 @@
 // Copyright (c) WithSecure Corporation
-// https://foundry.withsecure.com
 //
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
@@ -17,7 +16,9 @@ import (
 	"github.com/usbarmory/armory-drive/internal/hab"
 	"github.com/usbarmory/armory-drive/internal/ums"
 
+	"github.com/usbarmory/tamago/arm"
 	"github.com/usbarmory/tamago/soc/nxp/imx6ul"
+	"github.com/usbarmory/tamago/soc/nxp/usb"
 
 	usbarmory "github.com/usbarmory/tamago/board/usbarmory/mk2"
 )
@@ -27,7 +28,30 @@ func init() {
 		panic(fmt.Sprintf("WARNING: error setting ARM frequency: %v\n", err))
 	}
 
+	imx6ul.DCP.Init()
+	imx6ul.DCP.EnableInterrupt()
+
 	log.SetFlags(0)
+}
+
+func startInterruptHandler(port *usb.USB) {
+	irq := imx6ul.GIC.GetInterrupt(true)
+
+	imx6ul.GIC.EnableInterrupt(port.IRQ, true)
+	imx6ul.GIC.EnableInterrupt(imx6ul.DCP.IRQ, true)
+
+	isr := func() {
+		switch irq {
+		case port.IRQ:
+			port.ServiceInterrupts()
+		case imx6ul.DCP.IRQ:
+			imx6ul.DCP.ServiceInterrupt()
+		default:
+			log.Printf("internal error, unexpected IRQ %d", irq)
+		}
+	}
+
+	arm.ServiceInterrupts(isr)
 }
 
 func main() {
@@ -84,26 +108,25 @@ func main() {
 		go pairingFeedback(drive.PairingComplete)
 	}
 
-	device := drive.ConfigureUSB()
+	port := imx6ul.USB1
 
-	imx6ul.USB1.Init()
-	imx6ul.USB1.DeviceMode()
+	port.Device = drive.ConfigureUSB()
+	port.Init()
 
 	// To further reduce the attack surface, start the USB stack only when
 	// the card is unlocked (or in pairing mode).
-	if !drive.Ready {
-		imx6ul.USB1.Stop()
-
-		for !drive.Ready {
-			runtime.Gosched()
-			time.Sleep(10 * time.Millisecond)
-		}
-
-		imx6ul.USB1.Run()
+	for !drive.Ready {
+		runtime.Gosched()
+		time.Sleep(10 * time.Millisecond)
 	}
 
-	imx6ul.USB1.Reset()
-	imx6ul.USB1.Start(device)
+	port.DeviceMode()
+
+	port.EnableInterrupt(usb.IRQ_URI) // reset
+	port.EnableInterrupt(usb.IRQ_PCI) // port change detect
+	port.EnableInterrupt(usb.IRQ_UI)  // transfer completion
+
+	startInterruptHandler(port)
 }
 
 func pairingFeedback(done chan bool) {

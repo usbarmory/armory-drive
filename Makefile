@@ -1,5 +1,4 @@
 # Copyright (c) WithSecure Corporation
-# https://foundry.withsecure.com
 #
 # Use of this source code is governed by the license
 # that can be found in the LICENSE file.
@@ -99,7 +98,7 @@ clean:
 #### dependencies ####
 
 $(APP): BUILD_TAGS := $(or $(shell ( [ ! -z "${DISABLE_FR_AUTH}" ] ) && echo "$(BUILD_TAGS),disable_fr_auth"),$(BUILD_TAGS))
-$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -E _rt0_arm_tamago -R 0x1000 -X '${PKG}/assets.Revision=${REV}'"
+$(APP): GOFLAGS = -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -R 0x1000 -X '${PKG}/assets.Revision=${REV}'"
 $(APP): check_tamago proto
 	@if [ "${DISABLE_FR_AUTH}" == "" ]; then \
 		echo '** WARNING ** Enabling firmware updates authentication (fr:internal/ota/armory-drive.pub, log:internal/ota/armory-drive-log.pub)'; \
@@ -157,7 +156,7 @@ $(APP): check_tamago proto
 #### SRK fixup ####
 
 # Replace SRK hash before signing.
-# For F-Secure releases the F-Secure SRK will be used.
+# For OEM releases the OEM SRK will be used.
 
 %.srk: check_hab_keys
 %.srk: ${HAB_KEYS}/SRK_1_2_3_4_fuse.bin

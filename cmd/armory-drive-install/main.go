@@ -1,5 +1,4 @@
 // Copyright (c) WithSecure Corporation
-// https://foundry.withsecure.com
 //
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
@@ -57,7 +56,7 @@ func init() {
 	flag.StringVar(&conf.branch, "b", "master", "release branch")
 	flag.StringVar(&conf.release, "r", "latest", "release version")
 	flag.BoolVar(&conf.install, "I", false, "first time install")
-	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2)")
+	flag.IntVar(&conf.upgrade, "U", -1, "upgrade (unsigned: 0, OEM keys: 1, user keys: 2)")
 	flag.BoolVar(&conf.recovery, "R", false, "recovery install")
 
 	flag.StringVar(&conf.logPublicKey, "p", "", "transparency log authentication key")
@@ -108,7 +107,7 @@ func main() {
 
 func recovery() {
 	switch {
-	case confirm("Is Secure Boot enabled on your USB armory using F-Secure signing keys?"):
+	case confirm("Is Secure Boot enabled on your USB armory using OEM signing keys?"):
 		installFirmware(signedByFSecure)
 	case confirm("Is Secure Boot enabled on your USB armory using your own signing keys?"):
 		checkHABArguments()
@@ -131,7 +130,7 @@ func install() {
 	}
 
 	switch {
-	case confirm("Would you like to use F-Secure signed releases, enabling Secure Boot on the USB armory with permanent fusing of F-Secure public keys?"):
+	case confirm("Would you like to use OEM signed releases, enabling Secure Boot on the USB armory with permanent fusing of OEM public keys?"):
 		installFirmware(signedByFSecure)
 	case confirm("Would you like to sign releases on your own, enabling Secure Boot on the USB armory with your own public keys?"):
 		checkHABArguments()
@@ -148,7 +147,7 @@ func upgrade() {
 		upgradeFirmware(unsigned)
 		return
 	case conf.upgrade == signedByFSecure ||
-		conf.upgrade < 0 && confirm("Is Secure Boot enabled on your USB armory using F-Secure signing keys?"):
+		conf.upgrade < 0 && confirm("Is Secure Boot enabled on your USB armory using OEM signing keys?"):
 		upgradeFirmware(signedByFSecure)
 	case conf.upgrade == signedByUser ||
 		confirm("Is Secure Boot enabled on your USB armory using your own signing keys?"):
@@ -161,13 +160,13 @@ func upgrade() {
 
 func ota(assets *releaseAssets) {
 	log.Printf("\nWait for the USB armory blue LED to blink to indicate pairing mode.")
-	log.Printf("\nAn F-Secure drive should appear on your system.")
+	log.Printf("\nAn Armory drive should appear on your system.")
 
 	if conf.install {
 		log.Printf("\nDo *not* pair with mobile application at this time.")
 	}
 
-	mountPoint := prompt("Please specify the path of the mounted F-Secure drive")
+	mountPoint := prompt("Please specify the path of the mounted Armory drive")
 
 	log.Printf("\nCreating firmware update archive.")
 

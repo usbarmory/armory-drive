@@ -1,5 +1,4 @@
 // Copyright (c) WithSecure Corporation
-// https://foundry.withsecure.com
 //
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
@@ -25,7 +24,7 @@ const DefaultLogOrigin = "Armory Drive Prod 2"
 
 // DummySRKHash generates a known placeholder for the SRK hash to allow its
 // identification and replacement within the binary, by `armory-drive-install`,
-// with F-Secure or user secure boot key information.
+// with OEM or user secure boot key information.
 func DummySRKHash() []byte {
 	var dummySRK []byte
 

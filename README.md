@@ -1,8 +1,8 @@
 Introduction
 ============
 
-The [Armory Drive](https://www.withsecure.com/en/solutions/innovative-security-hardware/armory-drive)
-provides a pocket encrypted drive solution based on the [USB armory Mk II](https://github.com/usbarmory/usbarmory/wiki).
+Armory Drive provides a pocket encrypted drive solution based on the
+[USB armory Mk II](https://github.com/usbarmory/usbarmory/wiki).
 
 It allows one-tap unlock of a microSD backed encrypted USB drive through a
 companion mobile application.
@@ -40,10 +40,10 @@ Boot activation.
 
 The installer supports the following installation modes:
 
-* F-Secure signed releases: the installation of such firmware images
-  causes F-Secure own secure boot public keys to be *permanently fused* on the
-  target USB armory, fully converting the device to exclusive use with Armory
-  Drive releases signed by F-Secure.
+* OEM signed releases: the installation of such firmware images
+  causes OEM secure boot public keys to be *permanently fused* on the target
+  USB armory, fully converting the device to exclusive use with Armory Drive
+  releases signed by the USB armory project maintainers.
 
   These releases also enable [authenticated updates](https://github.com/usbarmory/armory-drive/wiki/Firmware-Transparency)
   through [tamper-evident logs](https://github.com/usbarmory/armory-drive-log)
@@ -103,8 +103,8 @@ Firmware update
 The `armory-drive-install` provides interactive upgrade of all installation
 modes and is the recommended way to upgrade the Armory Drive firmware.
 
-Alternatively *only users of F-Secure signed releases or unsigned releases* can
-use the following procedure on USB armory devices which have been already
+Alternatively *only users of OEM signed releases or unsigned releases* can use
+the following procedure on USB armory devices which have been already
 initialized with the Armory Drive firmware as shown in _Pairing and
 initialization_.
 
@@ -178,7 +178,7 @@ Authors
 =======
 
 Andrea Barisani  
-andrea.barisani@withsecure.com | andrea@inversepath.com  
+andrea@inversepath.com  
 
 License
 =======

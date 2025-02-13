@@ -1,5 +1,4 @@
 // Copyright (c) WithSecure Corporation
-// https://foundry.withsecure.com
 //
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
@@ -57,10 +56,6 @@ var iv = make([]byte, aes.BlockSize)
 
 // IV encryption IV for ESSIV computation and IV reset
 var zero = make([]byte, aes.BlockSize)
-
-func init() {
-	imx6ul.DCP.Init()
-}
 
 func (k *Keyring) deriveKey(diversifier []byte, index int, export bool) (key []byte, err error) {
 	if index == BLOCK_KEY {

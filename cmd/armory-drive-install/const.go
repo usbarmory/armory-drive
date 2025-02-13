@@ -1,5 +1,4 @@
 // Copyright (c) WithSecure Corporation
-// https://foundry.withsecure.com
 //
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
@@ -25,7 +24,7 @@ const usage = `Usage: habtool [OPTIONS]
   -I    first time install
   -R    recovery install
   -U int
-        upgrade (unsigned: 0, F-Secure keys: 1, user keys: 2) (default -1)
+        upgrade (unsigned: 0, OEM keys: 1, user keys: 2) (default -1)
 
   -C string
         SRK private key in PEM format
@@ -71,7 +70,7 @@ armory, fully converting the device to exclusive operation with signed
 executables.
 
 If the signed releases option is chosen you will be given the option of using
-F-Secure signing keys or your own.
+OEM signing keys or your own.
 
                  ***    Option #2: unsigned releases    ***
 
@@ -116,16 +115,16 @@ const fscSignedFirmwareWarning = `
                  ***  Armory Drive Programming Utility  ***
                  ***           READ CAREFULLY           ***
 
-This will provision F-Secure signed Armory Drive firmware on your USB armory. By
+This will provision OEM signed Armory Drive firmware on your USB armory. By
 doing so, secure boot will be activated on the USB armory with permanent OTP
-fusing of F-Secure public secure boot keys.
+fusing of OEM public secure boot keys.
 
 Fusing OTP's is an **irreversible** action that permanently fuses values on the
-device. This means that your USB armory will be able to only execute F-Secure
-signed Armory Drive firmware after programming is completed.
+device. This means that your USB armory will be able to only execute OEM signed
+Armory Drive firmware after programming is completed.
 
 In other words your USB armory will stop acting as a generic purpose device and
-will be converted to *exclusive use of F-Secure signed Armory Drive releases*.
+will be converted to *exclusive use of OEM signed Armory Drive releases*.
 
 ████████████████████████████████████████████████████████████████████████████████
 `

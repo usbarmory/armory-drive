@@ -1,5 +1,4 @@
 // Copyright (c) WithSecure Corporation
-// https://foundry.withsecure.com
 //
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
@@ -26,7 +25,7 @@ import (
 //
 // Key material is cleared on unsigned/test images only while a zero fixup is
 // performed only on user signed images as they cannot be authenticated with
-// F-Secure own keys.
+// OTA keys.
 func proofEnabled() bool {
 	return !DisableAuth && !bytes.Equal(FRPublicKey, make([]byte, len(FRPublicKey)))
 }
