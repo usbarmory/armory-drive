@@ -172,7 +172,7 @@ for internal eMMC flashing.
 Support
 =======
 
-If you require support, please email us at usbarmory@withsecure.com.
+If you require support, please email us at usbarmory@inversepath.com.
 
 Authors
 =======
