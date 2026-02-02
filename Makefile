@@ -109,7 +109,7 @@ $(APP): check_tamago proto
 
 %.dcd: check_tamago
 %.dcd: GOMODCACHE = $(shell ${TAMAGO} env GOMODCACHE)
-%.dcd: TAMAGO_PKG=$(shell go list -m -f '{{.Path}}@{{.Version}}' github.com/usbarmory/tamago)
+%.dcd: TAMAGO_PKG= $(shell ${TAMAGO} list -m -f '{{.Path}}@{{.Version}}' github.com/usbarmory/tamago)
 %.dcd:
 	echo $(GOMODCACHE)
 	echo $(TAMAGO_PKG)
