@@ -46,11 +46,11 @@ func Init() {
 func fuse(name string, bank int, word int, off int, size int, val []byte) {
 	log.Printf("fusing %s bank:%d word:%d off:%d size:%d val:%x", name, bank, word, off, size, val)
 
-	if err := otp.BlowOCOTP(bank, word, off, size, val); err != nil {
+	if err := otp.BlowOCOTP(imx6ul.OCOTP, bank, word, off, size, val); err != nil {
 		panic(err)
 	}
 
-	if res, err := otp.ReadOCOTP(bank, word, off, size); err != nil || !bytes.Equal(val, res) {
+	if res, err := otp.ReadOCOTP(imx6ul.OCOTP, bank, word, off, size); err != nil || !bytes.Equal(val, res) {
 		panic(fmt.Sprintf("readback error for %s, val:%x res:%x err:%v\n", name, val, res, err))
 	}
 }

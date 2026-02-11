@@ -12,7 +12,7 @@ SHELL = /bin/bash
 PROTOC ?= /usr/bin/protoc
 
 APP := armory-drive
-GOENV := GO_EXTLINK_ENABLED=0 CGO_ENABLED=0 GOOS=tamago GOARM=7 GOARCH=arm
+GOENV := GO_EXTLINK_ENABLED=0 CGO_ENABLED=0 GOOS=tamago GOOSPKG=github.com/usbarmory/tamago GOARM=7 GOARCH=arm
 TEXT_START := 0x80010000 # ramStart (defined in imx6/imx6ul/memory.go) + 0x10000
 
 # Set revision to git tag, if unset use short commit hash.
