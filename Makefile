@@ -14,6 +14,7 @@ PROTOC ?= /usr/bin/protoc
 APP := armory-drive
 GOENV := GO_EXTLINK_ENABLED=0 CGO_ENABLED=0 GOOS=tamago GOOSPKG=github.com/usbarmory/tamago GOARM=7 GOARCH=arm
 TEXT_START := 0x80010000 # ramStart (defined in imx6/imx6ul/memory.go) + 0x10000
+TAMAGO ?= $(shell go tool -n github.com/usbarmory/tamago/cmd/tamago)
 
 # Set revision to git tag, if unset use short commit hash.
 REV = $(shell git tag --points-at HEAD 2> /dev/null)
@@ -131,7 +132,7 @@ $(APP): check_tamago proto
 #### secure boot ####
 
 %-signed.imx: check_hab_keys %.imx
-	${TAMAGO} install github.com/usbarmory/crucible/cmd/habtool
+	${TAMAGO} install github.com/usbarmory/crucible/cmd/habtool@latest
 	$(shell ${TAMAGO} env GOPATH)/bin/habtool \
 		-A ${HAB_KEYS}/CSF_1_key.pem \
 		-a ${HAB_KEYS}/CSF_1_crt.pem \
