@@ -40,8 +40,8 @@ github.com/usbarmory/crucible v0.0.0-20260105222051-0bd71c72232c h1:085Xai8lKeaO
 github.com/usbarmory/crucible v0.0.0-20260105222051-0bd71c72232c/go.mod h1:ckguQ9IhSOqu3Aj5k739o8aleJE8q1ZwmUsQEKkXpiM=
 github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe h1:WWop+y0QNxBEZAKu9xlNiZWgo5+y5VkzlyngVMViBlE=
 github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe/go.mod h1:8ScVLh9aty8MLtypACxU7JdF5u2y2rEfhx3zJPS/tPc=
-github.com/usbarmory/tamago v1.26.0 h1:9lVHdyVLV2uvMV5DVuAtGXVeG2fJUaigu9eH9sXPTp4=
-github.com/usbarmory/tamago v1.26.0/go.mod h1:NDKiU/WXqDwNDCYs1BXEMgNlm1UFwdp8xENclDVQSNY=
+github.com/usbarmory/tamago v1.26.1 h1:ZJkxM/+qNZTO631bJz5x/flhYb/ww1ura4H2BrZbX5I=
+github.com/usbarmory/tamago v1.26.1/go.mod h1:7x0kUe5eE9S1z7Pi/C9RjF8E4JHWzqnE4cKzGl0hyug=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=

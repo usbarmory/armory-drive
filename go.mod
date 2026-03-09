@@ -1,6 +1,6 @@
 module github.com/usbarmory/armory-drive
 
-go 1.26.0
+go 1.26.1
 
 tool github.com/usbarmory/tamago/cmd/tamago
 
@@ -15,7 +15,7 @@ require (
 	github.com/usbarmory/armory-drive-log v0.0.0-20250828080636-6d83bf556d51
 	github.com/usbarmory/crucible v0.0.0-20260105222051-0bd71c72232c
 	github.com/usbarmory/hid v0.0.0-20210318233634-85ced88a1ffe
-	github.com/usbarmory/tamago v1.26.0
+	github.com/usbarmory/tamago v1.26.1
 	golang.org/x/crypto v0.48.0
 	golang.org/x/mod v0.33.0
 	golang.org/x/oauth2 v0.35.0
