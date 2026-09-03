@@ -16,7 +16,6 @@ import (
 	"github.com/usbarmory/armory-drive/internal/hab"
 	"github.com/usbarmory/armory-drive/internal/ums"
 
-	"github.com/usbarmory/tamago/arm"
 	"github.com/usbarmory/tamago/soc/nxp/imx6ul"
 	"github.com/usbarmory/tamago/soc/nxp/usb"
 
@@ -35,10 +34,10 @@ func init() {
 }
 
 func startInterruptHandler(port *usb.USB) {
-	irq := imx6ul.GIC.GetInterrupt(true)
+	irq := imx6ul.GIC.GetInterrupt()
 
-	imx6ul.GIC.EnableInterrupt(port.IRQ, true)
-	imx6ul.GIC.EnableInterrupt(imx6ul.DCP.IRQ, true)
+	imx6ul.GIC.EnableInterrupt(port.IRQ)
+	imx6ul.GIC.EnableInterrupt(imx6ul.DCP.IRQ)
 
 	isr := func() {
 		switch irq {
@@ -51,7 +50,7 @@ func startInterruptHandler(port *usb.USB) {
 		}
 	}
 
-	arm.ServiceInterrupts(isr)
+	imx6ul.ARM.ServiceInterrupts(isr)
 }
 
 func main() {
