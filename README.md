@@ -139,7 +139,7 @@ go get -u google.golang.org/protobuf/cmd/protoc-gen-go
 The [TamaGo compiler](https://github.com/usbarmory/tamago-go) is automatically
 downloaded and compiled as a `go tool` by the `Makefile`.
 
-Alternatively the `TAMAGO` environment variable can overridden to use the
+Alternatively the `TAMAGO` environment variable can be overridden to use the
 [latest binary release](https://github.com/usbarmory/tamago-go/releases/latest):
 
 ```sh
